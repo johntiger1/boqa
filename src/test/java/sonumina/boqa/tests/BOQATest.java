@@ -135,6 +135,8 @@ public class BOQATest
      */
     private void checkInternalSimValues(BOQA boqa)
     {
+
+
         /* Common ancestors */
         assertEquals(7, boqa.getCommonAncestorWithMaxIC(11, 12));
         assertTrue(boqa.getCommonAncestorWithMaxIC(9, 11) == 4 || boqa.getCommonAncestorWithMaxIC(9, 11) == 6);
@@ -513,13 +515,22 @@ public class BOQATest
     @Test
     public void testLargeNumberOfItems() throws IOException, OBOParserException, URISyntaxException
     {
-        Random rnd = new Random(2);
+        //Editable/working as intended
+//        for (int i = 0; i < 1110; i++)
+//        {
+//
+//            System.out.println("AAAADff");
+//        }
+
+        Random rnd = new Random(2); //this hint is for long l
 
         final BOQA boqa = new BOQA();
 
         OBOParser hpoParser = new OBOParser(
             new File(ClassLoader.getSystemResource("human-phenotype-ontology.obo.gz").toURI()).getCanonicalPath());
         hpoParser.doParse();
+
+        //blackbox: it gets all the terms (in the HPO)
         TermContainer tc = new TermContainer(hpoParser.getTermMap(), hpoParser.getFormatVersion(), hpoParser.getDate());
         Ontology ontology = new Ontology(tc);
         SlimDirectedGraphView<Term> slim = ontology.getSlimGraphView();
@@ -535,7 +546,8 @@ public class BOQATest
             for (int j = 0; j < rnd.nextInt(16) + 2; j++) {
                 Term t;
                 do {
-                    t = slim.getVertex(rnd.nextInt(slim.getNumberOfVertices()));
+                    t = slim.getVertex(rnd.nextInt(slim.getNumberOfVertices())); //randomly select a vertex
+                //keeps doing this til it gets a non-obsolete vertex
                 } while (t.isObsolete());
                 Association a = new Association(item, t.getIDAsString());
                 assocs.addAssociation(a);
@@ -543,6 +555,7 @@ public class BOQATest
         }
 
         this.logger.info("Constructed data set");
+        //the next few are just setting some parameters of BOQA
         boqa.setConsiderFrequenciesOnly(false);
         boqa.setPrecalculateScoreDistribution(false);
         boqa.setCacheScoreDistribution(false);

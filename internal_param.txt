@@ -1,0 +1,2 @@
+alpha	beta	consider.freqs.only	items	terms	max.terms	max.samples	evidences	max.freq.terms
+0.00200000	0.100000	false	5	15	3	5	All	10

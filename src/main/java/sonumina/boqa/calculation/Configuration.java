@@ -52,9 +52,11 @@ final public class Configuration implements Cloneable
         INHERIT_TRUE,
         INHERIT_FALSE
     }
-
-    final private int[] stats = new int[NodeCase.values().length];
-
+    //internal record of the states of all the nodes @TODO optimize to just link it directly
+    //to the ontology?
+    final private int[] stats = new int[NodeCase.values().length]; ///this is literally just 8 or so
+    //values wide!!!
+    //J I finally get it: these are the BUCKETS from before, that we use to multiply everything
     final public void increment(NodeCase c)
     {
         this.stats[c.ordinal()]++;
@@ -127,7 +129,7 @@ final public class Configuration implements Cloneable
 
     /**
      * Returns the log score of the summarized configuration.
-     *
+     * J: This is the famous 4 term expoenntiation, multiplication equation
      * @param alpha
      * @param beta
      * @return

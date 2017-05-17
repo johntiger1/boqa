@@ -90,8 +90,21 @@ import sonumina.math.graph.SlimDirectedGraphView;
  * @author Sebastian Bauer
  * @see setup, sonumina.boqa.tests.BOQATest
  */
+
+//Default constructor
 public class BOQA
 {
+
+
+    public BOQA()
+    {
+
+        for (int i = 1; i < 19; i++)
+        {
+            System.out.println("AAAWEW");
+
+        }
+    }
     /** Our logger */
     private static Logger logger = LoggerFactory.getLogger(BOQA.class);
 
@@ -224,7 +237,7 @@ public class BOQA
     private static int VARIANT_INHERITANCE_POSITIVES = 1 << 0;
 
     /** False negatives can be explained via inheritance */
-    private static int VARIANT_INHERITANCE_NEGATIVES = 1 << 1;
+    private static int VARIANT_INHERITANCE_NEGATIVES = 1 << 1; // left shift 1 by 1 bit == 0?!!?
 
     /** Model respects frequencies */
     private static int VARIANT_RESPECT_FREQUENCIES = 1 << 2;
@@ -525,8 +538,13 @@ public class BOQA
             for (int i = 0; i < this.term2Children[node].length; i++) {
                 int chld = this.term2Children[node][i];
                 if (observed[chld]) {
-                    if (observed[node]) {
-                        return Configuration.NodeCase.INHERIT_TRUE;
+                    if (observed[node]) { //in the observed layer, parent points to child, so
+                        //if child is on, then parenbt is on [contrary to how BN semantrics normally
+                        //work, where really only parent affects child]
+                        return Configuration.NodeCase.INHERIT_TRUE; //the causality seems backwards
+                        //it (the parent) is only on because its child was als oon
+                        //however, this could have been handled immediately in a different graph
+                        //preprocessing step
                     } else {
                         /* NaN */
                         logger
@@ -557,7 +575,10 @@ public class BOQA
         }
 
         if (hidden[node]) {
-            /* Term is truly on */
+            /* Term is truly on */ //only 4 possible cases;
+            // this only takes into account the hidden and the query variable
+            //unlike the paper which takes into account the parents
+
             if (observed[node]) {
                 return Configuration.NodeCase.TRUE_POSITIVE;
             } else {
@@ -586,7 +607,7 @@ public class BOQA
 
         for (int i = 0; i < numTerms; i++) {
             Configuration.NodeCase c = getNodeCase(i, hidden, observedTerms);
-            stats.increment(c);
+            stats.increment(c); //increment the case that c is in
         }
     }
 
@@ -612,7 +633,8 @@ public class BOQA
         }
         if (previousHidden != null && previousStats == null) {
             throw new IllegalArgumentException();
-        }
+        } //presumably they just cannot be equal to one another (or maybe only these specific
+        //cases are forbidden)
 
         long now = System.nanoTime();
 
@@ -722,7 +744,10 @@ public class BOQA
     /**
      * Returns the log probability that the given term has the observed state given the hidden states. If one of its
      * more specific terms (descendants in this case) are on then the probability that the observed term is on is one.
-     * Otherwise the probability depends on the false-positive/false-negative rate.
+     * Otherwise the probability depends on the false-positive/false-negative rate. J: note that right
+     * now it only seems to deal with the alpha/beta case (false). It is saying that only those that take alpha
+     * and beta into account in the observed layer will call this. Also, it actually also has inherit false
+     * and true
      *
      * @param termIndex
      * @param alpha
@@ -733,6 +758,7 @@ public class BOQA
      */
     public double scoreNode(int termIndex, double alpha, double beta, boolean[] hidden, boolean[] observed)
     {
+
         double score = 0.0;
 
         Configuration.NodeCase c = getNodeCase(termIndex, hidden, observed);
@@ -751,7 +777,8 @@ public class BOQA
                 score = Math.log(1 - alpha);
                 break;
             case INHERIT_FALSE:
-                score = Math.log(1);
+                score = Math.log(1); //this is 0 (i.e. we assume it was fine)/did not contribute
+                //to the product; normally, it COULD otherwise be a false neg/pos
                 break;
             case INHERIT_TRUE:
                 score = Math.log(1);
@@ -785,7 +812,7 @@ public class BOQA
      *
      * @param item which is supposed to be active.
      * @param observedTerms
-     * @param stats, some statistics about false positives etc.
+     * @param stats, some statistics about false positives etc. @TODO update by removing stats, which got moved inside
      * @param takeFrequenciesIntoAccount
      * @return
      */
@@ -824,6 +851,9 @@ public class BOQA
      */
     public boolean andParents(int v, boolean[] states)
     {
+        for (int i = 0; i<10000; i++) {
+            System.out.println("i am here though");
+        }
         int[] parents = this.term2Parents[v];
         for (int i = 0; i < parents.length; i++) {
             if (!states[parents[i]]) {
@@ -1099,7 +1129,7 @@ public class BOQA
     }
 
     /**
-     * Activates the ancestors of the given node.
+     * J: Deactivates the descendants of the given node.
      *
      * @param i
      * @param observations
@@ -1932,7 +1962,7 @@ public class BOQA
     }
 
     /**
-     * Provides the marginals for the observations.
+     * Provides the marginals for the observations. (non threaded)
      *
      * @param observations
      * @param takeFrequenciesIntoAccount
@@ -1954,23 +1984,40 @@ public class BOQA
     public Result assignMarginals(final Observations observations, final boolean takeFrequenciesIntoAccount,
         final int numThreads)
     {
+//        System.out.println("woot");
+//        System.out.println("woot");
+//        System.out.println("woot");
+//        System.out.println("woot");
+//        System.out.println("woot");
+
         int i;
 
         final Result res = new Result();
-        res.scores = new double[this.allItemList.size()];
+        res.scores = new double[this.allItemList.size()]; //its an array size of the entire BN
         res.marginals = new double[this.allItemList.size()];
         res.marginalsIdeal = new double[this.allItemList.size()];
-        res.stats = new Configuration[this.allItemList.size()];
+        res.stats = new Configuration[this.allItemList.size()]; // an ARRAY of configurations..
 
+        //this is just initializing each stats[i] to contain something
         for (i = 0; i < res.stats.length; i++) {
-            res.stats[i] = new Configuration();
+            res.stats[i] = new Configuration(); //each node gets its own cofnig?
+            //In fact each NODE in the BN gets its own config? (it's confusing since stats
+            //is also a variable inside configuration...)
         }
         for (i = 0; i < res.scores.length; i++) {
-            res.scores[i] = Math.log(0);
+            res.scores[i] = Double.NEGATIVE_INFINITY; //-Math.
+            //Math.log(0); //this is etting it to negative infinity??
+            //for example, one speedup is to not compute log(0) each time
         }
 
+        //J for all of this
+        //n^3 matrix, one dimension each for parameters (alpha and beta) and one dimension for all the scores
+        //i.e. at this alpha, beta, what are all the scores for all the nodes?
         final double[][][] scores = new double[this.allItemList.size()][this.ALPHA_GRID.length][this.BETA_GRID.length];
-        final double[] idealScores = new double[this.allItemList.size()];
+        final double[] idealScores = new double[this.allItemList.size()]; //this is likely a "target" whom we wish to approximate
+        //as much as possible
+        //interestingly we also have ideal marginals, which I am not sure how the two differ by
+
 
         final ExecutorService es;
         if (numThreads > 1) {
@@ -1981,6 +2028,8 @@ public class BOQA
 
         final boolean[] previousHidden = new boolean[this.slimGraph.getNumberOfVertices()];
         final Configuration previousStat = new Configuration();
+
+        //Configuration is not null, but: it also was not initalized to anything
         determineCases(observations.observations, previousHidden, previousStat);
 
         ArrayList<Future<?>> futureList = new ArrayList<Future<?>>();
@@ -1999,6 +2048,8 @@ public class BOQA
                         determineCasesForItem(item, observations.observations, takeFrequenciesIntoAccount,
                             numThreads > 1 ? null : previousHidden, numThreads > 1 ? null : previousStat);
 
+                    //J: the scoring function is critical; also this seems to be finding the best
+                    //rate for alpha and beta
                     for (int a = 0; a < BOQA.this.ALPHA_GRID.length; a++) {
                         for (int b = 0; b < BOQA.this.BETA_GRID.length; b++) {
                             scores[item][a][b] = stats.score(BOQA.this.ALPHA_GRID[a], BOQA.this.BETA_GRID[b]);
@@ -2117,7 +2168,7 @@ public class BOQA
             }
         }
 
-        /* A rather slow implementation */
+        /* A rather slow implementation */ // TODO: 16/05/17
         int[] ancestorsA;
         int[] ancestorsB;
 

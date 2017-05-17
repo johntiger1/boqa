@@ -218,6 +218,11 @@ public class BOQABenchmark
      */
     public static void main(String[] args) throws InterruptedException, IOException
     {
+
+        //this is strictly for benchmarking
+//        for (int i = 0; i < 10000; i++) {
+//            System.out.println("AADWEKJKFK");
+//        }
         parseCommandLine(args);
 
         BOQA boqa = new BOQA();
