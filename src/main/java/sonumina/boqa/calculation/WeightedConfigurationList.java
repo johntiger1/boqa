@@ -45,7 +45,11 @@ import java.util.Iterator;
  */
 public class WeightedConfigurationList implements Iterable<WeightedConfiguration>
 {
-    private ArrayList<WeightedConfiguration> tupelList = new ArrayList<WeightedConfiguration>(10);
+    private ArrayList<WeightedConfiguration> tupelList = new ArrayList<WeightedConfiguration>(10); //TODO typo and hardcoded
+    //interestingly this is actually what default araylist size is anyways
+    ArrayList<String> jim = new ArrayList<>();
+    //Why we should remove it:
+    //preusumably this is the top 10 diseases
 
     @Override
     public Iterator<WeightedConfiguration> iterator()
@@ -64,6 +68,7 @@ public class WeightedConfigurationList implements Iterable<WeightedConfiguration
     public double score(double alpha, double beta)
     {
         double sumOfScores = Math.log(0);
+        //System.out.println("my value is " + sumOfScores);
 
         for (WeightedConfiguration tupel : this.tupelList) {
             double score = tupel.stat.getScore(alpha, beta) + tupel.factor; /*
@@ -71,6 +76,7 @@ public class WeightedConfigurationList implements Iterable<WeightedConfiguration
                                                                              * we are operating in log space
                                                                              */
             sumOfScores = Util.logAdd(sumOfScores, score);
+            //System.out.println("my new value is " + sumOfScores); //somehow, it becomes NON NEGATIVE INFINITY AFTER
         }
         return sumOfScores;
     }

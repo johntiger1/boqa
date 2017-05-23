@@ -550,7 +550,7 @@ public class BOQATest
                 //keeps doing this til it gets a non-obsolete vertex
                 } while (t.isObsolete());
                 Association a = new Association(item, t.getIDAsString());
-                assocs.addAssociation(a);
+                assocs.addAssociation(a); //this seems to not hve any effect on BOQA... (nvm, it is used inb boqa.setup)
             }
         }
 
@@ -564,7 +564,14 @@ public class BOQATest
         this.logger.info("Setted up ontology and associations");
 
         Observations o = new Observations();
-        o.observations = new boolean[boqa.getOntology().getNumberOfTerms()];
+        o.observations = new boolean[boqa.getOntology().getNumberOfTerms()]; //this is actually likely where
+        //a lot of FP etc. happens?
+        System.out.println("This many terms" + boqa.getOntology().getNumberOfTerms());
+        System.out.println("This many items" + boqa.getNumberOfItems());
+        System.out.println("This many nodes" + boqa.slimGraph.getNumberOfVertices()); // this is lower than the number
+        //of terms, possibly because some were taken out
+        System.out.println("This many allitems" + boqa.allItemList.size());
+        //we can also check how many terms using one of the arrays, and we just assert that they are all the same sisze
 
         long start = System.nanoTime();
         this.logger.info("Calculating");

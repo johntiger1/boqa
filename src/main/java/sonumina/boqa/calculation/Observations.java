@@ -46,5 +46,5 @@ public class Observations
 
     public boolean[] observations;
 
-    public Configuration observationStats;
+    public Configuration observationStats; //this is our familiar 4 term!
 }

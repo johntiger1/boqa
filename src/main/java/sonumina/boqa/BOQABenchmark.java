@@ -111,7 +111,7 @@ public class BOQABenchmark
                 System.exit(0);
             }
 
-            ontologyPath = cl.getOptionValue('o', ontologyPath);
+            ontologyPath = cl.getOptionValue('o', ontologyPath); //so much nicer than C
             annotationPath = cl.getOptionValue('a', annotationPath);
             patientPath = cl.getOptionValue('p');
             outPath = cl.getOptionValue('d');

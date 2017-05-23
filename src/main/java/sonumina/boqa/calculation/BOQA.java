@@ -116,7 +116,8 @@ public class BOQA
     private GOTermEnumerator termEnumerator;
 
     /** Slim variant of the graph */
-    private SlimDirectedGraphView<Term> slimGraph;
+    //private SlimDirectedGraphView<Term> slimGraph;
+    public SlimDirectedGraphView<Term> slimGraph;
 
     /** An array of all items */
     public ArrayList<ByteString> allItemList;
@@ -129,6 +130,7 @@ public class BOQA
 
     /**
      * For each item, contains the term ids which need to be switched on, if the previous item was on.
+     * this is misleading: i believe this is saying which terms need to be on if the disease item is on
      */
     public int[][] diffOnTerms;
 
@@ -162,6 +164,7 @@ public class BOQA
     public double[][] items2TermFrequencies;
 
     /**
+     * J: sorted freqeuncies (TODO look into making the array optimally sized, for example max # of annotations)
      * This contains the (ascending) order of the items2TermFrequencies, E.g., use item2TermFrequenciesOrder[0][2] to
      * determine the term that is associated to first item and has the third lowest frequency.
      */
@@ -234,10 +237,11 @@ public class BOQA
     private int maxFrequencyTerms = 10; /* Maximal number of frequency terms (k in the paper) */
 
     /** False positives can be explained via inheritance */
-    private static int VARIANT_INHERITANCE_POSITIVES = 1 << 0;
+    private static int VARIANT_INHERITANCE_POSITIVES = 1 << 0; //left shift by 0 = same
 
     /** False negatives can be explained via inheritance */
     private static int VARIANT_INHERITANCE_NEGATIVES = 1 << 1; // left shift 1 by 1 bit == 0?!!?
+    //false, you are thinking of a right shift. A left shit will make it 2
 
     /** Model respects frequencies */
     private static int VARIANT_RESPECT_FREQUENCIES = 1 << 2;
@@ -325,7 +329,7 @@ public class BOQA
     /**
      * Set beta value used for generateObservations() and used for the ideal FABN scoring.
      *
-     * @param alpha
+     * @param alpha //todo
      */
     public void setSimulationBeta(double beta)
     {
@@ -500,7 +504,8 @@ public class BOQA
      */
     public boolean areFalsePositivesPropagated()
     {
-        return (this.MODEL_VARIANT & VARIANT_INHERITANCE_NEGATIVES) != 0;
+        return (this.MODEL_VARIANT & VARIANT_INHERITANCE_NEGATIVES) != 0; //for all intents and purposes,
+        //these are constants (never changed and can be reduced to flags)
     }
 
     /**
@@ -534,9 +539,12 @@ public class BOQA
     private Configuration.NodeCase getNodeCase(int node, boolean[] hidden, boolean[] observed)
     {
         if (areFalsePositivesPropagated()) {
-            /* Here, we consider that false positives are inherited */
+            /* Here, we consider that false positives are inherited.
+             * J: hence if my child is on, then no questions asked, i am on
+              * (that is, when I am also on, I consider the case to be because of INHERIT_TRUE
+              * and that correspondingly sets my calculations)*/
             for (int i = 0; i < this.term2Children[node].length; i++) {
-                int chld = this.term2Children[node][i];
+                int chld = this.term2Children[node][i]; //TODO use a lambda here, or some python syn
                 if (observed[chld]) {
                     if (observed[node]) { //in the observed layer, parent points to child, so
                         //if child is on, then parenbt is on [contrary to how BN semantrics normally
@@ -545,6 +553,8 @@ public class BOQA
                         //it (the parent) is only on because its child was als oon
                         //however, this could have been handled immediately in a different graph
                         //preprocessing step
+
+                        //we assume that it became true via inheritance
                     } else {
                         /* NaN */
                         logger
@@ -578,7 +588,13 @@ public class BOQA
             /* Term is truly on */ //only 4 possible cases;
             // this only takes into account the hidden and the query variable
             //unlike the paper which takes into account the parents
+            //hidden and observed are both on?? even though they are different nodes
+            //i mean doesnt each node in the BN get its own id??
+            //1-t-1 correspondence, I'll allow it... (since these are "slices" of the BN, unoike
+            //previously where we were iterating over an array of size ALL of the ITEMS)
 
+            //when they are NOT inherited, what happens? a node CANNOT be made into a false
+            //by another node--hence it IS conclusively false positve/negative
             if (observed[node]) {
                 return Configuration.NodeCase.TRUE_POSITIVE;
             } else {
@@ -603,6 +619,7 @@ public class BOQA
      */
     private void determineCases(boolean[] observedTerms, boolean[] hidden, Configuration stats)
     {
+        //total number of nodes
         int numTerms = this.slimGraph.getNumberOfVertices();
 
         for (int i = 0; i < numTerms; i++) {
@@ -616,7 +633,7 @@ public class BOQA
     /**
      * Determines the case of the given items and the given observations.
      *
-     * @param item
+     * @param item the disease (not the term!)
      * @param observed
      * @param takeFrequenciesIntoAccount select, if frequencies should be taken into account.
      * @param hiddenStorage is the storage used to store the hidden states. It must correspond to the states of the
@@ -665,8 +682,12 @@ public class BOQA
             int[] diffOff = this.diffOffTerms[item];
 
             /* Decrement config stats of the nodes we are going to change */
+            //J: we will change them back (update) later!
+            //presumably this is JUST like items2terms, except it takes into account some existing frequency stuff
+
             for (int element : diffOn) {
                 stats.decrement(getNodeCase(element, hidden, observed));
+                //these 3 uniquely can identify a state
             }
             for (int element : diffOff) {
                 stats.decrement(getNodeCase(element, hidden, observed));
@@ -697,10 +718,11 @@ public class BOQA
                 }
             }
             stats.clear();
-            determineCases(observed, hidden, stats);
+            determineCases(observed, hidden, stats); // not recursive!
 
             /*
              * Loop over all tracked configurations that may appear due to the given item being active
+             * J: this is the complext, O(2^k) case mentioned in the paper
              */
             for (int c = 0; c < this.diffOnTermsFreqs[item].length; c++) {
                 int[] diffOn = this.diffOnTermsFreqs[item][c];
@@ -900,8 +922,8 @@ public class BOQA
     }
 
     /**
-     * Generates observation according to the model parameter for the given item.
-     *
+     * Generates observation according to the model parameter for the given __ITEM___item.
+     * J: this is most likely the TESTING code?
      * @param item
      * @return
      */
@@ -927,11 +949,15 @@ public class BOQA
 
             boolean CONSIDER_ONLY_DIRECT_ASSOCIATIONS = true;
 
-            if (CONSIDER_ONLY_DIRECT_ASSOCIATIONS) {
+            if (CONSIDER_ONLY_DIRECT_ASSOCIATIONS) { //Note: item = disease
                 logger.debug("Item {} has {} annotations", item, this.items2DirectTerms[item].length);
                 for (i = 0; i < this.items2DirectTerms[item].length; i++) {
+                    //our "i" is actually all the children of items (all the terms that the disease
+                    //annotates
+
                     boolean state = true;
 
+                    //potentially it might not be on (state)
                     if (respectFrequencies()) {
                         state = rnd.nextDouble() < this.items2TermFrequencies[item][i];
 
@@ -941,6 +967,7 @@ public class BOQA
                     }
 
                     if (state) {
+                        //this is our classic ancestor propagation (we just set it to
                         hidden[this.items2DirectTerms[item][i]] = state;
                         observations[this.items2DirectTerms[item][i]] = state;
 
@@ -954,6 +981,10 @@ public class BOQA
                 }
 
             } else {
+                //THIS actually seems to be only conbsidering direct assoc...
+                //(since activateAncestors will activate ALL ANCESTORS,
+                //note ancestors contains ALL ancestors (not just immediate parents)
+                //TODO speed up here
                 for (i = 0; i < this.items2Terms[item].length; i++) {
                     hidden[this.items2Terms[item][i]] = true;
                     observations[this.items2Terms[item][i]] = true;
@@ -962,6 +993,7 @@ public class BOQA
             }
 
             /* Fill in false and true positives */
+            //randomly set some nodes to be counted as FP/FN
             for (i = 0; i < observations.length; i++) {
                 double r = rnd.nextDouble();
                 if (observations[i]) {
@@ -969,7 +1001,7 @@ public class BOQA
                         falseNegative[numFalseNegative++] = i;
                         // System.out.println("false negative " + i);
                     }
-                } else {
+                } else { //set on to off and vicea versa
                     if (r < this.ALPHA) {
                         falsePositive[numFalsePositive++] = i;
                         // System.out.println("false positive " + i);
@@ -983,8 +1015,10 @@ public class BOQA
                  * false negative, but also make all descendants negative. They are considered as inherited in this case
                  */
                 for (i = 0; i < numFalseNegative; i++) {
-                    observations[falseNegative[i]] = false;
+                    observations[falseNegative[i]] = false; //set that paritcular node to false
+                    //note that it doesn't do anuything about the PARENTS
                     deactivateDecendants(falseNegative[i], observations);
+                    //they got turned off, since the and-parents will be negative.,
                 }
             } else {
                 /* false negative */
@@ -993,11 +1027,23 @@ public class BOQA
                 }
 
                 /* fix for true path rule */
+                //this has the effect of undoing some of the false negatives
+                //(i.e. setting observations[falsenegative[i] back to TRUE)
+                //however, it must be for the true path rule (i can follow any path back up)
+                //to be true
+                //hence only leaf nodes can become false negatives
+
+                //Note annotation propagation and True path rule are synonyms
+                //also: TODO there can be a speed up, since probably quite a bit of
+                //repeated work (i.e. I already turned it on, no need to go through the entire
+                // tree repeatedly)
                 for (i = 0; i < observations.length; i++) {
                     if (observations[i]) {
                         activateAncestors(i, observations);
                     }
                 }
+
+                //this fixes the case where I am on but my parent is not
             }
 
             /* apply false positives */
@@ -1005,7 +1051,8 @@ public class BOQA
                 /* fix for true path rule */
                 for (i = 0; i < numFalsePositive; i++) {
                     observations[falsePositive[i]] = true;
-                    activateAncestors(falsePositive[i], observations);
+                    activateAncestors(falsePositive[i], observations); //they got turned on
+                    //by the node beiong positive
                 }
             } else {
                 /* False positive */
@@ -1015,15 +1062,30 @@ public class BOQA
 
                 /* fix for the true path rule (reverse case) */
                 for (i = 0; i < observations.length; i++) {
-                    if (!observations[i]) {
+                    if (!observations[i]) { //i am off, so my descendants should be off???
+                        //yes. the reason is that I need all my parents to be on in order for me to be on
+                        //hence it really is the reverse case (q_parents = 0 me = 1) => 0 chance
+                        //alternatively stated, if i am off,
+
+                        //however, while they are all quite similar cases, we must check that
+                        // the total meaning is correct: P=>Q vs Q=>P
+                        //here, this seems to be saying that if I am off, then my descendants must be off
+                        //which is NOT the same as saying if my descendants are off then I am off
+                        //however, it might be bi-implicative since it specified a conditional dist, with
+                        //no directionality
+                        //also, we always require the concept of a "node" we are checking
+                        //if i am off then for my descendants, Q_pa-and(i) will be 0, hence there is NO
+                        //situation where they can be ON
                         deactivateDecendants(i, observations);
                     }
                 }
             }
-
+            //actually maxterms is -1 here (i.e. there is limit on how many terms an item can be annotated
+            //to). FALSE actually what it is saying is how many terms can comprise a query at once.
             if (this.maxTerms != -1) {
                 IntArray sparse = new IntArray(observations);
-                int[] mostSpecific = mostSpecificTerms(sparse.get());
+                int[] mostSpecific = mostSpecificTerms(sparse.get()); //get an array of only
+                //terms that were True (A[i] contains the index into the original array)
                 if (mostSpecific.length > this.maxTerms) {
                     int[] newTerms = new int[this.maxTerms];
 
@@ -1048,7 +1110,7 @@ public class BOQA
 
             for (i = 0; i < hidden.length; i++) {
                 if (hidden[i]) {
-                    numHidden++;
+                    numHidden++; //i.e. whether or not hidden at i is true (by anno prop rule etc.)
                 }
             }
 
@@ -1097,7 +1159,9 @@ public class BOQA
             o = new Observations();
             o.item = item;
             o.observations = observations;
-            o.observationStats = stats;
+            o.observationStats = stats; //this doesnt seem to be completely necessary, since
+            //we overwite o anyways..
+            //however, one puyrpose is to link it back and then be able to return it
         } while (!this.ALLOW_EMPTY_OBSERVATIONS && retry++ < 50);
         return o;
     }
@@ -1170,7 +1234,7 @@ public class BOQA
      */
     public void setup(Ontology ontology, AssociationContainer associations)
     {
-        this.assoc = associations;
+        this.assoc = associations; //this is the main work
         this.graph = ontology;
 
         // graph.findRedundantISARelations();
@@ -1180,6 +1244,7 @@ public class BOQA
             this.micaMatrix = null;
         }
 
+        //which diseases to consider
         HashSet<ByteString> itemsToBeConsidered = new HashSet<ByteString>(associations.getAllAnnotatedGenes());
         provideGlobals(itemsToBeConsidered);
 
@@ -1406,10 +1471,11 @@ public class BOQA
 
     /**
      * Helper function to create sub array of length elements from the given array.
-     *
+     * this copies over the firrst n elements (i.e. subarray from 0 to length)
      * @param array
      * @param length
      * @return
+     * TODO move this to a new class etc.
      */
     private static int[] subArray(int[] array, int length)
     {
@@ -1445,22 +1511,32 @@ public class BOQA
                 }
             }
 
-            this.array = new int[c];
-            c = 0;
+            this.array = new int[c]; //on the first pass, get the number of elements on in the dense array
+            //on the next pass, actually put in all them selements
+            c = 0; //my claim is that c WILL be the size of the array at the end, and hence we cannot just add
+            //to it
+            //only put the
             for (int i = 0; i < dense.length; i++) {
                 if (dense[i]) {
-                    this.array[c++] = i;
+                    this.array[c++] = i; //essentially this forms a coalescence operation
+                    //(Brings all the true ones to a new array; we are guaranteed to just have an array of
+                    //trues at the end)
                 }
             }
             this.length = c;
         }
 
+        //@TODO This is a deprecated method and will be removed
         public void add(int e)
         {
             this.array[this.length++] = e;
-        }
+        } //should this not be larger?
+        //we might overfill our array! -- i.e. arrayout of bounds exception?!
+        //not necessarily, (consider just calling it using the length constructor, then it just fills
+        //the array as regular
 
-        public int[] get()
+
+        public int[] get()//returns the first n elements (i.e. the entire array)
         {
             return subArray(this.array, this.length);
         }
@@ -1480,7 +1556,8 @@ public class BOQA
         HashMap<ByteString, Integer> evidences = new HashMap<ByteString, Integer>();
         for (Gene2Associations g2a : this.assoc) {
             for (Association a : g2a) {
-                if (a.getEvidence() != null) {
+                //for each association in g2a
+                if (a.getEvidence() != null) { //this is always null
                     /* Worst implementation ever! */
                     Integer evidence = evidences.get(a.getEvidence());
                     if (evidence == null) {
@@ -1523,18 +1600,19 @@ public class BOQA
 
         PopulationSet allItems = new PopulationSet("all");
         allItems.addGenes(allItemsToBeConsidered);
-        this.termEnumerator =
+        this.termEnumerator =  //since a.getEvidence is always false
             allItems.enumerateGOTerms(this.graph, this.assoc, evidences != null ? evidences.keySet() : null);
+        //a
         ItemEnumerator itemEnumerator = ItemEnumerator.createFromTermEnumerator(this.termEnumerator);
 
         /* Term stuff */
         Ontology inducedGraph = this.graph.getInducedGraph(this.termEnumerator.getAllAnnotatedTermsAsList());
         this.slimGraph = inducedGraph.getSlimGraphView();
 
-        this.term2Parents = this.slimGraph.vertexParents;
+        this.term2Parents = this.slimGraph.vertexParents; //recall this was an array of arrays
         this.term2Children = this.slimGraph.vertexChildren;
         this.term2Ancestors = this.slimGraph.vertexAncestors;
-        this.term2Descendants = this.slimGraph.vertexDescendants;
+        this.term2Descendants = this.slimGraph.vertexDescendants; //presumably, this is a vertex induced subgraph
         this.termsInTopologicalOrder = this.slimGraph.getVertexIndices(inducedGraph.getTermsInTopologicalOrder());
 
         if (this.termsInTopologicalOrder.length != this.slimGraph.getNumberOfVertices()) {
@@ -1542,7 +1620,7 @@ public class BOQA
         }
         this.termsToplogicalRank = new int[this.termsInTopologicalOrder.length];
         for (i = 0; i < this.termsInTopologicalOrder.length; i++) {
-            this.termsToplogicalRank[this.termsInTopologicalOrder[i]] = i;
+            this.termsToplogicalRank[this.termsInTopologicalOrder[i]] = i; //this is just copying them over
         }
 
         /* Item stuff */
@@ -1562,7 +1640,7 @@ public class BOQA
         i = 0;
         for (ByteString item : itemEnumerator) {
             int j = 0;
-
+            //these all the terms connected via the induced subgraph (i.e. following the annotation propagation rule)
             ArrayList<TermID> tids = itemEnumerator.getTermsAnnotatedToTheItem(item);
             this.items2Terms[i] = new int[tids.size()];
 
@@ -1594,7 +1672,7 @@ public class BOQA
                 }
             }
 
-            // System.out.println(item.toString());
+            // S: System.out.println(item.toString());
             this.items2DirectTerms[i] = new int[tids.size()];
 
             for (TermID tid : tids) {
@@ -1962,7 +2040,7 @@ public class BOQA
     }
 
     /**
-     * Provides the marginals for the observations. (non threaded)
+     * Provides the marginals for the observations. (non threaded--builder paradigm?)
      *
      * @param observations
      * @param takeFrequenciesIntoAccount
@@ -1997,12 +2075,15 @@ public class BOQA
         res.marginals = new double[this.allItemList.size()];
         res.marginalsIdeal = new double[this.allItemList.size()];
         res.stats = new Configuration[this.allItemList.size()]; // an ARRAY of configurations..
+        //perhaps they are saying how for each node in THE BN, there is a cofig?
+
 
         //this is just initializing each stats[i] to contain something
         for (i = 0; i < res.stats.length; i++) {
             res.stats[i] = new Configuration(); //each node gets its own cofnig?
             //In fact each NODE in the BN gets its own config? (it's confusing since stats
             //is also a variable inside configuration...)
+            //however the stats inside config is more "true" to what it means (the 4 buckets)
         }
         for (i = 0; i < res.scores.length; i++) {
             res.scores[i] = Double.NEGATIVE_INFINITY; //-Math.
@@ -2031,6 +2112,8 @@ public class BOQA
 
         //Configuration is not null, but: it also was not initalized to anything
         determineCases(observations.observations, previousHidden, previousStat);
+        //this pops back with all the cases; and having incremented the particular stats
+        //(i.e previousStat)
 
         ArrayList<Future<?>> futureList = new ArrayList<Future<?>>();
 
@@ -2044,15 +2127,24 @@ public class BOQA
                 @Override
                 public void run()
                 {
+                    //for 1 item, we get a WCL
+                    //then we check it against all values of alpha, beta
+                    //then we ge tthe score of the WCL
+                    //there is a list of configurations, and we get
+                    //
                     WeightedConfigurationList stats =
                         determineCasesForItem(item, observations.observations, takeFrequenciesIntoAccount,
                             numThreads > 1 ? null : previousHidden, numThreads > 1 ? null : previousStat);
+                            //if numthreads > 1 then null, else previousHidden
 
                     //J: the scoring function is critical; also this seems to be finding the best
-                    //rate for alpha and beta
+                    //rate for alpha and beta.at a particular alpha, beta value
+                    //this puts the score in for an item;
                     for (int a = 0; a < BOQA.this.ALPHA_GRID.length; a++) {
                         for (int b = 0; b < BOQA.this.BETA_GRID.length; b++) {
-                            scores[item][a][b] = stats.score(BOQA.this.ALPHA_GRID[a], BOQA.this.BETA_GRID[b]);
+                            //This scor is a weighted sum!
+                            scores[item][a][b] = stats.score(BOQA.this.ALPHA_GRID[a],
+                                    BOQA.this.BETA_GRID[b]);
                             res.scores[item] = Util.logAdd(res.scores[item], scores[item][a][b]);
                         }
                     }
@@ -2079,6 +2171,7 @@ public class BOQA
                         }
 
                         idealScores[item] = stats.score(fpr, fnr);
+                        //run it again with the **actual** scores
                     }
                 }
             };

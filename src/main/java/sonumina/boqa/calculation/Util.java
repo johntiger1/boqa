@@ -53,7 +53,7 @@ class Util
          */
 
         if (Double.isInfinite(loga)) {
-            return logb;
+            return logb; //y tho
         }
         return loga + Math.log(1 + Math.exp(logb - loga));
 
