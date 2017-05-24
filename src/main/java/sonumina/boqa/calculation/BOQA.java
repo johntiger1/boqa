@@ -131,6 +131,7 @@ public class BOQA
     /**
      * For each item, contains the term ids which need to be switched on, if the previous item was on.
      * this is misleading: i believe this is saying which terms need to be on if the disease item is on
+     * No, actually it is saying exactly what it says: an order-dependent way of quickly turing things on
      */
     public int[][] diffOnTerms;
 
@@ -161,7 +162,8 @@ public class BOQA
      * Links items to the frequencies of corresponding directly associated terms. Frequencies are interpreted as
      * probabilities that the corresponding term is on.
      */
-    public double[][] items2TermFrequencies;
+    public double[][] items2TermFrequencies; //really this should be an array of tuples (combine it with items2DirectTerms)
+
 
     /**
      * J: sorted freqeuncies (TODO look into making the array optimally sized, for example max # of annotations)
@@ -494,6 +496,7 @@ public class BOQA
      */
     public boolean areFalseNegativesPropagated()
     {
+        boolean FNProp = (this.MODEL_VARIANT & VARIANT_INHERITANCE_POSITIVES) != 0;
         return (this.MODEL_VARIANT & VARIANT_INHERITANCE_POSITIVES) != 0;
     }
 
@@ -504,6 +507,7 @@ public class BOQA
      */
     public boolean areFalsePositivesPropagated()
     {
+        boolean FPProp = (this.MODEL_VARIANT & VARIANT_INHERITANCE_NEGATIVES) != 0;
         return (this.MODEL_VARIANT & VARIANT_INHERITANCE_NEGATIVES) != 0; //for all intents and purposes,
         //these are constants (never changed and can be reduced to flags)
     }
@@ -536,8 +540,33 @@ public class BOQA
      * @param observed
      * @return
      */
+    //We know the propagation is at play here, so a True kid implies a true Actual
+
+    //Anno prop only occurs in the Hidden and Observed layers
+    //this seems to treat it like a TERM (by using the term2Children lookup table
+    //STEP THE BACK: this only makes sense (i.e. NodeCase is ONLY defined for) observed nodes
+    //in fact, observe: term2children will be quite large, even when only 1 disease
     private Configuration.NodeCase getNodeCase(int node, boolean[] hidden, boolean[] observed)
     {
+
+        //these two do false ___ propagation in the observed layer
+        //the last one does no propagation (since recall propagation remains sequestered within
+        //the layer)
+        //also note: if we EVER either observe child in FPpro or NOT observe parent in FNpro,
+        //then we are GUARANTEED to reach an exit case. Negate the statements, and we find:
+        //
+        //if we dont observe parent in FPpro => and-parents is 0, and HENCE, it is the case from the paper..?
+        //yet this one does not take into account the hidden layer..
+
+        //there seems to be some weird conflation of states (1;0) and probability (alpha, beta etc.)
+        //in this code. It makes sense that If i false positive a node in the observed layer, this will propagate
+        //upwards through the observed layer.
+
+        //However, this doesn't really MEAN anything in terms of probability!
+        //or does it? if i was a false positive, does this say anything about my parents or the hidden node?
+        //perhaps we fall into the and-parent case only because of the annotation propagation rule
+        //ALSO NOTE: we do NOT consider the 0,1 cases...
+
         if (areFalsePositivesPropagated()) {
             /* Here, we consider that false positives are inherited.
              * J: hence if my child is on, then no questions asked, i am on
@@ -545,11 +574,15 @@ public class BOQA
               * and that correspondingly sets my calculations)*/
             for (int i = 0; i < this.term2Children[node].length; i++) {
                 int chld = this.term2Children[node][i]; //TODO use a lambda here, or some python syn
-                if (observed[chld]) {
+                if (observed[chld]) { //theere is no and-parents here!
+                    //in fact, we are looking at the children, and certainly not ALL THE children!
+
                     if (observed[node]) { //in the observed layer, parent points to child, so
                         //if child is on, then parenbt is on [contrary to how BN semantrics normally
                         //work, where really only parent affects child]
                         return Configuration.NodeCase.INHERIT_TRUE; //the causality seems backwards
+
+                        //this is explaining WHY the node is on--it is on because of ONE of its kids!
                         //it (the parent) is only on because its child was als oon
                         //however, this could have been handled immediately in a different graph
                         //preprocessing step
@@ -563,15 +596,21 @@ public class BOQA
                         return Configuration.NodeCase.FAULT;
                     }
                 }
+
+                //note that nothing happens if the child was not observed
             }
         }
+        //Essentially, BOTH boil down to propagation of child states to parent states. NOTE: at this
+        //point we do not necessarily have the probability assignments...
+        //this also goes back to the "explaining away" discussed in the textbooks etc.
+        if (areFalseNegativesPropagated()) { //note that this detemrinsitic propagation occurs in BOTH the hidden
+            //and observed layers
 
-        if (areFalseNegativesPropagated()) {
             /* Here, we consider that false negatives are inherited */
             for (int i = 0; i < this.term2Parents[node].length; i++) {
                 int parent = this.term2Parents[node][i];
                 if (!observed[parent]) {
-                    if (!observed[node]) {
+                    if (!observed[node]) { //i.e. that we get our falses from a parent!!
                         return Configuration.NodeCase.INHERIT_FALSE;
                     } else {
                         /* NaN */
@@ -590,22 +629,52 @@ public class BOQA
             //unlike the paper which takes into account the parents
             //hidden and observed are both on?? even though they are different nodes
             //i mean doesnt each node in the BN get its own id??
-            //1-t-1 correspondence, I'll allow it... (since these are "slices" of the BN, unoike
+            //1-t-1 correspondence, I'll allow it... The index could/should
+            // work for both of them
+            //also: here, since FN and FP propagation checks either failed or completed...
+            //however, we need only show that one part of this doesn't work:
+            //let's say NEITHER FP or FN are propagated. Then, this should still work:
+            //might be some terrible latch logic where they just left it out even though
+            //not intuive at all
+
+            //Ok, so neither FN/FP are propagated. In this case,
+
+            //hidden & observed,
+            // (since these are "slices" of the BN, unoike
             //previously where we were iterating over an array of size ALL of the ITEMS)
 
             //when they are NOT inherited, what happens? a node CANNOT be made into a false
             //by another node--hence it IS conclusively false positve/negative
-            if (observed[node]) {
+
+            //consider JUST the and-parents. they will ALWAYS be on, because their children are on?
+            //essentially, we are arguing that the and of a node's parents will not be 0
+            // when there is no propagation
+            //but how would it have arisen "regularly"? i.e. how can parent's nodes be 0 if a child is on? since
+            //it must annotate all the things anyways.
+            //if the child is off, then the paper says that the parents will be off with 1 certainty
+            //(i am not sure about the Implication, but it simple states that P(Q_i = 0| H_I = 1 and Q_parents = 0) = 0
+            //so actually the inference goes the OTHER way (we can conclude q_i state given the parents), not the other
+            //way around
+            //so they are saying that parents cannot be 0 EVEN if the child is 0!!
+            //the observed cases make sense, since naturally, they will cause their parents to be anded
+            //however, the (hidden, Not observed) and (not hidden, not observed) require explanation
+            //i.e. the false and true negatives. There is no guarantee that false negatives and true negatives
+            //that parents are kept on
+
+            //these correspond to the parents-and = 1 in the paper
+            if (observed[node]) { //this synchronizes with the results from the paper (assuming above)
                 return Configuration.NodeCase.TRUE_POSITIVE;
             } else {
-                return Configuration.NodeCase.FALSE_NEGATIVE;
+                return Configuration.NodeCase.FALSE_NEGATIVE; //this is P=1 in the textbook
             }
-        } else {
+
+
+        } else { // if hidden is off
             /* Term is truly off */
             if (!observed[node]) {
                 return Configuration.NodeCase.TRUE_NEGATIVE;
             } else {
-                return Configuration.NodeCase.FALSE_POSITIVE;
+                return Configuration.NodeCase.FALSE_POSITIVE; //alpha (from the paper)
             }
         }
     }
@@ -801,6 +870,8 @@ public class BOQA
             case INHERIT_FALSE:
                 score = Math.log(1); //this is 0 (i.e. we assume it was fine)/did not contribute
                 //to the product; normally, it COULD otherwise be a false neg/pos
+                //note: the inheritors "are fully explained" by the other nodes
+
                 break;
             case INHERIT_TRUE:
                 score = Math.log(1);
@@ -1334,7 +1405,7 @@ public class BOQA
 
         /* Choose appropriate values */
         double numOfTerms = getSlimGraph().getNumberOfVertices();
-
+        //overwrite the other values!
         this.ALPHA_GRID =
             new double[] { 1e-10, 1 / numOfTerms, 2 / numOfTerms, 3 / numOfTerms, 4 / numOfTerms, 5 / numOfTerms,
             6 / numOfTerms };
@@ -1807,9 +1878,15 @@ public class BOQA
         this.diffOnTerms = new int[this.allItemList.size()][];
         this.diffOffTerms = new int[this.allItemList.size()][];
         this.diffOnTerms[0] = this.items2Terms[0]; /* For the first step, all terms must be activated */
-        this.diffOffTerms[0] = new int[0];
+        //this makes sense, since the one "behind" it is the empty set; hence all must be taken!
+
+
+        //all terms annotated to the first item are diffOnTerms for that item as well
+
+        //
+        this.diffOffTerms[0] = new int[0];   //this is an empty array
         for (i = 1; i < this.allItemList.size(); i++) {
-            int prevOnTerms[] = this.items2Terms[i - 1];
+            int prevOnTerms[] = this.items2Terms[i - 1];      //items2terms[0] on first iteration
             int newOnTerms[] = this.items2Terms[i];
 
             this.diffOnTerms[i] = setDiff(newOnTerms, prevOnTerms);
@@ -1844,7 +1921,7 @@ public class BOQA
 
             /* First, determine the number of configs (could calculate binomial coefficient of course) */
             while ((s = sg.next()) != null) {
-                numConfigs++;
+                numConfigs++;                 //since this is an iterator, this is the only way to get size
             }
 
             this.diffOnTermsFreqs[item] = new int[numConfigs][];

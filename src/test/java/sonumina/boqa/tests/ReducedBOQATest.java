@@ -149,25 +149,10 @@ public class ReducedBOQATest
         //Run BOQA once to get the initial guesses.
         ArrayList<String> initial_guesses = null;
 
-        this.logger.info("Constructed data set");
-        //the next few are just setting some parameters of BOQA
-        boqa.setConsiderFrequenciesOnly(false);
-        boqa.setPrecalculateScoreDistribution(false);
-        boqa.setCacheScoreDistribution(false);
-        boqa.setPrecalculateItemMaxs(false);
         boqa.setup(ontology, assocs);
-        this.logger.info("Setted up ontology and associations");
 
         Observations o = new Observations();
-        o.observations = new boolean[boqa.getOntology().getNumberOfTerms()]; //this is actually likely where
-        //a lot of FP etc. happens?
-        System.out.println("This many terms" + boqa.getOntology().getNumberOfTerms());
-        System.out.println("This many items" + boqa.getNumberOfItems());
-        System.out.println("This many nodes" + boqa.slimGraph.getNumberOfVertices()); // this is lower than the number
-        //of terms, possibly because some were taken out
-        System.out.println("This many allitems" + boqa.allItemList.size());
-        //we can also check how many terms using one of the arrays, and we just assert that they are all the same sisze
-
+        o.observations = new boolean[boqa.getOntology().getNumberOfTerms()];
         long start = System.nanoTime();
         this.logger.info("Calculating");
         boqa.assignMarginals(o, false, 1);
