@@ -197,7 +197,7 @@ public class BOQABenchmark
                 }
                 return 0;
             }
-        });
+        }); //order[i] will be sorted according to the comparator, so [1..n] will become [3,2,67,1,..]
 
         // Get top 20 results
         ArrayList<String> results = new ArrayList<String>();

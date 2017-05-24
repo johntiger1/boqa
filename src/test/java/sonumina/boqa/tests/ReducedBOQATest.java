@@ -14,6 +14,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import sonumina.boqa.BOQABenchmark;
 import sonumina.boqa.benchmark.Benchmark;
 import sonumina.boqa.calculation.BOQA;
 import sonumina.boqa.calculation.ReducedBoqa;
@@ -62,6 +63,7 @@ import sonumina.boqa.calculation.BOQA.Result;
 import sonumina.boqa.calculation.Observations;
 import sonumina.math.graph.AbstractGraph.DotAttributesProvider;
 import sonumina.math.graph.SlimDirectedGraphView;
+import sun.font.TrueTypeFont;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -110,6 +112,40 @@ public class ReducedBOQATest
         }
         return assocs;
     }
+
+    static public ArrayList<String> getTopDiseases(final ReducedBoqa.Result res)
+    {
+        // All of this is sorting diseases by marginals
+        Integer[] order = new Integer[res.size()];
+        for (int i = 0; i < order.length; i++) {
+            order[i] = i;
+        }
+
+        Arrays.sort(order, new Comparator<Integer>()
+        {
+            @Override
+            public int compare(Integer o1, Integer o2)
+            {
+                if (res.getScore(o1) < res.getScore(o2)) {
+                    return 1;
+                }
+                if (res.getScore(o1) > res.getScore(o2)) {
+                    return -1;
+                }
+                return 0;
+            }
+        }); //order[i] will be sorted according to the comparator, so [1..n] will become [3,2,67,1,..]
+
+        // Get top 20 results
+        ArrayList<String> results = new ArrayList<String>();
+        for (int i = 0; i < 20 && i<order.length; i++) {
+            int id = order[i]; //presumably, order[i] is now in order from lowest to msot score
+            results.add( "Disease "+ id + "\t"  + "Probs"  + res.getScore(id) ); //all amrginals are the same...
+        }
+
+        return results;
+    }
+
     @Test
     public void testLargeNumberOfItems() throws IOException, OBOParserException, URISyntaxException
     {
@@ -139,7 +175,7 @@ public class ReducedBOQATest
         TermContainer tc = new TermContainer(hpoParser.getTermMap(), hpoParser.getFormatVersion(), hpoParser.getDate());
         Ontology ontology = new Ontology(tc);
         SlimDirectedGraphView<Term> slim = ontology.getSlimGraphView();
-        assocs = generateAnnotations(10, slim);
+        assocs = generateAnnotations(25, slim);
 
         //pseudo:
         //boqa.setup
@@ -153,9 +189,158 @@ public class ReducedBOQATest
 
         Observations o = new Observations();
         o.observations = new boolean[boqa.getOntology().getNumberOfTerms()];
+//        for (int i = 0; i < o.observations.length; i++)
+//        {
+//
+//            Random rand = new Random(1);
+//            o.observations[i] = (rand.nextInt(2) > 0) ? true :false;
+//            //(rand.nextInt(2) > 0) ? o.observations[i] = true : o.observations[i] = false;
+//        }
+        //o.observations[10] = true;  //has no effect
+
         long start = System.nanoTime();
         this.logger.info("Calculating");
-        boqa.assignMarginals(o, false, 1);
+        ReducedBoqa.Result res = boqa.assignMarginals(o, false, 1);
+        System.out.println(java.util.Arrays.toString(res.marginals)); //doesn't res store ONE thing tho?
+        System.out.println(java.util.Arrays.toString(res.scores));
+
+        double max = -Double.MAX_VALUE;
+        int max_ind = 0;
+        for (int i = 0 ; i < res.marginals.length; i++)
+        {
+            if (res.marginals[i] > max){
+
+                max = res.marginals[i];
+                max_ind = i;
+            }
+
+        }
+
+        System.out.println("max_ind is " + max_ind+ " max is " + max);
+        System.out.println(getTopDiseases(res));
+        //for (double t: res.)
+        //write a method that keeps track of the top 10 scores
+        //use concept of lower and upper bound
+        //instead: use selection algorithm
+        //however, it should be online (based on the api exported)
+        //insert the first 10 unconditionally
+        //then, for each element, check if it should be put in or not, --this is a linear time algorithm
+        //but we must keep track of the max and min (i.e. go through the array and update hte max, min indices each time...)
+
+        //find the 10th largest number, using quickselect
+        //then, we shall have the 10 larger numbers on one side and we can just return that
+        //easier way is to just sort the array and then take the top n elements, except we need a reference
+        //to previous. This issue is also a problem in using quickselect too.
+
+        //we can just use parallel arrays though. for example, lookup[i] = pos_in__sorted_array
+
+
+        long end = System.nanoTime();
+
+        this.logger.info(((end - start) / 1000 / 1000) + "ms");
+    }
+
+
+    static public ArrayList<String> getTopDiseases(final BOQA.Result res)
+    {
+        // All of this is sorting diseases by marginals
+        Integer[] order = new Integer[res.size()];
+        for (int i = 0; i < order.length; i++) {
+            order[i] = i;
+        }
+        System.out.println("this is what order has" + java.util.Arrays.toString(order));
+        Arrays.sort(order, new Comparator<Integer>()
+        {
+            @Override
+            public int compare(Integer o1, Integer o2)
+            {
+                if (res.getMarginal(o1) < res.getMarginal(o2)) {
+                    return 1;
+                }
+                if (res.getMarginal(o1) > res.getMarginal(o2)) {
+                    return -1;
+                }
+                return 0;
+            }
+        }); //order[i] will be sorted according to the comparator, so [1..n] will become [3,2,67,1,..]
+
+
+        System.out.println("this is what order has" + java.util.Arrays.toString(order));
+        // Get top 20 results
+        ArrayList<String> results = new ArrayList<String>();
+        for (int i = 0; i < 20 && i<order.length; i++) {
+            int id = order[i];
+            results.add( "Disease "+ id + "\t"  + "Probs"  + res.getMarginal(id) ); //all amrginals are the same...
+        }
+
+        return results;
+    }
+
+    @Test
+    public void vanillaTestLargeNumberOfItems() throws IOException, OBOParserException, URISyntaxException
+    {
+
+
+        final BOQA boqa = new BOQA();
+        //get the file, then get its canonical path
+        AssociationContainer assocs;
+
+
+        URL resource = ClassLoader.getSystemResource("hp.obo.gz");
+        if (resource==null)
+        {
+
+            throw new NullPointerException("Couldn't find it!");
+        }
+        URI resourceURI = resource.toURI();
+        File hpo_file = new File(resourceURI);
+        String final_path = hpo_file.getCanonicalPath();
+        //.toURI();
+
+        OBOParser hpoParser = new OBOParser(
+                final_path);
+        hpoParser.doParse();
+
+        //blackbox: it gets all the terms (in the HPO)
+        TermContainer tc = new TermContainer(hpoParser.getTermMap(), hpoParser.getFormatVersion(), hpoParser.getDate());
+        Ontology ontology = new Ontology(tc);
+        SlimDirectedGraphView<Term> slim = ontology.getSlimGraphView();
+        assocs = generateAnnotations(25, slim);
+
+        //pseudo:
+        //boqa.setup
+        //boqa.assignMarginals (get best score)
+        //inference step: do some sampling to see which might be best (like in Monte Carlo tree search)
+
+        //Run BOQA once to get the initial guesses.
+        ArrayList<String> initial_guesses = null;
+        boqa.setConsiderFrequenciesOnly(false);
+        boqa.setup(ontology, assocs);
+
+        Observations o = new Observations();
+        o.observations = new boolean[boqa.getOntology().getNumberOfTerms()];
+
+        long start = System.nanoTime();
+        this.logger.info("Calculating");
+        BOQA.Result res = boqa.assignMarginals(o, false, 1);
+        System.out.println(getTopDiseases(res));
+        //for (double t: res.)
+        //write a method that keeps track of the top 10 scores
+        //use concept of lower and upper bound
+        //instead: use selection algorithm
+        //however, it should be online (based on the api exported)
+        //insert the first 10 unconditionally
+        //then, for each element, check if it should be put in or not, --this is a linear time algorithm
+        //but we must keep track of the max and min (i.e. go through the array and update hte max, min indices each time...)
+
+        //find the 10th largest number, using quickselect
+        //then, we shall have the 10 larger numbers on one side and we can just return that
+        //easier way is to just sort the array and then take the top n elements, except we need a reference
+        //to previous. This issue is also a problem in using quickselect too.
+
+        //we can just use parallel arrays though. for example, lookup[i] = pos_in__sorted_array
+
+
         long end = System.nanoTime();
 
         this.logger.info(((end - start) / 1000 / 1000) + "ms");

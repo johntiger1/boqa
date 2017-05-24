@@ -2214,6 +2214,13 @@ public class BOQA
                             numThreads > 1 ? null : previousHidden, numThreads > 1 ? null : previousStat);
                             //if numthreads > 1 then null, else previousHidden
 
+                    for (WeightedConfiguration wc : stats) //this is a list of weighted configs,
+                        // which itself is simply a tuple of factor and config
+                    {
+                        System.out.println("Itme " + item);
+                        System.out.println(wc.stat);
+
+                    }
                     //J: the scoring function is critical; also this seems to be finding the best
                     //rate for alpha and beta.at a particular alpha, beta value
                     //this puts the score in for an item;

@@ -137,17 +137,17 @@ public class ReducedBoqa {
 
         createDiffVectors(); //need this crucial line from provideGlobals()
     }
-    
+
     boolean areFalsePositivesPropagated()
     {
 
-        return true;
+        return false;
     }
 
     boolean areFalseNegativesPropagated()
     {
 
-        return true;
+        return false;
     }
 
     private Configuration.NodeCase getNodeCase(int node, boolean[] hidden, boolean[] observed)
@@ -233,14 +233,16 @@ public class ReducedBoqa {
     static public class Result
     {
         /** Contains the marginal probability for each item */
-        private double[] marginals;
+        public double[] marginals;
 
         /** Contains the marginal probability for each item */
-        private double[] marginalsIdeal;
+        public double[] marginalsIdeal;
         //hence we can lookup how likely a disease is (and sort it later)
 
 
-        private double[] scores;
+        public double[] scores;
+
+
 
         /** Some statistics for each item (number of false-positives, etc. ) */
         Configuration[] stats;
@@ -383,8 +385,7 @@ public class ReducedBoqa {
         //we don't need diffOn, since we have the actual items as well as ancestors etc. we can just
         //compute everything on the fly
 
-        //
-        takeFrequenciesIntoAccount = false;
+
         if (!takeFrequenciesIntoAccount) {
             /* New */
             int[] diffOn = this.diffOnTerms[item];
@@ -393,30 +394,37 @@ public class ReducedBoqa {
             /* Decrement config stats of the nodes we are going to change */
             //J: we will change them back (update) later!
             //presumably this is JUST like items2terms, except it takes into account some existing frequency stuff
-
+            Configuration decrement_config = new Configuration();
+            Configuration increment_config = new Configuration();
             for (int element : diffOn) {
+                decrement_config.increment(getNodeCase(element, hidden, observed));
                 stats.decrement(getNodeCase(element, hidden, observed));
                 //these 3 uniquely can identify a state
             }
             for (int element : diffOff) {
-                stats.decrement(getNodeCase(element, hidden, observed));
+                decrement_config.increment(getNodeCase(element, hidden, observed));
+                stats.decrement(getNodeCase(element, hidden, observed)); //lookup the hidden and observed too
             }
 
-            /* Change nodes states */
+            /* Change nodes states */ //why is hidden[0] always on, esp. when we set observed to be on only
             for (int i = 0; i < diffOn.length; i++) {
-                hidden[diffOn[i]] = true;
+                hidden[diffOn[i]] = true; //each element in the diffOn array, will change
+                //(regarde, diffon is fixed for the item)
             }
             for (int i = 0; i < diffOff.length; i++) {
-                hidden[diffOff[i]] = false;
+                hidden[diffOff[i]] = false; //what we need to switch off to get to disease i
             }
 
             /* Increment config states of nodes that we have just changed */
             for (int element : diffOn) {
+                increment_config.increment(getNodeCase(element, hidden, observed));
                 stats.increment(getNodeCase(element, hidden, observed));
             }
             for (int element : diffOff) {
+                increment_config.increment(getNodeCase(element, hidden, observed));
                 stats.increment(getNodeCase(element, hidden, observed));
-            }
+            } //this winds up exactly undoing what we just earlier did. however, apparently, the state of hidden
+            //must have changed.
 
             statsList.add(stats.clone(), 0);
         }
@@ -461,16 +469,7 @@ public class ReducedBoqa {
         //as much as possible
         //interestingly we also have ideal marginals, which I am not sure how the two differ by
 
-        //Score each item:
 
-        for (i = 0; i < this.allItemList.size(); i++) {
-            final int item = i;
-
-            WeightedConfigurationList stats =
-                    determineCasesForItem(item, observations.observations, takeFrequenciesIntoAccount,
-                            null, null); //run it single threaded for now
-
-        }
 
         final ExecutorService es;
         if (numThreads > 1) {
@@ -482,7 +481,7 @@ public class ReducedBoqa {
         final boolean[] previousHidden = new boolean[this.slimGraph.getNumberOfVertices()];
         final Configuration previousStat = new Configuration();
 
-        //Configuration is not null, but: it also was not initalized to anything
+        //Configuration is not null, but: it also was not initalized to anything //previousstat contains all the info from runnign determinecases--do we run it first just for the multithreading?; part of the diffOn, etc.?
         determineCases(observations.observations, previousHidden, previousStat);
         //this pops back with all the cases; and having incremented the particular stats
         //(i.e previousStat)
@@ -496,16 +495,38 @@ public class ReducedBoqa {
             {
 
                 @Override
-                public void run()
+                public void run() //since this is an inner, class, we need final int item
+                        //we cannot change it inside this scope!
                 {
+
                     //for 1 item, we get a WCL
                     //then we check it against all values of alpha, beta
                     //then we ge tthe score of the WCL
                     //there is a list of configurations, and we get
                     //
+                    //this call does the differntials, and also returns the list to work on
+                    //(with all the nodes set); but it does NOT determine the cases!
+                    //i believe the stats does not get updated
                     WeightedConfigurationList stats =
                             determineCasesForItem(item, observations.observations, takeFrequenciesIntoAccount,
                                     numThreads > 1 ? null : previousHidden, numThreads > 1 ? null : previousStat);
+
+                    //stats only has 1 element
+                    //moreover, we can get a new element each time using the iterator
+                    //System.out.print("aaa");
+                    for (WeightedConfiguration wc : stats) //this is a list of weighted configs, which itself is simply a list of
+                    {
+                        System.out.println("Itme " + item);
+                        System.out.println(wc.stat);
+
+                    }
+                    //since multithreading with the differentials would be too difficult,
+                    //we only sequentially set flags in the stats, (when we only have one process)
+
+                    //PERHAPS: we should assign stats to some of the res.
+                    //In general, res.stats is not updated again, sadly
+
+                    System.out.println(stats.toString());
                     //if numthreads > 1 then null, else previousHidden
 
                     //J: the scoring function is critical; also this seems to be finding the best
@@ -520,7 +541,7 @@ public class ReducedBoqa {
                         }
                     }
 
-
+                    System.out.println(observations.observationStats != null);
                     if (observations.observationStats != null) {
                         double fpr = observations.observationStats.falsePositiveRate();
                         if (fpr == 0) {
@@ -575,14 +596,14 @@ public class ReducedBoqa {
 
         double normalization = Math.log(0);
         double idealNormalization = Math.log(0);
-
+        //already at this point, why are all the scores the same?
         for (i = 0; i < this.allItemList.size(); i++) {
             normalization = Util.logAdd(normalization, res.scores[i]);
             idealNormalization = Util.logAdd(idealNormalization, idealScores[i]);
         }
 
         for (i = 0; i < this.allItemList.size(); i++) {
-            res.marginals[i] = Math.min(Math.exp(res.scores[i] - normalization), 1);
+            res.marginals[i] = Math.min(Math.exp(res.scores[i] - normalization), 1); //no, also the scores are same
             res.marginalsIdeal[i] = Math.min(Math.exp(idealScores[i] - idealNormalization), 1);
 
             // System.out.println(i + ": " + idealScores[i] + " (" + res.getMarginalIdeal(i) + ") " + res.scores[i] +

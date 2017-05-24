@@ -563,7 +563,7 @@ public class BOQATest
         boqa.setup(ontology, assocs);
         this.logger.info("Setted up ontology and associations");
 
-        Observations o = new Observations();
+        Observations o = new Observations(); //initalized to all 0 to start off with
         o.observations = new boolean[boqa.getOntology().getNumberOfTerms()]; //this is actually likely where
         //a lot of FP etc. happens?
         System.out.println("This many terms" + boqa.getOntology().getNumberOfTerms());
@@ -575,7 +575,7 @@ public class BOQATest
 
         long start = System.nanoTime();
         this.logger.info("Calculating");
-        boqa.assignMarginals(o, false, 1);
+        Result res = boqa.assignMarginals(o, false, 1);
         long end = System.nanoTime();
 
         this.logger.info(((end - start) / 1000 / 1000) + "ms");
