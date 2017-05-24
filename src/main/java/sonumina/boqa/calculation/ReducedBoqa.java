@@ -136,8 +136,8 @@ public class ReducedBoqa {
         }
 
         createDiffVectors(); //need this crucial line from provideGlobals()
-
     }
+    
     boolean areFalsePositivesPropagated()
     {
 
