@@ -53,7 +53,9 @@ class Util
          */
 
         if (Double.isInfinite(loga)) {
-            return logb; //y tho
+            return logb; //y tho (it's like adding to 0 or something--a base condition)
+            //note in fact it IS exactly like adding to 0 -- hence why EVEN BOTH doing .log(0) vs .log(1)
+
         }
         return loga + Math.log(1 + Math.exp(logb - loga));
 
