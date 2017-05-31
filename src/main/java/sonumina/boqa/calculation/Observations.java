@@ -35,6 +35,8 @@
 
 package sonumina.boqa.calculation;
 
+import java.util.ArrayList;
+
 /**
  * Class maintaining observations and stats regarding to true positives.
  *
@@ -44,7 +46,33 @@ public class Observations
 {
     public int item;
 
-    public boolean[] observations;
+    //this is the way it works:
+    //default state is observations= [0,..,0]
+    //whenever we make an observation, we flip the corresponding elt to 1, AND set the registeredobservation
+    //the registeredobservation contains whether or not it was "truly" set to 0/1
+    //we msut take great care to only check registered observations if the corresondonding observations is 1
+    //(otherwise it has no meaning)
+    //dangerous parallel array, just use an object!
 
+    //perhaps just make it an object itself!
+
+    //it makes most sense just to have an arraylist of <item: observation_value> pairings
+    public boolean[] observations;
+    public boolean [] RegisteredObservaitons; // records whether the observation was true or false
+
+    public ArrayList<obs_value> real_observations= new ArrayList<>();
     public Configuration observationStats; //this is our familiar 4 term!
+
+//    //TODO UNSAFE METHOD
+//    public void recordObservation(int index, boolean value)
+//    {
+//        observations[index] = true;
+//        RegisteredObservaitons[index] = value;
+//
+//    }
+    public void recordObs(int index, boolean value)
+    {
+        real_observations.add(new obs_value(index, value));
+    }
+
 }

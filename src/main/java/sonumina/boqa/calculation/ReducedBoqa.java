@@ -43,9 +43,9 @@ public class ReducedBoqa {
     /** Map items to their index */
     public HashMap<ByteString, Integer> item2Index;
 
-    GOTermEnumerator termEnumerator;
+    public GOTermEnumerator termEnumerator;
 
-    SlimDirectedGraphView<Term> slimGraph;
+    public SlimDirectedGraphView<Term> slimGraph;
 
 
     private long timeDuration;

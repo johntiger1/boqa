@@ -95,16 +95,25 @@ import sonumina.math.graph.SlimDirectedGraphView;
 public class BOQA
 {
 
+    public boolean [] observations; //records if term i has been observed
+    public boolean [] RegisteredObservaitons; // records whether the observation was true or false
+
+
 
     public BOQA()
     {
 
         for (int i = 1; i < 19; i++)
         {
-            System.out.println("AAAWEW");
+            System.out.println("RO-BOQA"); //reducued online boqa
 
         }
     }
+
+    //public int [];
+
+
+
     /** Our logger */
     private static Logger logger = LoggerFactory.getLogger(BOQA.class);
 
