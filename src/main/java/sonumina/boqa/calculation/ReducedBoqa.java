@@ -30,6 +30,7 @@ public class ReducedBoqa {
 
     /** Contains all the ancestors of the terms */
     public int[][] term2Ancestors;
+    //these are all JAGGED ARRAYS
 
     /** Contains the parents of the terms */
     public int[][] term2Parents;

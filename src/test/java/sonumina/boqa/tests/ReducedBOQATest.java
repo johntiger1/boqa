@@ -303,6 +303,10 @@ public class ReducedBOQATest
         System.out.println(getTopDiseasesAsByteStrings(res));
         initial_guesses = getTopDiseasesAsByteStrings(res); //we have essentially the top ids now
         //from the ids, we can get the mappings they have
+
+        //termcounts is the count of each phenotype hit, indexed by the "index" of the term
+        //as seen in the BOQA term2ancestors semantics
+        //
         Integer [] termcounts = new Integer[boqa.getOntology().getNumberOfTerms()];
         for (int i = 0; i < termcounts.length; i++){
 
@@ -319,14 +323,24 @@ public class ReducedBOQATest
 //            }
 
             for (TermID tid : temp.getAssociations()) {
-                System.out.println("vale is " + termcounts[boqa.slimGraph.getVertexIndex(boqa.getOntology().getTerm(tid))]);
-                termcounts[boqa.slimGraph.getVertexIndex(boqa.getOntology().getTerm(tid))]++ ;
+                //System.out.println("vale is " + termcounts[boqa.slimGraph.getVertexIndex(boqa.getOntology().getTerm(tid))]);
+                int index =boqa.slimGraph.getVertexIndex(boqa.getOntology().getTerm(tid));
+
+                for (int parent: boqa.term2Ancestors[index] )
+                {
+                    //if (parent == 1) {
+
+                        termcounts[parent]++;
+                    //}
+                }
+                termcounts[index]++ ;
+
             }
 
             //this must be recursive to get ALL THE PHENOTYPES
 
             //termcounts[0]++;
-            Arrays.sort(termcounts, Collections.<Integer>reverseOrder());
+            //Arrays.sort(termcounts, Collections.<Integer>reverseOrder());
             //our own hashing function:
 
         }
@@ -499,7 +513,7 @@ public class ReducedBOQATest
         for (int i = 0; i < order.length; i++) {
             order[i] = i;
         }
-        System.out.println("this is what order has" + java.util.Arrays.toString(order));
+        //System.out.println("this is what order has" + java.util.Arrays.toString(order));
         Arrays.sort(order, new Comparator<Integer>()
         {
             @Override
