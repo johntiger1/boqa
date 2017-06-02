@@ -18,9 +18,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import sonumina.boqa.BOQABenchmark;
 import sonumina.boqa.benchmark.Benchmark;
-import sonumina.boqa.calculation.BOQA;
-import sonumina.boqa.calculation.ReducedBoqa;
-import sonumina.boqa.calculation.Observations;
+import sonumina.boqa.calculation.*;
 import sonumina.math.graph.AbstractGraph;
 import sonumina.math.graph.SlimDirectedGraphView;
 
@@ -346,12 +344,22 @@ public class ReducedBOQATest
         }
 
         //most likely the terms are also just ints and so can be
-        HashMap<Association, Integer> termCounts;
+
+
+        PhenotypeSelector ps = null;
+        TermID phenotype_to_check = ps.getBestPhenotype();
+
+        int index =boqa.slimGraph.getVertexIndex(boqa.getOntology().getTerm(phenotype_to_check));
+
+        boolean present_or_not = getObservation(index);
+        //HashMap<Association, Integer> termCounts;
 
 
 
         //get input from physician, and update the observations object
-        o.recordObs(10, true);
+        o.recordObs(index, present_or_not);
+
+        //now, we recompute the marginals.
         //o.setValue();
     }
 
@@ -359,6 +367,10 @@ public class ReducedBOQATest
     //Reduces the BOQA result accordingly,
     //one thing we could do is return only a slice of the array.
 
+    public boolean getObservation(int index)
+    {
+        return true;
+    }
     public ReducedBoqa.Result reduceDiseases(final ReducedBoqa.Result res)
     {
 
@@ -454,6 +466,7 @@ public class ReducedBOQATest
 
         Observations o = new Observations();
         o.observations = new boolean[boqa.getOntology().getNumberOfTerms()];
+
 //        for (int i = 0; i < o.observations.length; i++)
 //        {
 //

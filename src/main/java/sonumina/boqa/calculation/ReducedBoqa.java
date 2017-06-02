@@ -24,6 +24,15 @@ import java.util.concurrent.TimeUnit;
  */
 public class ReducedBoqa {
 
+    //really i want a dictionary
+    //DIctioanry of observations: Term-Index (vertex) to Boolean
+    //Another choice could have been Term-ID to Boolean
+    public HashMap<Integer,Boolean> registered_obserations;
+
+    private double initial_beta = 0.3 ; //this will approach the experimental beta
+    private double experimental_beta = 0.01 ;
+
+
     Ontology graph;
     AssociationContainer assoc;
     public ArrayList<ByteString> allItemList;
@@ -83,13 +92,10 @@ public class ReducedBoqa {
 
     public void setup(Ontology ontology, AssociationContainer assocs)
     {
+        this.registered_obserations = new HashMap<>();
         this.assoc = assocs;
         this.graph = ontology;
-        //without graph inducing--how long will the computation take?
-        //why is inducement a valid thing?
-        //is it because of the only one valid configuration for a disease type thing ? => 0's in the Hidden
-        //still mess it up since they could be 1 in the observed (False Positive). Hence
-        //not entirely sure of rationale (if rational) to break it up
+
         this.term2Parents = this.graph.getSlimGraphView().vertexParents; //recall this was an array of arrays
         this.term2Children = this.graph.getSlimGraphView().vertexChildren;
         this.term2Ancestors = this.graph.getSlimGraphView().vertexAncestors;
@@ -126,7 +132,7 @@ public class ReducedBoqa {
             int j = 0;
             //these all the terms connected via the induced subgraph (i.e. following the annotation propagation rule)
             ArrayList<TermID> tids = itemEnumerator.getTermsAnnotatedToTheItem(item);
-            this.items2Terms[i] = new int[tids.size()];
+            this.items2Terms[i] = new int[tids.size()]; //jagged arrays
 
             for (TermID tid : tids) {
                 this.items2Terms[i][j++] = this.slimGraph.getVertexIndex(this.graph.getTerm(tid));
@@ -191,6 +197,18 @@ public class ReducedBoqa {
                     }
                 }
             }
+        }
+
+
+        if (registered_obserations.containsKey(node))
+        {
+
+        }
+
+        else
+        {
+
+
         }
 
         if (hidden[node]) {
@@ -533,11 +551,20 @@ public class ReducedBoqa {
                     //J: the scoring function is critical; also this seems to be finding the best
                     //rate for alpha and beta.at a particular alpha, beta value
                     //this puts the score in for an item;
+
+                    int temp_terms [] = new int[] ; // since this is inside a void run inside an interface
+                    //might be tricky...
+
                     for (int a = 0; a < ReducedBoqa.this.ALPHA_GRID.length; a++) {
                         for (int b = 0; b < ReducedBoqa.this.BETA_GRID.length; b++) {
                             //This scor is a weighted sum!
+                            for (int index : term2Ancestors)
+                            {
+
+                            }
                             scores[item][a][b] = stats.score(ReducedBoqa.this.ALPHA_GRID[a],
                                     ReducedBoqa.this.BETA_GRID[b]);
+                            //normally we maximize this
                             res.scores[item] = Util.logAdd(res.scores[item], scores[item][a][b]);
                         }
                     }
@@ -546,7 +573,10 @@ public class ReducedBoqa {
                     if (observations.observationStats != null) {
                         double fpr = observations.observationStats.falsePositiveRate();
                         if (fpr == 0) {
-                            fpr = 0.0000001;
+                            fpr = 0.0000001; //get the false positive rate, which for some reason
+                            //cannot be exactly 0 or 1 (this is so that we do not get a 0 term in the
+                            //product which will just wipe our probabilities
+
                         } else if (fpr == 1.0) {
                             fpr = 0.999999;
                         } else if (Double.isNaN(fpr)) {
@@ -622,5 +652,40 @@ public class ReducedBoqa {
         // if (exitNow)
         // System.exit(10);
         return res;
+    }
+    //the issue is we just use a neat little stats container in the other one, precluding this
+    public double scoreNode(int termIndex, double alpha, double beta, boolean[] hidden, boolean[] observed)
+    {
+
+        double score = 0.0;
+
+        Configuration.NodeCase c = getNodeCase(termIndex, hidden, observed);
+
+        switch (c) {
+            case FALSE_NEGATIVE:
+                score = Math.log(beta);
+                break;
+            case FALSE_POSITIVE:
+                score = Math.log(alpha);
+                break;
+            case TRUE_POSITIVE:
+                score = Math.log(1 - beta);
+                break;
+            case TRUE_NEGATIVE:
+                score = Math.log(1 - alpha);
+                break;
+            case INHERIT_FALSE:
+                score = Math.log(1); //this is 0 (i.e. we assume it was fine)/did not contribute
+                //to the product; normally, it COULD otherwise be a false neg/pos
+                //note: the inheritors "are fully explained" by the other nodes
+
+                break;
+            case INHERIT_TRUE:
+                score = Math.log(1);
+                break;
+            default:
+                break;
+        }
+        return score;
     }
 }

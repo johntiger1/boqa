@@ -35,7 +35,7 @@
 
 package sonumina.boqa.calculation;
 
-import java.util.ArrayList;
+import java.util.HashMap;
 
 /**
  * Class maintaining observations and stats regarding to true positives.
@@ -58,9 +58,13 @@ public class Observations
 
     //it makes most sense just to have an arraylist of <item: observation_value> pairings
     public boolean[] observations;
-    public boolean [] RegisteredObservaitons; // records whether the observation was true or false
-
-    public ArrayList<obs_value> real_observations= new ArrayList<>();
+    //public boolean [] RegisteredObservaitons; // records whether the observation was true or false
+    public Observations()
+    {
+        this.real_observations = new HashMap<>();
+    }
+    //public ArrayList<obs_value> real_observations= new ArrayList<>();
+    public HashMap<Integer, Boolean> real_observations;
     public Configuration observationStats; //this is our familiar 4 term!
 
 //    //TODO UNSAFE METHOD
@@ -72,7 +76,8 @@ public class Observations
 //    }
     public void recordObs(int index, boolean value)
     {
-        real_observations.add(new obs_value(index, value));
+        real_observations.put(index, value);
+        //real_observations.add(new obs_value(index, value));
     }
 
 }
