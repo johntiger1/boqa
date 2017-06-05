@@ -160,7 +160,7 @@ public class ReducedBoqa {
         return false;
     }
 
-    private ReducedConfiguration.NodeCase getNodeCase(int node, boolean[] hidden, boolean[] observed)
+    private ReducedConfiguration.NodeCase getNodeCase(int node, boolean[] hidden,Observations o)
     {
         if (areFalsePositivesPropagated()) {
             /* Here, we consider that false positives are inherited.
@@ -169,8 +169,18 @@ public class ReducedBoqa {
               * and that correspondingly sets my calculations)*/
             for (int i = 0; i < this.term2Children[node].length; i++) {
                 int chld = this.term2Children[node][i]; //TODO use a lambda here, or some python syn
-                if (observed[chld]) {
-                    if (observed[node]) { //in the observed layer, parent points to child, so
+                if (o.real_observations.get(chld)) { //this explains false positive propagation
+                    //translation: if both are observed has no real analogue anymore
+                    //actually, if we actually do do true propagation, then
+                    //we can just check that both are in
+                    //however, this implies that we should have "truly observed"
+                    //since, it could just be on solely because one of its kids was accidentally on
+
+
+                    //if both are unobserved, it DOES have an analogue though! Both are not in
+                    //the registered observations
+
+                    if (o.real_observations.get(node)) { //in the observed layer, parent points to child, so
                         //if child is on, then parenbt is on [contrary to how BN semantrics normally
                         //work, where really only parent affects child]
                         return ReducedConfiguration.NodeCase.INHERIT_TRUE; //the causality seems backwards
@@ -191,8 +201,9 @@ public class ReducedBoqa {
             /* Here, we consider that false negatives are inherited */
             for (int i = 0; i < this.term2Parents[node].length; i++) {
                 int parent = this.term2Parents[node][i];
-                if (!observed[parent]) {
-                    if (!observed[node]) {
+                //handle both false and null case
+                if (!o.real_observations.get(parent) || o.real_observations.get(parent) == null) {
+                    if (!o.real_observations.get(node) || o.real_observations.get(node) == null) {
                         return ReducedConfiguration.NodeCase.INHERIT_FALSE; //wasn't actually false but inherited it..
                     } else {
                         /* NaN */
@@ -213,9 +224,12 @@ public class ReducedBoqa {
 
             //when they are NOT inherited, what happens? a node CANNOT be made into a false
             //by another node--hence it IS conclusively false positve/negative
-            if (observed[node]) {
+            //observed just means whether it was actually looked at or not
+            if (o.real_observations.get(node)) {
                 return ReducedConfiguration.NodeCase.TRUE_OBSERVED_POSITIVE;
             } else {
+
+                //really, this should just be false
                 if (registered_obserations.containsKey(node))
                 {
                     return ReducedConfiguration.NodeCase.FALSE_OBSERVED_NEGATIVE;
@@ -226,7 +240,7 @@ public class ReducedBoqa {
             }
         } else {
             /* Term is truly off */
-            if (!observed[node]) {
+            if (!o.real_observations.get(node) || o.real_observations.get(node) == null) {
                 return ReducedConfiguration.NodeCase.TRUE_NEGATIVE;
             } else {
                 return ReducedConfiguration.NodeCase.FALSE_POSITIVE;
@@ -234,7 +248,7 @@ public class ReducedBoqa {
         }
     }
     //either need an instance variable or another way of maintaining the actual obs
-    private void determineCases(boolean[] observedTerms, boolean[] hidden, ReducedConfiguration stats)
+    private void determineCases(Observations o, boolean[] hidden, ReducedConfiguration stats)
     {
         //total number of nodes
         int numTerms = this.slimGraph.getNumberOfVertices();
