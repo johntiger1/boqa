@@ -348,17 +348,37 @@ public class ReducedBOQATest
 
         PhenotypeSelector ps = null;
         Object information = new Object();
-        TermID phenotype_to_check = ps.getBestPhenotype(information);
+        TermID phenotype_to_check = ps.getBestPhenotype(information); //in here we do all the phenotype checks
+
 
         int index =boqa.slimGraph.getVertexIndex(boqa.getOntology().getTerm(phenotype_to_check));
 
         boolean present_or_not = getObservation(index);
         //HashMap<Association, Integer> termCounts;
 
-
+        //tracks which phenotypes have already been observed or not
+        boolean already_recorded [] = new boolean[boqa.getOntology().getNumberOfTerms()];
 
         //get input from physician, and update the observations object
+        //ALL ancestors must be updated as well!
+        //o doesn't have this information, so we need to full info from boqa:
+        for (int anc: boqa.term2Ancestors[index])
+        {
+            o.recordObs(anc, present_or_not); //only do this if we propagate positives up too
+            //do NOT propagate negatives up (since this is not how the true path rule works)
+
+            //if its negative, should we
+
+        }
         o.recordObs(index, present_or_not);
+
+        //assign marginals again based on things
+        boqa.assignMarginals(o, false, 1);
+        //repeating this process should segregate everything
+        //however, this can and SHOULD happen normally (probability of seeing something false
+        //repeatedly is low. this is not a healing love, this is a wicked fantasy
+        //test shoudl work:
+
 
         //now, we recompute the marginals.
         //o.setValue();

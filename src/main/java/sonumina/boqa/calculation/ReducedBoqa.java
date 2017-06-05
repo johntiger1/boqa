@@ -27,7 +27,7 @@ public class ReducedBoqa {
     //really i want a dictionary
     //DIctioanry of observations: Term-Index (vertex) to Boolean
     //Another choice could have been Term-ID to Boolean
-    public HashMap<Integer,Boolean> registered_obserations; //we still need this to store whether observed
+    //public HashMap<Integer,Boolean> registered_obserations; //we still need this to store whether observed
     public Observations o;
 
     private double initial_beta = 0.01; //0.3 ; //this will approach the experimental beta
@@ -227,10 +227,12 @@ public class ReducedBoqa {
             //observed just means whether it was actually looked at or not
             if (o.real_observations.get(node)) {
                 return ReducedConfiguration.NodeCase.TRUE_OBSERVED_POSITIVE;
+                //ensure this is based on the correct beta being used
+
             } else {
 
                 //really, this should just be false
-                if (registered_obserations.containsKey(node))
+                if (o.real_observations.containsKey(node))
                 {
                     return ReducedConfiguration.NodeCase.FALSE_OBSERVED_NEGATIVE;
 
