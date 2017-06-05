@@ -861,7 +861,7 @@ public class BOQA
 
         double score = 0.0;
 
-        ReducedConfiguration.NodeCase c = getNodeCase(termIndex, hidden, observed);
+        Configuration.NodeCase c = getNodeCase(termIndex, hidden, observed);
 
         switch (c) {
             case FALSE_NEGATIVE:

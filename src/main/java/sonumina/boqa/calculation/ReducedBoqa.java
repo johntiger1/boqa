@@ -254,7 +254,7 @@ public class ReducedBoqa {
         int numTerms = this.slimGraph.getNumberOfVertices();
 
         for (int i = 0; i < numTerms; i++) {
-            ReducedConfiguration.NodeCase c = getNodeCase(i, hidden, observedTerms);
+            ReducedConfiguration.NodeCase c = getNodeCase(i, hidden, o);
             stats.increment(c); //increment the case that c is in
         }
     }
@@ -377,7 +377,7 @@ public class ReducedBoqa {
 
 
 
-    private WeightedConfigurationList determineCasesForItem(int item, boolean[] observed,
+    private WeightedConfigurationList determineCasesForItem(int item, Observations o,
                                                             boolean takeFrequenciesIntoAccount, boolean[] previousHidden, ReducedConfiguration previousStats)
     {
         int numTerms = this.slimGraph.getNumberOfVertices();
@@ -427,13 +427,13 @@ public class ReducedBoqa {
             ReducedConfiguration decrement_config = new ReducedConfiguration();
             ReducedConfiguration increment_config = new ReducedConfiguration();
             for (int element : diffOn) {
-                decrement_config.increment(getNodeCase(element, hidden, observed));
-                stats.decrement(getNodeCase(element, hidden, observed));
+                decrement_config.increment(getNodeCase(element, hidden, o));
+                stats.decrement(getNodeCase(element, hidden, o));
                 //these 3 uniquely can identify a state
             }
             for (int element : diffOff) {
-                decrement_config.increment(getNodeCase(element, hidden, observed));
-                stats.decrement(getNodeCase(element, hidden, observed)); //lookup the hidden and observed too
+                decrement_config.increment(getNodeCase(element, hidden, o));
+                stats.decrement(getNodeCase(element, hidden, o)); //lookup the hidden and observed too
             }
 
             /* Change nodes states */ //why is hidden[0] always on, esp. when we set observed to be on only
@@ -447,12 +447,12 @@ public class ReducedBoqa {
 
             /* Increment config states of nodes that we have just changed */
             for (int element : diffOn) {
-                increment_config.increment(getNodeCase(element, hidden, observed));
-                stats.increment(getNodeCase(element, hidden, observed));
+                increment_config.increment(getNodeCase(element, hidden, o));
+                stats.increment(getNodeCase(element, hidden, o));
             }
             for (int element : diffOff) {
-                increment_config.increment(getNodeCase(element, hidden, observed));
-                stats.increment(getNodeCase(element, hidden, observed));
+                increment_config.increment(getNodeCase(element, hidden, o));
+                stats.increment(getNodeCase(element, hidden, o));
             } //this winds up exactly undoing what we just earlier did. however, apparently, the state of hidden
             //must have changed.
 
@@ -512,7 +512,7 @@ public class ReducedBoqa {
         final ReducedConfiguration previousStat = new ReducedConfiguration();
 
         //ReducedConfiguration is not null, but: it also was not initalized to anything //previousstat contains all the info from runnign determinecases--do we run it first just for the multithreading?; part of the diffOn, etc.?
-        determineCases(observations.observations, previousHidden, previousStat);
+        determineCases(observations, previousHidden, previousStat);
         //this pops back with all the cases; and having incremented the particular stats
         //(i.e previousStat)
 
@@ -538,7 +538,7 @@ public class ReducedBoqa {
                     //(with all the nodes set); but it does NOT determine the cases!
                     //i believe the stats does not get updated
                     WeightedConfigurationList stats =
-                            determineCasesForItem(item, observations.observations, takeFrequenciesIntoAccount,
+                            determineCasesForItem(item, observations, takeFrequenciesIntoAccount,
                                     numThreads > 1 ? null : previousHidden, numThreads > 1 ? null : previousStat);
 
                     //stats only has 1 element
