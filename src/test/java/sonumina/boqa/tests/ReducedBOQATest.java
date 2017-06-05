@@ -347,7 +347,8 @@ public class ReducedBOQATest
 
 
         PhenotypeSelector ps = null;
-        TermID phenotype_to_check = ps.getBestPhenotype();
+        Object information = new Object();
+        TermID phenotype_to_check = ps.getBestPhenotype(information);
 
         int index =boqa.slimGraph.getVertexIndex(boqa.getOntology().getTerm(phenotype_to_check));
 

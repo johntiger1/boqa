@@ -42,7 +42,7 @@ import java.util.HashMap;
  *
  * @author Sebastian Bauer
  */
-final public class ReducedConfiguration  implements Cloneable
+final public class ReducedConfiguration extends Configuration implements Cloneable
 {
     public static enum NodeCase
     {
@@ -56,87 +56,12 @@ final public class ReducedConfiguration  implements Cloneable
         //TRUE_OBSERVED_POSITIVE, //IN FACT, we can just get rid of true positive with this
         FALSE_OBSERVED_NEGATIVE
     }
-//
-//    public HashMap<Integer,Boolean> registered_observations;
-//
-//    public ReducedConfiguration(HashMap<Integer,Boolean> reg_obs){
-//        this.registered_observations = reg_obs;
-//
-//    }
 
-    //internal record of the states of all the nodes @TODO optimize to just link it directly
-    //to the ontology?
-    final private int[] stats = new int[NodeCase.values().length]; ///this is literally just 8 or so
-    //values wide!!!
-    //J I finally get it: these are the BUCKETS from before, that we use to multiply everything
-    final public void increment(NodeCase c)
-    {
-        this.stats[c.ordinal()]++;
-    }
+    final private int[] stats = new int[ReducedConfiguration.NodeCase.values().length]; ///this is literally just 8 or so
 
-    final public void decrement(NodeCase c)
-    {
-        this.stats[c.ordinal()]--;
-    }
-
-    @Override
-    public String toString()
-    {
-        String str = "";
-        for (int i = 0; i < this.stats.length; i++) {
-            str += " " + NodeCase.values()[i].name() + ": " + this.stats[i] + "\n";
-        }
-
-        return str;
-    }
-
-    /**
-     * Get the number of observed cases for the given case.
-     *
-     * @param c
-     * @return
-     */
-    final public int getCases(NodeCase c)
+    public int getCases(ReducedConfiguration.NodeCase c)
     {
         return this.stats[c.ordinal()];
-    }
-
-    /**
-     * Returns the total number of cases that were tracked.
-     *
-     * @return
-     */
-    final public int getTotalCases()
-    {
-        int c = 0;
-        for (int stat : this.stats) {
-            c += stat;
-        }
-        return c;
-    }
-
-    /**
-     * Returns the false positive rate.
-     *
-     * @return
-     */
-    final public double falsePositiveRate()
-    {
-        return getCases(ReducedConfiguration .NodeCase.FALSE_POSITIVE)
-                / (double) (getCases(ReducedConfiguration .NodeCase.FALSE_POSITIVE)
-                + getCases(ReducedConfiguration .NodeCase.TRUE_NEGATIVE));
-    }
-
-    /**
-     * Return false negative rate.
-     *
-     * @return
-     */
-    final public double falseNegativeRate()
-    {
-        return getCases(ReducedConfiguration .NodeCase.FALSE_UNOBSERVED_NEGATIVE)
-                / (double) (getCases(ReducedConfiguration .NodeCase.FALSE_UNOBSERVED_NEGATIVE)
-                + getCases(ReducedConfiguration .NodeCase.TRUE_OBSERVED_POSITIVE));
     }
 
     /**
@@ -148,7 +73,7 @@ final public class ReducedConfiguration  implements Cloneable
      */
     final public double getScore(double alpha, double naive_beta, double experimental_beta)
     {
-        return Math.log(naive_beta) * getCases(NodeCase.FALSE_UNOBSERVED_NEGATIVE) +
+        return Math.log(naive_beta) * getCases(ReducedConfiguration.NodeCase.FALSE_UNOBSERVED_NEGATIVE) +
                 Math.log(experimental_beta) * getCases(NodeCase.FALSE_OBSERVED_NEGATIVE) +
                 //True positives can only occur via being observed
                 // pretty hard wired into the stats...
@@ -165,45 +90,16 @@ final public class ReducedConfiguration  implements Cloneable
                 Math.log(1) * getCases(NodeCase.INHERIT_TRUE); /* 0 */
     }
 
-    /**
-     * Adds the given stat to this one.
-     *
-     * @param toAdd
-     */
-    final public void add(ReducedConfiguration  toAdd)
+    public void decrement(ReducedConfiguration.NodeCase c)
     {
-        for (int i = 0; i < this.stats.length; i++) {
-            this.stats[i] += toAdd.stats[i];
-        }
+        this.stats[c.ordinal()]--;
     }
 
-    /**
-     * Clear the stats.
-     */
-    final public void clear()
+    public void increment(ReducedConfiguration.NodeCase c)
     {
-        for (int i = 0; i < this.stats.length; i++) {
-            this.stats[i] = 0;
-        }
+        this.stats[c.ordinal()]++;
     }
 
-    @Override
-    final public ReducedConfiguration  clone()
-    {
-        ReducedConfiguration  c = new ReducedConfiguration ();
-        for (int i = 0; i < this.stats.length; i++) {
-            c.stats[i] = this.stats[i];
-        }
-        return c;
-    }
 
-    public boolean equals(ReducedConfiguration  obj)
-    {
-        for (int i = 0; i < obj.stats.length; i++) {
-            if (obj.stats[i] != this.stats[i]) {
-                return false;
-            }
-        }
-        return true;
-    }
+
 }

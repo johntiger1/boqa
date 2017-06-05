@@ -40,7 +40,7 @@ package sonumina.boqa.calculation;
  *
  * @author Sebastian Bauer
  */
-final public class Configuration implements Cloneable
+ public class Configuration implements Cloneable
 {
     public static enum NodeCase
     {
@@ -57,12 +57,12 @@ final public class Configuration implements Cloneable
     final private int[] stats = new int[NodeCase.values().length]; ///this is literally just 8 or so
     //values wide!!!
     //J I finally get it: these are the BUCKETS from before, that we use to multiply everything
-    final public void increment(NodeCase c)
+    public void increment(Configuration.NodeCase c)
     {
         this.stats[c.ordinal()]++;
     }
 
-    final public void decrement(NodeCase c)
+    public void decrement(Configuration.NodeCase c)
     {
         this.stats[c.ordinal()]--;
     }
@@ -84,7 +84,7 @@ final public class Configuration implements Cloneable
      * @param c
      * @return
      */
-    final public int getCases(NodeCase c)
+    public int getCases(Configuration.NodeCase c)
     {
         return this.stats[c.ordinal()];
     }

@@ -27,9 +27,10 @@ public class ReducedBoqa {
     //really i want a dictionary
     //DIctioanry of observations: Term-Index (vertex) to Boolean
     //Another choice could have been Term-ID to Boolean
-    public HashMap<Integer,Boolean> registered_obserations;
+    public HashMap<Integer,Boolean> registered_obserations; //we still need this to store whether observed
+    public Observations o;
 
-    private double initial_beta = 0.3 ; //this will approach the experimental beta
+    private double initial_beta = 0.01; //0.3 ; //this will approach the experimental beta
     private double experimental_beta = 0.01 ;
 
 
@@ -92,7 +93,9 @@ public class ReducedBoqa {
 
     public void setup(Ontology ontology, AssociationContainer assocs)
     {
-        this.registered_obserations = new HashMap<>();
+        //this.registered_obserations = new HashMap<>();
+        this.o = new Observations();
+
         this.assoc = assocs;
         this.graph = ontology;
 
@@ -157,7 +160,7 @@ public class ReducedBoqa {
         return false;
     }
 
-    private Configuration.NodeCase getNodeCase(int node, boolean[] hidden, boolean[] observed)
+    private ReducedConfiguration.NodeCase getNodeCase(int node, boolean[] hidden, boolean[] observed)
     {
         if (areFalsePositivesPropagated()) {
             /* Here, we consider that false positives are inherited.
@@ -170,7 +173,7 @@ public class ReducedBoqa {
                     if (observed[node]) { //in the observed layer, parent points to child, so
                         //if child is on, then parenbt is on [contrary to how BN semantrics normally
                         //work, where really only parent affects child]
-                        return Configuration.NodeCase.INHERIT_TRUE; //the causality seems backwards
+                        return ReducedConfiguration.NodeCase.INHERIT_TRUE; //the causality seems backwards
                         //it (the parent) is only on because its child was als oon
                         //however, this could have been handled immediately in a different graph
                         //preprocessing step
@@ -178,7 +181,7 @@ public class ReducedBoqa {
                         //we assume that it became true via inheritance
                     } else {
                         /* NaN */
-                        return Configuration.NodeCase.FAULT;
+                        return ReducedConfiguration.NodeCase.FAULT;
                     }
                 }
             }
@@ -190,25 +193,13 @@ public class ReducedBoqa {
                 int parent = this.term2Parents[node][i];
                 if (!observed[parent]) {
                     if (!observed[node]) {
-                        return Configuration.NodeCase.INHERIT_FALSE; //wasn't actually false but inherited it..
+                        return ReducedConfiguration.NodeCase.INHERIT_FALSE; //wasn't actually false but inherited it..
                     } else {
                         /* NaN */
-                         return Configuration.NodeCase.FAULT;
+                         return ReducedConfiguration.NodeCase.FAULT;
                     }
                 }
             }
-        }
-
-
-        if (registered_obserations.containsKey(node))
-        {
-
-        }
-
-        else
-        {
-
-
         }
 
         if (hidden[node]) {
@@ -223,27 +214,33 @@ public class ReducedBoqa {
             //when they are NOT inherited, what happens? a node CANNOT be made into a false
             //by another node--hence it IS conclusively false positve/negative
             if (observed[node]) {
-                return Configuration.NodeCase.TRUE_POSITIVE;
+                return ReducedConfiguration.NodeCase.TRUE_OBSERVED_POSITIVE;
             } else {
-                return Configuration.NodeCase.FALSE_NEGATIVE;
+                if (registered_obserations.containsKey(node))
+                {
+                    return ReducedConfiguration.NodeCase.FALSE_OBSERVED_NEGATIVE;
+
+                }
+                return ReducedConfiguration.NodeCase.FALSE_UNOBSERVED_NEGATIVE;
+
             }
         } else {
             /* Term is truly off */
             if (!observed[node]) {
-                return Configuration.NodeCase.TRUE_NEGATIVE;
+                return ReducedConfiguration.NodeCase.TRUE_NEGATIVE;
             } else {
-                return Configuration.NodeCase.FALSE_POSITIVE;
+                return ReducedConfiguration.NodeCase.FALSE_POSITIVE;
             }
         }
     }
-
-    private void determineCases(boolean[] observedTerms, boolean[] hidden, Configuration stats)
+    //either need an instance variable or another way of maintaining the actual obs
+    private void determineCases(boolean[] observedTerms, boolean[] hidden, ReducedConfiguration stats)
     {
         //total number of nodes
         int numTerms = this.slimGraph.getNumberOfVertices();
 
         for (int i = 0; i < numTerms; i++) {
-            Configuration.NodeCase c = getNodeCase(i, hidden, observedTerms);
+            ReducedConfiguration.NodeCase c = getNodeCase(i, hidden, observedTerms);
             stats.increment(c); //increment the case that c is in
         }
     }
@@ -264,7 +261,7 @@ public class ReducedBoqa {
 
 
         /** Some statistics for each item (number of false-positives, etc. ) */
-        Configuration[] stats;
+        ReducedConfiguration[] stats;
 
         /**
          * Get the score of the given item.
@@ -293,7 +290,7 @@ public class ReducedBoqa {
             return this.marginalsIdeal[i];
         }
 
-        public Configuration getStats(int i)
+        public ReducedConfiguration getStats(int i)
         {
             return this.stats[i];
         }
@@ -367,7 +364,7 @@ public class ReducedBoqa {
 
 
     private WeightedConfigurationList determineCasesForItem(int item, boolean[] observed,
-                                                            boolean takeFrequenciesIntoAccount, boolean[] previousHidden, Configuration previousStats)
+                                                            boolean takeFrequenciesIntoAccount, boolean[] previousHidden, ReducedConfiguration previousStats)
     {
         int numTerms = this.slimGraph.getNumberOfVertices();
 
@@ -381,14 +378,14 @@ public class ReducedBoqa {
 
         long now = System.nanoTime();
 
-        /* Tracks the hidden state configuration that matches the observed state best */
+        /* Tracks the hidden state ReducedConfiguration that matches the observed state best */
         // double bestScore = Double.NEGATIVE_INFINITY;
         // boolean [] bestTaken = new boolean[numTermsWithExplicitFrequencies];
 
         WeightedConfigurationList statsList = new WeightedConfigurationList();
 
         boolean[] hidden;
-        Configuration stats;
+        ReducedConfiguration stats;
 
         if (previousHidden == null) {
             hidden = new boolean[numTerms];
@@ -397,7 +394,7 @@ public class ReducedBoqa {
         }
 
         if (previousStats == null) {
-            stats = new Configuration();
+            stats = new ReducedConfiguration();
         } else {
             stats = previousStats;
         }
@@ -413,8 +410,8 @@ public class ReducedBoqa {
             /* Decrement config stats of the nodes we are going to change */
             //J: we will change them back (update) later!
             //presumably this is JUST like items2terms, except it takes into account some existing frequency stuff
-            Configuration decrement_config = new Configuration();
-            Configuration increment_config = new Configuration();
+            ReducedConfiguration decrement_config = new ReducedConfiguration();
+            ReducedConfiguration increment_config = new ReducedConfiguration();
             for (int element : diffOn) {
                 decrement_config.increment(getNodeCase(element, hidden, observed));
                 stats.decrement(getNodeCase(element, hidden, observed));
@@ -468,13 +465,13 @@ public class ReducedBoqa {
         res.scores = new double[this.allItemList.size()]; //its an array size of the entire BN
         res.marginals = new double[this.allItemList.size()];
         res.marginalsIdeal = new double[this.allItemList.size()];
-        res.stats = new Configuration[this.allItemList.size()]; // an ARRAY of configurations..
+        res.stats = new ReducedConfiguration[this.allItemList.size()]; // an ARRAY of ReducedConfigurations..
         //perhaps they are saying how for each node in THE BN, there is a cofig?
 
 
         //this is just initializing each stats[i] to contain something
         for (i = 0; i < res.stats.length; i++) {
-            res.stats[i] = new Configuration(); //each ITEM gets its own configuration
+            res.stats[i] = new ReducedConfiguration(); //each ITEM gets its own ReducedConfiguration
         }
         for (i = 0; i < res.scores.length; i++) {
             res.scores[i] = Double.NEGATIVE_INFINITY;
@@ -498,9 +495,9 @@ public class ReducedBoqa {
         }
 
         final boolean[] previousHidden = new boolean[this.slimGraph.getNumberOfVertices()];
-        final Configuration previousStat = new Configuration();
+        final ReducedConfiguration previousStat = new ReducedConfiguration();
 
-        //Configuration is not null, but: it also was not initalized to anything //previousstat contains all the info from runnign determinecases--do we run it first just for the multithreading?; part of the diffOn, etc.?
+        //ReducedConfiguration is not null, but: it also was not initalized to anything //previousstat contains all the info from runnign determinecases--do we run it first just for the multithreading?; part of the diffOn, etc.?
         determineCases(observations.observations, previousHidden, previousStat);
         //this pops back with all the cases; and having incremented the particular stats
         //(i.e previousStat)
@@ -521,7 +518,7 @@ public class ReducedBoqa {
                     //for 1 item, we get a WCL
                     //then we check it against all values of alpha, beta
                     //then we ge tthe score of the WCL
-                    //there is a list of configurations, and we get
+                    //there is a list of ReducedConfigurations, and we get
                     //
                     //this call does the differntials, and also returns the list to work on
                     //(with all the nodes set); but it does NOT determine the cases!
@@ -552,16 +549,12 @@ public class ReducedBoqa {
                     //rate for alpha and beta.at a particular alpha, beta value
                     //this puts the score in for an item;
 
-                    int temp_terms [] = new int[] ; // since this is inside a void run inside an interface
+                    //int temp_terms [] = new int[] ; // since this is inside a void run inside an interface
                     //might be tricky...
 
                     for (int a = 0; a < ReducedBoqa.this.ALPHA_GRID.length; a++) {
                         for (int b = 0; b < ReducedBoqa.this.BETA_GRID.length; b++) {
                             //This scor is a weighted sum!
-                            for (int index : term2Ancestors)
-                            {
-
-                            }
                             scores[item][a][b] = stats.score(ReducedBoqa.this.ALPHA_GRID[a],
                                     ReducedBoqa.this.BETA_GRID[b]);
                             //normally we maximize this
@@ -652,40 +645,5 @@ public class ReducedBoqa {
         // if (exitNow)
         // System.exit(10);
         return res;
-    }
-    //the issue is we just use a neat little stats container in the other one, precluding this
-    public double scoreNode(int termIndex, double alpha, double beta, boolean[] hidden, boolean[] observed)
-    {
-
-        double score = 0.0;
-
-        Configuration.NodeCase c = getNodeCase(termIndex, hidden, observed);
-
-        switch (c) {
-            case FALSE_NEGATIVE:
-                score = Math.log(beta);
-                break;
-            case FALSE_POSITIVE:
-                score = Math.log(alpha);
-                break;
-            case TRUE_POSITIVE:
-                score = Math.log(1 - beta);
-                break;
-            case TRUE_NEGATIVE:
-                score = Math.log(1 - alpha);
-                break;
-            case INHERIT_FALSE:
-                score = Math.log(1); //this is 0 (i.e. we assume it was fine)/did not contribute
-                //to the product; normally, it COULD otherwise be a false neg/pos
-                //note: the inheritors "are fully explained" by the other nodes
-
-                break;
-            case INHERIT_TRUE:
-                score = Math.log(1);
-                break;
-            default:
-                break;
-        }
-        return score;
     }
 }

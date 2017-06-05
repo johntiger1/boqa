@@ -7,5 +7,6 @@ import ontologizer.go.TermID;
  */
 public interface PhenotypeSelector {
 
+
     TermID getBestPhenotype(Object o);
 }
