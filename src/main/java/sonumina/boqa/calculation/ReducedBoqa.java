@@ -227,7 +227,19 @@ public class ReducedBoqa {
             //observed just means whether it was actually looked at or not
             if (o.real_observations.get(node)) {
                 return ReducedConfiguration.NodeCase.TRUE_OBSERVED_POSITIVE;
-                //ensure this is based on the correct beta being used
+                //ensure this is based on the correct beta being used (when being scored)
+                //however, it depends. Say we go with annotation propagation. Then, there is a
+                //chance that it could be on due to its children. Then we can reward still checking
+                //by being able to take advanatage of the smaller beta (i.e. a True true positive)
+                //OTOH we can also consider that a node only ever turns on if it was observed. Hence,
+                //we can automatically use the small beta
+                //the issue with the "lookup beta" even for the positives approach is that in general,
+                //we do not condone checking a parent of a node you already checked.
+                //however, under our current semantics, the probabilities no longer add to 1!
+                //since (1-e_beta) + (n_beta) > 1
+                //this probably has an effect on the probability distributions though
+
+                //MIA CIBC??! idk
 
             } else {
 

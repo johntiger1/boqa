@@ -84,6 +84,8 @@ final public class ReducedConfiguration extends Configuration implements Cloneab
 
                 Math.log(alpha) * getCases(NodeCase.FALSE_POSITIVE) +
                 Math.log(1 - experimental_beta) * getCases(NodeCase.TRUE_OBSERVED_POSITIVE) + //True positives can only occur via being observed
+                //note that adding to one is satisfied: 1-experimental beta+e_beta =1
+                //the misleading thing is that there is NO case where an obs can be true without having been examined via beta (e_beta)
                 Math.log(1 - alpha) * getCases(NodeCase.TRUE_NEGATIVE) +
 
                 Math.log(1) * getCases(NodeCase.INHERIT_FALSE) + /* 0 */

@@ -184,7 +184,10 @@ public class ReducedBOQATest
         hpoParser.doParse();
 
         //blackbox: it gets all the terms (in the HPO)
+        //getTermMap returns a list of all terms!
         TermContainer tc = new TermContainer(hpoParser.getTermMap(), hpoParser.getFormatVersion(), hpoParser.getDate());
+
+
         Ontology ontology = new Ontology(tc);
         SlimDirectedGraphView<Term> slim = ontology.getSlimGraphView();
         int num = 1000;
@@ -306,6 +309,7 @@ public class ReducedBOQATest
         //as seen in the BOQA term2ancestors semantics
         //
         Integer [] termcounts = new Integer[boqa.getOntology().getNumberOfTerms()];
+        //Integer [] observations = new Integer[boqa.getOntology().getNumberOfTerms()];
         for (int i = 0; i < termcounts.length; i++){
 
             termcounts[i] = 0;
@@ -348,10 +352,12 @@ public class ReducedBOQATest
 
         PhenotypeSelector ps = null;
         Object information = new Object();
-        TermID phenotype_to_check = ps.getBestPhenotype(information); //in here we do all the phenotype checks
+        int phenotype_to_check = ps.getBestPhenotype(information); //in here we do all the phenotype checks
 
+        //This allows us to go from TermID->index, but what about the other way>
+        //int index =boqa.slimGraph.getVertexIndex(boqa.getOntology().getTerm(phenotype_to_check));
 
-        int index =boqa.slimGraph.getVertexIndex(boqa.getOntology().getTerm(phenotype_to_check));
+        int index =phenotype_to_check; //much simpler
 
         boolean present_or_not = getObservation(index);
         //HashMap<Association, Integer> termCounts;
@@ -364,13 +370,19 @@ public class ReducedBOQATest
         //o doesn't have this information, so we need to full info from boqa:
         for (int anc: boqa.term2Ancestors[index])
         {
+            o.observations[anc] = true;
             o.recordObs(anc, present_or_not); //only do this if we propagate positives up too
             //do NOT propagate negatives up (since this is not how the true path rule works)
 
             //if its negative, should we
 
         }
+        //this should all be abstracted to another function!
         o.recordObs(index, present_or_not);
+
+        o.observations[index] = true;
+
+
 
         //assign marginals again based on things
         boqa.assignMarginals(o, false, 1);
@@ -435,11 +447,98 @@ public class ReducedBOQATest
 
     //associations are between terms and items (diseases)
     //roughly, they map HPO term #s to an Bytestrign (which includes an integer)
-    public Term getBestPhenotype(ReducedBoqa.Result res)
+    //Interface for getting best phenotupe
+    public int getBestPhenotype(ReducedBoqa rb)
+    {
+        //why not just maintain the observed array from before?
+        //int [] top_phenotypes; //TODO keep the n largest phenotypes
+        //we can use a min heap here! we want to maintain the largest k elements in a stream
+        //(simply check the min elemnt, and if its larger, kick out one of the elements (replace)
+
+        //we have the index, but not about the TermID
+        int best_phenotype_index = 0;
+        double best_phenotype_value = 0;
+        double temp = 0;
+        for (int i =0; i < rb.o.observations.length; i++)//(int termInd : rb.o.observations)
+        {
+            if (!rb.o.observations[i])
+            {
+
+                //actually, we must set ALL the above nodes to true too!
+                rb.o.recordObs(i, true); //actually this is almost NEVER true (since negatives don't tell us anything more)
+
+                rb.assignMarginals(rb.o,false,1);
+
+
+                //after assignMarginals, the scores array is updated
+                //boqa roll back: undoes the last one
+                if (best_phenotype_value < (temp = scoringFunction(rb)))
+                    {
+                        best_phenotype_index = i;
+                        best_phenotype_value = temp;
+
+                        //index to termID is not well supported.
+                        //since these things only make sense wrt a graph
+                        //also termid and term are not well related, we really just want
+                        //term,since it encapsulates everything
+                        //hence we should use termcontainer to send it into
+
+                    }
+
+
+
+                //SUM OF SQUARES FORMULA HERE
+            }
+
+        }
+        return best_phenotype_index;
+    }
+
+    //sets all ancestors of a node in the boqa instance observations to on
+    //only call this function if you are recording a positive, as when checking for
+    //next best phenotype, or recording a positive phenotype
+
+    //note that is like intersection of linked lists! when we have a common node,
+    //we can just stop!
+
+    //either return an array of modified (safe)
+    //alternatievely, is rollback we can compute the intersection of nodes
+    //however, this has the possiblity of turning OFF nodes that were turnt on by others
+    //for example, the root node will be turned on by anything, but rolling back in this
+    //way will turn it off (undesired), this violates true path rule etc.
+    public ArrayList<Integer> setAncestors(ReducedBoqa rb, int index)
+    {
+        ArrayList<Integer> turnedOnTerms = new ArrayList<>();
+        for (int anc: rb.term2Ancestors[index])
+        {
+            if (!rb.o.observations[anc])
+            {
+                rb.o.observations[anc] = true;
+                rb.o.recordObs(anc, true); //only do this if we propagate positives up too
+                //do NOT propagate negatives up (since this is not how the true path rule works)
+
+                //if its negative, should we
+                turnedOnTerms.add(index);
+
+            }
+
+
+        }
+
+        return turnedOnTerms; //this will be input to the rollback
+
+    }
+
+    public void rollback(ReducedBoqa rb, ArrayList<Integer> turntOn)
     {
 
+    }
 
-        return null;
+    public double scoringFunction(ReducedBoqa rb)
+    {
+        double score;
+
+        return score;
     }
 
     @Test

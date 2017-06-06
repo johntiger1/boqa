@@ -80,4 +80,10 @@ public class Observations
         //real_observations.add(new obs_value(index, value));
     }
 
+    public void removeObs(int index)
+    {
+        real_observations.remove(index);
+        //real_observations.put(index, value);
+        //real_observations.add(new obs_value(index, value));
+    }
 }
