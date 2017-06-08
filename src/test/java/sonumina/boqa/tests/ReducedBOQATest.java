@@ -459,6 +459,8 @@ public class ReducedBOQATest
         int best_phenotype_index = 0;
         double best_phenotype_value = 0;
         double temp = 0;
+        ReducedBoqa.Result res;
+        ArrayList<Integer> turnedOn;
         for (int i =0; i < rb.o.observations.length; i++)//(int termInd : rb.o.observations)
         {
             if (!rb.o.observations[i])
@@ -466,13 +468,13 @@ public class ReducedBOQATest
 
                 //actually, we must set ALL the above nodes to true too!
                 rb.o.recordObs(i, true); //actually this is almost NEVER true (since negatives don't tell us anything more)
-
-                rb.assignMarginals(rb.o,false,1);
+                turnedOn=setAncestors(rb,i);
+                res=rb.assignMarginals(rb.o,false,1);
 
 
                 //after assignMarginals, the scores array is updated
                 //boqa roll back: undoes the last one
-                if (best_phenotype_value < (temp = scoringFunction(rb)))
+                if (best_phenotype_value < (temp = scoringFunction(res, rb))) //pass in rb in case we need ot infer other things
                     {
                         best_phenotype_index = i;
                         best_phenotype_value = temp;
@@ -481,10 +483,13 @@ public class ReducedBOQATest
                         //since these things only make sense wrt a graph
                         //also termid and term are not well related, we really just want
                         //term,since it encapsulates everything
-                        //hence we should use termcontainer to send it into
+                        //hence we should use 3termcontainer to send it into
 
                     }
 
+                //undoes the setting action
+                rb.o.removeObs(i);
+                rollback(rb,turnedOn);
 
 
                 //SUM OF SQUARES FORMULA HERE
@@ -508,6 +513,7 @@ public class ReducedBOQATest
     //way will turn it off (undesired), this violates true path rule etc.
     public ArrayList<Integer> setAncestors(ReducedBoqa rb, int index)
     {
+        //list of terms that were turned on by setting the index to 1 (or true)
         ArrayList<Integer> turnedOnTerms = new ArrayList<>();
         for (int anc: rb.term2Ancestors[index])
         {
@@ -518,7 +524,7 @@ public class ReducedBOQATest
                 //do NOT propagate negatives up (since this is not how the true path rule works)
 
                 //if its negative, should we
-                turnedOnTerms.add(index);
+                turnedOnTerms.add(anc);//otherwise this would add index a lot!
 
             }
 
@@ -531,12 +537,22 @@ public class ReducedBOQATest
 
     public void rollback(ReducedBoqa rb, ArrayList<Integer> turntOn)
     {
+        for (Integer i: turntOn)
+        {
+            rb.o.observations[i] = false;
+            rb.o.removeObs(i);
+
+        }
 
     }
 
-    public double scoringFunction(ReducedBoqa rb)
+    public double scoringFunction(ReducedBoqa.Result result, ReducedBoqa rb)
     {
         double score;
+
+        rb.
+        //for (rb in )
+        //examine the scores for each one
 
         return score;
     }
