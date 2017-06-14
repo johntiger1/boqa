@@ -97,7 +97,7 @@ public class ReducedBOQATest
             // Association a = new Association(item,slim.getVertex(10).getIDAsString());
             // assocs.addAssociation(a);
 
-            for (int j = 0; j < rnd.nextInt(16) + 2; j++) {
+            for (int j = 0; j < rnd.nextInt(16) + 30; j++) {
                 Term t;
                 do {
                     t = slim.getVertex(rnd.nextInt(slim.getNumberOfVertices())); //randomly select a vertex
@@ -173,9 +173,23 @@ public class ReducedBOQATest
 
         //blackbox: it gets all the terms (in the HPO)
         TermContainer tc = new TermContainer(hpoParser.getTermMap(), hpoParser.getFormatVersion(), hpoParser.getDate());
+
         Ontology ontology = new Ontology(tc);
         SlimDirectedGraphView<Term> slim = ontology.getSlimGraphView();
         assocs = generateAnnotations(25, slim);
+        ByteString item = new ByteString("item" + 26);
+        Random rnd = new Random(2);
+        Term t;
+        do {
+            t = slim.getVertex(rnd.nextInt(slim.getNumberOfVertices())); //randomly select a vertex
+            //keeps doing this til it gets a non-obsolete vertex
+        } while (t.isObsolete());
+
+        Association a = new Association(item, t.getIDAsString());
+        //System.err.println(a.toString());
+        //print(a);
+        assocs.addAssociation(a);
+
 
         //pseudo:
         //boqa.setup
@@ -315,6 +329,19 @@ public class ReducedBOQATest
         //Run BOQA once to get the initial guesses.
         ArrayList<String> initial_guesses = null;
         boqa.setConsiderFrequenciesOnly(false);
+
+        ByteString item = new ByteString("item" + 26);
+        Random rnd = new Random(2);
+        Term t;
+        do {
+            t = slim.getVertex(rnd.nextInt(slim.getNumberOfVertices())); //randomly select a vertex
+            //keeps doing this til it gets a non-obsolete vertex
+        } while (t.isObsolete());
+
+        Association a = new Association(item, t.getIDAsString());
+        //System.err.println(a.toString());
+        //print(a);
+        assocs.addAssociation(a);
         boqa.setup(ontology, assocs);
 
         Observations o = new Observations();
@@ -322,6 +349,7 @@ public class ReducedBOQATest
 
         long start = System.nanoTime();
         this.logger.info("Calculating");
+
         BOQA.Result res = boqa.assignMarginals(o, false, 1);
         System.out.println(getTopDiseases(res));
         //for (double t: res.)
