@@ -24,6 +24,48 @@ import java.util.concurrent.TimeUnit;
  */
 public class ReducedBoqa {
 
+
+
+
+    //Most likely will be an array of all the frequencies for phenotype
+    //Note that: this array should always sum to 1. (should it?)-- ask brudno about this
+    public Object PhenotypeFrequencyDistributions;
+
+    //todo: note that this already exists--it is the marginals
+    //an array of all the frequencies for disease. This can be re-computed at each stage.
+    public Object DiseaseFrequencyDistributions;
+
+    //However, it is a good question: is it the marginals being recomputed each time, or just them getting updated?
+    //this is more of a implementation/engineering issue
+    //TODO: use a lambda to pass in arbitrary function at call
+    public double scoringFunction(double [] phen_arr, double [] dis_arr )
+    {
+        double sum = 0;
+        //for example, just compute sum of squares here.
+        for (double elt: dis_arr)
+        {
+            sum+=elt;
+        }
+
+        return sum;
+//        for (int i = 0; i < phen_arr.length; i++)
+//        {
+//
+//        }
+
+    }
+
+    public void scoringFunctionWrapper(double [] phen_arr, double [] dis_arr )
+    {
+
+        //Calls scoringFunction each time
+        //Picking one on or off would cause
+        for (int i = 0; i < phen_arr.length; i++)
+        {
+
+        }
+    }
+
     //really i want a dictionary
     //DIctioanry of observations: Term-Index (vertex) to Boolean
     //Another choice could have been Term-ID to Boolean

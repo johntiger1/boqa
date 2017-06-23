@@ -380,7 +380,9 @@ public class ReducedBOQATest
         //this should all be abstracted to another function!
         o.recordObs(index, present_or_not);
 
-        o.observations[index] = true;
+        o.observations[index] = true; //recall the new meanings: observations means whether it was
+        //checked, while the arraylist determines whether it was true or not
+
 
 
 
@@ -445,10 +447,18 @@ public class ReducedBOQATest
 
     }
 
+
+    //Gets the frequency distribution
+    public void frequencyDistributions()
+    {
+
+
+    }
+
     //associations are between terms and items (diseases)
     //roughly, they map HPO term #s to an Bytestrign (which includes an integer)
     //Interface for getting best phenotupe
-    public int getBestPhenotype(ReducedBoqa rb)
+    public int getBestPhenotype(ReducedBoqa rb, double [] phenotype_frequencies)
     {
         //why not just maintain the observed array from before?
         //int [] top_phenotypes; //TODO keep the n largest phenotypes
@@ -474,7 +484,10 @@ public class ReducedBOQATest
 
                 //after assignMarginals, the scores array is updated
                 //boqa roll back: undoes the last one
-                if (best_phenotype_value < (temp = scoringFunction(res, rb))) //pass in rb in case we need ot infer other things
+
+                //if our current best worse than this new one, update it
+                if (best_phenotype_value <
+                        (temp = scoringFunction(res, rb)*phenotype_frequencies[i])) //pass in rb in case we need ot infer other things
                     {
                         best_phenotype_index = i;
                         best_phenotype_value = temp;
@@ -497,6 +510,98 @@ public class ReducedBOQATest
 
         }
         return best_phenotype_index;
+    }
+
+    //Represents the disease-phenotype frequency annotation data.
+    HashMap<Integer, HashMap<Integer, Integer>> freqs = new HashMap<>();
+    //I1: Disease
+    //I2: Phenotype
+    //I3: Frequency Category
+    double [] phenotype_frequencies;
+    HashMap <Integer, List<Integer>> disease_to_pheno;
+    /***
+     * Updates the phenotype frequencies.
+     */
+    public void updatePhenotypeFrequencies(int disease)
+    {
+        //Each phenotype frequency is linked to diseases.
+        //How can be demonstrate this relationship?
+        //for example a lambda function
+        //note that we only need to update Frequencies of those diseases that annotate the phenotypes
+        //use the mappings we have
+
+        //recall how we can dsicretize it into two distinct cases: P(ph|disease) and P(disease)
+        //this boils down to how the frequency is mapped
+        HashMap <Integer, Integer> phenotype_frequencies_for_fixed_disease = freqs.get(disease);
+        double score = 0;
+
+        for (int i = 0; i < phenotype_frequencies_for_fixed_disease.size(); i ++)
+        {
+            for (Map.Entry annotation: phenotype_frequencies_for_fixed_disease.entrySet())
+            {
+                annotation.getKey();
+                annotation.getValue();
+                score +=
+                        //the thing is that just ONE is not enough
+                //phenotye freqeuncy is composed of MANY different terms from different diseases
+                //this paradigm is assuming that we "update" just a single p(d) from
+                // p(ph)= P(ph|d) * P(d)
+                //also, this in general is probably quite inefficient, since we need to do it for all disease,
+                //there must be some savings somewhere
+
+                //IN FACT--it is probably better to just compute the entire thing from scratch again--i.e.
+                //run computePhenotypeFrequencies() with the updated disease frequencies
+                //like the other alternative would require a LOT of scaffolding
+                //for example, we would need to know the component of the probability from each disease, ph|disease
+                //pairing and store that somewhere.
+                //mat: phen X disease, where at each element is the p(ph|dis) or something
+
+
+                //solving this problem is equivalent to solving the entire "compute pheno from disease" problem!
+
+
+                //can either do this with the keys, and then doing things "dumbly"--i.e. explicitly,
+                //or we can do things using the entries only
+                //from the entries, we will be able to typematch to get the keys AND the values
+
+
+            }
+        }
+        for (Integer i: freqs.get(disease))
+
+
+    }
+
+    public void updateDiseaseFrequencies(int phenotype)
+    {
+        List<Integer> asb = new ArrayList<>();
+        for (Integer i: asb)
+        {
+
+        }
+
+        for (Integer disease: disease_to_pheno.get(phenotype))
+        {
+            //In general, this wont actually be a thing though!
+            //the reason is that the disease frequencies come only from the BOQA run!
+            //(since recall: the disease comes from a combiantion of scoring fp/fm)
+            //marginals[disease] = new computed
+
+
+            //phenotype_frequencies[disease] =
+        }
+        //Each phenotype frequency is linked to diseases.
+        //How can be demonstrate this relationship?
+        //for example a lambda function
+        //note that we only need to update Frequencies of those diseases that annotate the phenotypes
+        //use the mappings we have
+
+        //recall how we can dsicretize it into two distinct cases: P(ph|disease) and P(disease)
+        //this boils down to how the frequency is mapped
+
+
+
+
     }
 
     //sets all ancestors of a node in the boqa instance observations to on
