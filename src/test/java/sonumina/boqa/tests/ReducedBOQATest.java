@@ -147,7 +147,9 @@ public class ReducedBOQATest
         // Get top 20 results
         ArrayList<String> results = new ArrayList<String>();
         //for (int i = 0; i < 20 && i<order.length; i++) {
-        for (int i = 0; i<order.length/2; i++) {
+
+        //order.length/2
+        for (int i = 0; i<10; i++) {
             int id = order[i]; //presumably, order[i] is now in order from lowest to msot score
             results.add( "item" + id ); //bytestrings can be immediately constructed from this
                     //"Disease "+ id + "\t"  + "Probs"  + res.getScore(id) ); //all amrginals are the same...
@@ -317,6 +319,7 @@ public class ReducedBOQATest
         }
         //this should all be abstracted to another function!
         o.recordObs(index, present_or_not);
+
 
         o.observations[index] = true; //recall the new meanings: observations means whether it was
         //checked, while the arraylist determines whether it was true or not

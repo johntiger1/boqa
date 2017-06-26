@@ -295,10 +295,13 @@ public class ReducedBoqa {
 
             }
         } else {
+            //Note this will cause errors!: !o.real_observations.get(node)
             /* Term is truly off */
-            if (!o.real_observations.get(node) || o.real_observations.get(node) == null) {
+            if (o.real_observations.get(node) == null|| !o.real_observations.get(node)) {
                 return ReducedConfiguration.NodeCase.TRUE_NEGATIVE;
             } else {
+                //however, this doesn't really make sense anymore: how can it be fp if indeed
+                //it was not in hidden yet also
                 return ReducedConfiguration.NodeCase.FALSE_POSITIVE;
             }
         }
