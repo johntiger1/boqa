@@ -84,7 +84,7 @@ public class ReducedBOQATest
     }
     //Generates num diseases and associates them with terms in the graph
     //Diseases get 2 to 18 annotations, mirroring real life.
-    public static AssociationContainer generateAnnotations (int num, SlimDirectedGraphView<Term> slim
+    public AssociationContainer generateAnnotations (int num, SlimDirectedGraphView<Term> slim
                                                             )
     {
         //Set the random to a seed
@@ -95,9 +95,6 @@ public class ReducedBOQATest
 
             ByteString item = new ByteString("item" + i);
 
-            // Association a = new Association(item,slim.getVertex(10).getIDAsString());
-            // assocs.addAssociation(a);
-
             for (int j = 0; j < rnd.nextInt(16) + 2; j++) {
                 Term t;
                 do {
@@ -106,9 +103,9 @@ public class ReducedBOQATest
                 } while (t.isObsolete());
 
                 Association a = new Association(item, t.getIDAsString());
-                //System.err.println(a.toString());
-                //print(a);
-                assocs.addAssociation(a); //this seems to not hve any effect on BOQA... (nvm, it is used inb boqa.setup)
+                pheno_disease_freq.put(item, 1);
+
+                assocs.addAssociation(a);
             }
         }
         return assocs;
@@ -162,6 +159,7 @@ public class ReducedBOQATest
     //
     public void testConvergence() throws IOException, OBOParserException, URISyntaxException
     {
+        pheno_disease_freq = new HashMap<>();
 
         final ReducedBoqa boqa = new ReducedBoqa();
         //get the file, then get its canonical path
@@ -513,15 +511,12 @@ public class ReducedBOQATest
     }
 
     //Represents the disease-phenotype frequency annotation data.
-    HashMap<Integer, HashMap<Integer, Integer>> disease_pheno_freqs = new HashMap<>();
     //I1: Disease
     //I2: Phenotype
     //I3: Frequency Category
     double [] phenotype_frequencies;
     double [] disease_frequencies;
-    HashMap <Integer, List<Integer>> disease_to_pheno;
-    HashMap <Integer, List<Integer>> pheno_to_disease;
-    HashMap<Integer, HashMap<Integer, Integer>> pheno_disease_freq = new HashMap<>();
+    HashMap<Integer, HashMap<Integer, Integer>> pheno_disease_freq;
 
     /***
      * TODO skip phenotypes that have already been observed
@@ -597,7 +592,7 @@ public class ReducedBOQATest
 
         for (double marg: result.marginals)
         {
-            score+=marg;
+            score+=marg*marg;
         }
 
         return score;

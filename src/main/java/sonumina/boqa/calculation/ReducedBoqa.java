@@ -161,7 +161,7 @@ public class ReducedBoqa {
 
 
         this.allItemList = new ArrayList<ByteString>();
-        this.item2Index = new HashMap<ByteString, Integer>();
+        this.item2Index = new HashMap<ByteString, Integer>(); //these are the diseases
         int i = 0;
         for (ByteString item : itemEnumerator) { //we need this to get the actual terms!!
             this.allItemList.add(item);
