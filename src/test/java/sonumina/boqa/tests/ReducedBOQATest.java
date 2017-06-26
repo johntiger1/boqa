@@ -87,6 +87,7 @@ public class ReducedBOQATest
     public AssociationContainer generateAnnotations (int num, SlimDirectedGraphView<Term> slim
                                                             )
     {
+
         //Set the random to a seed
         Random rnd = new Random(2);
         AssociationContainer assocs = new AssociationContainer();
@@ -101,8 +102,10 @@ public class ReducedBOQATest
                     t = slim.getVertex(rnd.nextInt(slim.getNumberOfVertices())); //randomly select a vertex
                     //keeps doing this til it gets a non-obsolete vertex
                 } while (t.isObsolete());
-
+                t.ge
                 Association a = new Association(item, t.getIDAsString());
+                //here we are simply required to remember what TID and temr was.
+                slim.get
                 pheno_disease_freq.put(item, 1);
 
                 assocs.addAssociation(a);
@@ -162,6 +165,11 @@ public class ReducedBOQATest
         pheno_disease_freq = new HashMap<>();
 
         final ReducedBoqa boqa = new ReducedBoqa();
+
+        //boqa.getOntology().getTerm() //FROM THE TERMID, we can recover the terms, and also recover the indexes?
+        //yes, we are sure that the ints produced are the same ints as used in the Boqa.java (since, we get the
+        //vertex2ancestors just immediately from boqa)
+
         //get the file, then get its canonical path
         AssociationContainer assocs;
 
@@ -325,6 +333,8 @@ public class ReducedBOQATest
             for (TermID tid : temp.getAssociations()) {
                 //System.out.println("vale is " + termcounts[boqa.slimGraph.getVertexIndex(boqa.getOntology().getTerm(tid))]);
                 int index =boqa.slimGraph.getVertexIndex(boqa.getOntology().getTerm(tid));
+                //boqa.getOntology().getTermContainer().get().
+                //the question is
 
                 for (int parent: boqa.term2Ancestors[index] )
                 {
@@ -629,6 +639,7 @@ public class ReducedBOQATest
         TermContainer tc = new TermContainer(hpoParser.getTermMap(), hpoParser.getFormatVersion(), hpoParser.getDate());
         Ontology ontology = new Ontology(tc);
         SlimDirectedGraphView<Term> slim = ontology.getSlimGraphView();
+        slim.get
         assocs = generateAnnotations(25, slim);
 
         //pseudo:
