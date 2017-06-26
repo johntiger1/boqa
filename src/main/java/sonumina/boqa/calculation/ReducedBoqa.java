@@ -523,11 +523,6 @@ public class ReducedBoqa {
     public Result assignMarginals(final Observations observations, final boolean takeFrequenciesIntoAccount,
                                        final int numThreads)
     {
-//        System.out.println("woot"); 
-//        System.out.println("woot");
-//        System.out.println("woot");
-//        System.out.println("woot");
-//        System.out.println("woot");
 
         int i;
 
