@@ -5,26 +5,17 @@ package sonumina.boqa.tests;
  */
 import java.net.URI;
 
-import ontologizer.association.*;
 import ontologizer.benchmark.Datafiles;
 import ontologizer.enumeration.GOTermEnumerator;
-import ontologizer.enumeration.ItemEnumerator;
-import ontologizer.go.*;
 import ontologizer.types.ByteString;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import sonumina.boqa.BOQABenchmark;
-import sonumina.boqa.benchmark.Benchmark;
 import sonumina.boqa.calculation.*;
-import sonumina.math.graph.AbstractGraph;
 import sonumina.math.graph.SlimDirectedGraphView;
 
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -33,37 +24,17 @@ import java.util.*;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.util.HashSet;
 import java.util.Random;
-import java.util.logging.Level;
-
-import org.junit.BeforeClass;
-import org.junit.Ignore;
-import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import ontologizer.association.Association;
 import ontologizer.association.AssociationContainer;
-import ontologizer.benchmark.Datafiles;
 import ontologizer.go.OBOParser;
 import ontologizer.go.OBOParserException;
 import ontologizer.go.Ontology;
 import ontologizer.go.Term;
 import ontologizer.go.TermContainer;
-import ontologizer.types.ByteString;
-import sonumina.boqa.benchmark.Benchmark;
 import sonumina.boqa.calculation.BOQA;
-import sonumina.boqa.calculation.BOQA.Result;
 import sonumina.boqa.calculation.Observations;
-import sonumina.math.graph.AbstractGraph.DotAttributesProvider;
-import sonumina.math.graph.SlimDirectedGraphView;
-import sun.font.TrueTypeFont;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -74,6 +45,8 @@ public class ReducedBOQATest
 
     private Logger logger = LoggerFactory.getLogger(BOQATest.class);
 
+
+
     @BeforeClass
     public static void loadHPO() throws InterruptedException, IOException, URISyntaxException
     {
@@ -82,11 +55,32 @@ public class ReducedBOQATest
 //                new File(ClassLoader.getSystemResource("phenotype_annotation.omim.gz").toURI()).getCanonicalPath());
 
     }
+    @Test
+    public void byteStringSameAsString()
+    {
+        ByteString bs = new ByteString("aawerasd");
+        assertTrue("aawerasd".equals(bs.toString()));
+
+    }
+
+    public boolean trueDiseaseInTopNDiseases(String target, List<String> top)
+    {
+        for (String s: top)
+        {
+            if (target.equals(s))
+                return true;
+        }
+        return false;
+    }
+
     //Generates num diseases and associates them with terms in the graph
     //Diseases get 2 to 18 annotations, mirroring real life.
     public AssociationContainer generateAnnotations (int num, SlimDirectedGraphView<Term> slim
                                                             )
     {
+       pheno_disease_freq1 = new HashMap<>();
+
+        //initialize all the inner hashmaps:
 
         //Set the random to a seed
         Random rnd = new Random(2);
@@ -102,11 +96,22 @@ public class ReducedBOQATest
                     t = slim.getVertex(rnd.nextInt(slim.getNumberOfVertices())); //randomly select a vertex
                     //keeps doing this til it gets a non-obsolete vertex
                 } while (t.isObsolete());
-                t.ge
                 Association a = new Association(item, t.getIDAsString());
                 //here we are simply required to remember what TID and temr was.
-                slim.get
-                pheno_disease_freq.put(item, 1);
+                //we want to be able to update the indices, based on the vertex2ancestor info from before, and
+                //we CAN do that!
+                        //since for example, the interface between
+                        //let us make it a mapping between terms, and items and frequencies
+                if (pheno_disease_freq1.containsKey(t)){
+                    pheno_disease_freq1.get(t).put(item, 2);
+
+                }
+
+                else{
+                    pheno_disease_freq1.put(t, new HashMap<ByteString, Integer>());
+                    pheno_disease_freq1.get(t).put(item, 2); //these correspond to the frequency classes
+
+                }
 
                 assocs.addAssociation(a);
             }
@@ -114,7 +119,7 @@ public class ReducedBOQATest
         return assocs;
     }
 
-    static public ArrayList<String> getTopDiseasesAsByteStrings(final ReducedBoqa.Result res)
+    static public ArrayList<String> getTopDiseasesAsStrings(final ReducedBoqa.Result res)
     {
         // All of this is sorting diseases by marginals
         Integer[] order = new Integer[res.size()];
@@ -151,7 +156,7 @@ public class ReducedBOQATest
         return results;
     }
 
-    @Test
+    //@Test
     //this test
     //in reality, it seems like we really only need one giant test of correctness
     //the test needs to simulate the physician entering phenotypes in and getting the diseases out
@@ -165,7 +170,7 @@ public class ReducedBOQATest
         pheno_disease_freq = new HashMap<>();
 
         final ReducedBoqa boqa = new ReducedBoqa();
-
+        //boqa.getOntology().
         //boqa.getOntology().getTerm() //FROM THE TERMID, we can recover the terms, and also recover the indexes?
         //yes, we are sure that the ints produced are the same ints as used in the Boqa.java (since, we get the
         //vertex2ancestors just immediately from boqa)
@@ -199,7 +204,8 @@ public class ReducedBOQATest
         int num = 1000;
         assocs = generateAnnotations(num, slim);
 
-        ByteString item = new ByteString("item" + num);
+        trueDisease = new ByteString("item" + num);
+
         Random rnd = new Random(3); //this is our true disease
         for (int j = 0; j < rnd.nextInt(16) + 2; j++) {
             Term t;
@@ -210,7 +216,7 @@ public class ReducedBOQATest
 
             //how it works, is we store key:value pairs, regardless of whether key already exists
             //(hence not like a dictionary)
-            Association trueDiseasePhenotype = new Association(item, t.getIDAsString());
+            Association trueDiseasePhenotype = new Association(trueDisease, t.getIDAsString());
             System.out.println(trueDiseasePhenotype.getEvidence());
 
             //we have a huge array of size (#items by #terms large)
@@ -223,40 +229,19 @@ public class ReducedBOQATest
             //assocs.get(item).getAssociations();
             //System.err.println(a.toString());
             //print(a);
+
+            if (pheno_disease_freq1.containsKey(t)){
+                pheno_disease_freq1.get(t).put(trueDisease, 2);
+
+            }
+
+            else{
+                pheno_disease_freq1.put(t, new HashMap<ByteString, Integer>());
+                pheno_disease_freq1.get(t).put(trueDisease, 2); //these correspond to the frequency classes
+
+            }
             assocs.addAssociation(trueDiseasePhenotype); //this seems to not hve any effect on BOQA... (nvm, it is used inb boqa.setup)
         }
-        //save one of the things
-        //Term t1 = boqa.termEnumerator.getAnnotatedGenes(new TermID());
-        ByteString disease_2 = new ByteString(("item" + num));//otherwise we can just STORE ALL OF THESE
-
-
-        Gene2Associations s = assocs.get(item); //should do the inverse op and get the annotations
-        Gene2Associations s2 = assocs.get(disease_2); //should do the inverse op and get the annotations
-        //we can make membership queries to the g2a
-        //use the termcontainers etc. to make queries
-
-        //Note that most of our job is actually building the REVERSE thing:
-        s.getAssociations(); //gets all the associations
-        //we can just maintain an array (of all the terms) and build it up as we go through the
-        //associations for EACH disease.
-
-        //
-
-        // we need to obtain termIDs somehiow, from the BOQA, or the graph
-        //perhaps from the ranked list that we get back
-        //result
-        //s.containsID(91);
-
-
-
-
-        //now we know which is the true disease, as well as what it annotates
-
-
-        //pseudo:
-        //boqa.setup
-        //boqa.assignMarginals (get best score)
-        //inference step: do some sampling to see which might be best (like in Monte Carlo tree search)
 
         //Run BOQA once to get the initial guesses.
         ArrayList<String> initial_guesses = null;
@@ -264,23 +249,17 @@ public class ReducedBOQATest
         boqa.setup(ontology, assocs);
         //provides a reverse mapping (from HPO term to disease)
         GOTermEnumerator x = boqa.termEnumerator;
-        //x.
-
-        //however, we
+        x.getGenes();
 
         Observations o = new Observations();
         o.observations = new boolean[boqa.getOntology().getNumberOfTerms()];
-//        for (int i = 0; i < o.observations.length; i++)
-//        {
-//
-//            Random rand = new Random(1);
-//            o.observations[i] = (rand.nextInt(2) > 0) ? true :false;
-//            //(rand.nextInt(2) > 0) ? o.observations[i] = true : o.observations[i] = false;
-//        }
-        //o.observations[10] = true;  //has no effect
+
 
         long start = System.nanoTime();
         this.logger.info("Calculating");
+
+        boolean discovered = false;
+        while (!discovered){
         ReducedBoqa.Result res = boqa.assignMarginals(o, false, 1);
         //this returns an int array[], where each elt is the prob of item with that index
         //we can introconvert if we have the index2term for example
@@ -307,65 +286,16 @@ public class ReducedBOQATest
         }
 
         System.out.println("max_ind is " + max_ind+ " max is " + max);
-        System.out.println(getTopDiseasesAsByteStrings(res));
-        initial_guesses = getTopDiseasesAsByteStrings(res); //we have essentially the top ids now
+        System.out.println(getTopDiseasesAsStrings(res));
+        initial_guesses = getTopDiseasesAsStrings(res); //we have essentially the top ids now
         //from the ids, we can get the mappings they have
 
-        //termcounts is the count of each phenotype hit, indexed by the "index" of the term
-        //as seen in the BOQA term2ancestors semantics
-        //
-        Integer [] termcounts = new Integer[boqa.getOntology().getNumberOfTerms()];
-        //Integer [] observations = new Integer[boqa.getOntology().getNumberOfTerms()];
-        for (int i = 0; i < termcounts.length; i++){
-
-            termcounts[i] = 0;
-        }
-        for (String str: initial_guesses)
-        {
-            Gene2Associations temp = assocs.get(new ByteString(str)); // we could also have memoized from before
-            //temp.getAssociations(). //we would like an iterator
-//            for (TermID a : temp.getAssociations())
-//            {
-//                termcounts[a.id]++; //consider using the termcontainer,
-//                //just like how I am using the assocs
-//            }
-
-            for (TermID tid : temp.getAssociations()) {
-                //System.out.println("vale is " + termcounts[boqa.slimGraph.getVertexIndex(boqa.getOntology().getTerm(tid))]);
-                int index =boqa.slimGraph.getVertexIndex(boqa.getOntology().getTerm(tid));
-                //boqa.getOntology().getTermContainer().get().
-                //the question is
-
-                for (int parent: boqa.term2Ancestors[index] )
-                {
-                    //if (parent == 1) {
-
-                        termcounts[parent]++;
-                    //}
-                }
-                termcounts[index]++ ;
-
-            }
-
-            //this must be recursive to get ALL THE PHENOTYPES
-
-            //termcounts[0]++;
-            //Arrays.sort(termcounts, Collections.<Integer>reverseOrder());
-            //our own hashing function:
-
-        }
-
-        //most likely the terms are also just ints and so can be
-
-
-        PhenotypeSelector ps = null;
-        Object information = new Object();
-        int phenotype_to_check = ps.getBestPhenotype(information); //in here we do all the phenotype checks
+        int phenotype_to_check = getBestPhenotype(boqa, phenotype_frequencies); //in here we do all the phenotype checks
 
         //This allows us to go from TermID->index, but what about the other way>
         //int index =boqa.slimGraph.getVertexIndex(boqa.getOntology().getTerm(phenotype_to_check));
 
-        int index =phenotype_to_check; //much simpler
+        int index = phenotype_to_check; //much simpler
 
         boolean present_or_not = getObservation(index);
         //HashMap<Association, Integer> termCounts;
@@ -403,7 +333,12 @@ public class ReducedBOQATest
 
 
         //now, we recompute the marginals.
-        //o.setValue();
+        //o.setValue()if ()
+        if (trueDiseaseInTopNDiseases(trueDisease.toString(),initial_guesses))
+        {
+            discovered = true;
+        }
+    }
     }
 
 
@@ -517,6 +452,7 @@ public class ReducedBOQATest
             }
 
         }
+        //rb.getOntology().getSlimGraphView().getVertex()//this can recover the Term if need be
         return best_phenotype_index;
     }
 
@@ -527,6 +463,8 @@ public class ReducedBOQATest
     double [] phenotype_frequencies;
     double [] disease_frequencies;
     HashMap<Integer, HashMap<Integer, Integer>> pheno_disease_freq;
+    HashMap<Term, HashMap<ByteString, Integer>> pheno_disease_freq1;
+    ByteString trueDisease;
 
     /***
      * TODO skip phenotypes that have already been observed
@@ -608,7 +546,7 @@ public class ReducedBOQATest
         return score;
     }
 
-    @Test
+    //@Test
     public void testLargeNumberOfItems() throws IOException, OBOParserException, URISyntaxException
     {
 
@@ -639,7 +577,7 @@ public class ReducedBOQATest
         TermContainer tc = new TermContainer(hpoParser.getTermMap(), hpoParser.getFormatVersion(), hpoParser.getDate());
         Ontology ontology = new Ontology(tc);
         SlimDirectedGraphView<Term> slim = ontology.getSlimGraphView();
-        slim.get
+        //slim.get
         assocs = generateAnnotations(25, slim);
 
         //pseudo:
@@ -683,7 +621,7 @@ public class ReducedBOQATest
         }
 
         System.out.println("max_ind is " + max_ind+ " max is " + max);
-        System.out.println(getTopDiseasesAsByteStrings(res));
+        System.out.println(getTopDiseasesAsStrings(res));
         //for (double t: res.)
         //write a method that keeps track of the top 10 scores
         //use concept of lower and upper bound
@@ -706,7 +644,7 @@ public class ReducedBOQATest
         this.logger.info(((end - start) / 1000 / 1000) + "ms");
     }
 
-
+    @Deprecated
     static public ArrayList<String> getTopDiseases(final BOQA.Result res)
     {
         // All of this is sorting diseases by marginals
@@ -742,7 +680,7 @@ public class ReducedBOQATest
         return results;
     }
 
-    @Test
+    //@Test
     public void vanillaTestLargeNumberOfItems() throws IOException, OBOParserException, URISyntaxException
     {
 
