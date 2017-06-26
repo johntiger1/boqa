@@ -518,9 +518,34 @@ public class ReducedBOQATest
     //I2: Phenotype
     //I3: Frequency Category
     double [] phenotype_frequencies;
+    double [] disease_frequencies;
     HashMap <Integer, List<Integer>> disease_to_pheno;
+    HashMap <Integer, List<Integer>> pheno_to_disease;
+    HashMap<Integer, HashMap<Integer, Integer>> pheno_disease_freq = new HashMap<>();
+
+    public void computePhenotypeFrequencies()
+    {
+        double temp;
+        for (Integer pheno: pheno_disease_freq.keySet())
+        {
+            temp = 0;
+            //if we are just doing phenotype to disease, then we can directly use these elements
+            for (Map.Entry annotation: pheno_disease_freq.get(pheno).entrySet())
+            {
+                //Updates it based on the new disease_frequencies, and the original disease
+                temp += disease_frequencies[(Integer)annotation.getKey()] * (Integer)annotation.getValue();
+
+            }
+            phenotype_frequencies[pheno] = temp;
+
+        }
+    }
+
     /***
-     * Updates the phenotype frequencies.
+     * Updates the phenotype frequencies. Note that this is computed from the disease frequencies.
+     * @deprecated there is almost never a case where we only need ot update based on a single disease
+     *
+     *
      */
     public void updatePhenotypeFrequencies(int disease)
     {
