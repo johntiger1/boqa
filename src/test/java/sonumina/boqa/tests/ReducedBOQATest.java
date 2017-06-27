@@ -372,11 +372,7 @@ public class ReducedBOQATest {
 
         }
         Random r = new Random(21);
-        ;
-        if (r.nextDouble() <= probs)
-            return true;
-        else
-            return false;
+        return r.nextDouble() <= probs;
     }
 
     public ReducedBoqa.Result reduceDiseases(final ReducedBoqa.Result res) {
