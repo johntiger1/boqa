@@ -346,6 +346,22 @@ public class ReducedBOQATest {
         //However, these results must correspond with
 
         //rb.getOntology().getSlimGraphView().get;
+        //Randomly generate a number. If it is less than or equal to the probability given, then we report that the
+        //phenotype was observed (return True). Else return false.
+        //mapping is between bytestring and associations
+        //given a termid, we want to get the term out
+
+        Term t;
+        double probs = 0;
+        for (Association assoc: trueDiseaseMapping)
+        {
+            t = rb.getOntology().getTerm(assoc.getTermID());
+            //alternatvely, we should be able to recover from the bytestring
+            //trueDiseaseMapping.name()
+            pheno_disease_freq1.get(t).get(trueDisease);
+
+            assoc.getTermID();
+        }
 
         if (trueDiseaseMapping.containsID(rb.slimGraph.getVertex(index).getID())){
             return true;
