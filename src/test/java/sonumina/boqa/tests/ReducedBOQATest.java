@@ -288,7 +288,7 @@ public class ReducedBOQATest {
             initial_guesses = getTopDiseasesAsStrings(res); //we have essentially the top ids now
             //from the ids, we can get the mappings they have
 
-            int phenotype_to_check = getBestPhenotype(boqa, phenotype_frequencies); //in here we do all the phenotype checks
+            int phenotype_to_check = getBestPhenotype(boqa, phi_phenotype_frequencies); //in here we do all the phenotype checks
 
             //This allows us to go from TermID->index, but what about the other way>
             //int index =boqa.slimGraph.getVertexIndex(boqa.getOntology().getTerm(phenotype_to_check));
@@ -480,6 +480,7 @@ public class ReducedBOQATest {
     //I1: Disease
     //I2: Phenotype
     //I3: Frequency Category
+    double[] phi_phenotype_frequencies;
     double[] phenotype_frequencies;
     double[] disease_frequencies;
     HashMap<Integer, HashMap<Integer, Integer>> pheno_disease_freq;
@@ -494,7 +495,9 @@ public class ReducedBOQATest {
      * TODO skip phenotypes that have already been observed
      * TODO take into account descendant frequencies too
      */
-    public void computePhenotypeFrequencies(ReducedBoqa rb) {
+    //it would need to compute the intrinsics separately
+
+    public void computePhiPhenotypeFrequencies(ReducedBoqa rb) {
 
         double temp;
         for (Integer pheno : pheno_disease_freq.keySet()) {
@@ -503,19 +506,41 @@ public class ReducedBOQATest {
             for (Map.Entry annotation : pheno_disease_freq.get(pheno).entrySet()) {
                 //Updates it based on the new disease_frequencies, and the original disease
                 temp += disease_frequencies[(Integer) annotation.getKey()] * (Integer) annotation.getValue();
-                //The descendant component
-                for (Integer i: rb.term2Descendants[(Integer)annotation.getKey()])
-                {
-                    //actually don't add in these ones (we only want the COMPONENTS)
-                    //to get the components would be to just call this function again! 
-                    temp+=phenotype_frequencies[i];
 
-                }
 
             }
-            phenotype_frequencies[pheno] = temp;
+            phi_phenotype_frequencies[pheno] = temp;
 
         }
+
+    }
+
+    public void computePhenotypeFrequencies(ReducedBoqa rb)
+    {
+        double temp;
+        //either fill it left to right, or using the order found in the hashmap
+        for (Integer pheno : pheno_disease_freq.keySet()) {
+            temp = 0;
+
+            //The self component
+            temp+= phi_phenotype_frequencies[pheno];
+
+            //The descendant component
+            for (Integer i: rb.term2Descendants[pheno])
+            {
+                //actually don't add in these ones (we only want the COMPONENTS)
+                //to get the components would be to just call this function again!
+                temp+= phi_phenotype_frequencies[i];
+
+            }
+
+
+            phenotype_frequencies[pheno] =temp;
+        }
+
+
+
+
 
     }
 
