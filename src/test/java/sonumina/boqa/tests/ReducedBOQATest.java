@@ -300,6 +300,7 @@ public class ReducedBOQATest {
             //get input from physician, and update the observations object
             //ALL ancestors must be updated as well!
             //o doesn't have this information, so we need to full info from boqa:
+            if (present_or_not){
             for (int anc : boqa.term2Ancestors[index]) {
                 o.observations[anc] = true;
                 o.recordObs(anc, present_or_not); //only do this if we propagate positives up too
@@ -307,7 +308,7 @@ public class ReducedBOQATest {
 
                 //if its negative, should we
 
-            }
+            }}
             //this should all be abstracted to another function!
             o.recordObs(index, present_or_not);
 
@@ -491,8 +492,10 @@ public class ReducedBOQATest {
 
     /***
      * TODO skip phenotypes that have already been observed
+     * TODO take into account descendant frequencies too
      */
-    public void computePhenotypeFrequencies() {
+    public void computePhenotypeFrequencies(ReducedBoqa rb) {
+
         double temp;
         for (Integer pheno : pheno_disease_freq.keySet()) {
             temp = 0;
@@ -500,6 +503,14 @@ public class ReducedBOQATest {
             for (Map.Entry annotation : pheno_disease_freq.get(pheno).entrySet()) {
                 //Updates it based on the new disease_frequencies, and the original disease
                 temp += disease_frequencies[(Integer) annotation.getKey()] * (Integer) annotation.getValue();
+                //The descendant component
+                for (Integer i: rb.term2Descendants[(Integer)annotation.getKey()])
+                {
+                    //actually don't add in these ones (we only want the COMPONENTS)
+                    //to get the components would be to just call this function again! 
+                    temp+=phenotype_frequencies[i];
+
+                }
 
             }
             phenotype_frequencies[pheno] = temp;
