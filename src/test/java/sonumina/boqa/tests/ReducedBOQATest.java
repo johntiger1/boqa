@@ -334,7 +334,7 @@ public class ReducedBOQATest {
 
         }
     }
-
+    //Index is the phenotype to check
     //This should check the frequency map to see whether it will return True or not.
     //This will require us to know:
     //indexing by this SPECIFIC disease, we need to know P(ph|disease) which can be simply stored as P(ph), under
@@ -352,22 +352,31 @@ public class ReducedBOQATest {
         //given a termid, we want to get the term out
 
         Term t;
+        Term target_pheno_to_check = rb.slimGraph.getVertex(index);
         double probs = 0;
         for (Association assoc: trueDiseaseMapping)
         {
+
             t = rb.getOntology().getTerm(assoc.getTermID());
-            //alternatvely, we should be able to recover from the bytestring
-            //trueDiseaseMapping.name()
-            pheno_disease_freq1.get(t).get(trueDisease);
+            //check if the term is a descendant of the input index term
+            //Because you are your own ancestor, we do not need to deal with the self case specially.
+            if (rb.getOntology().getSlimGraphView().isAncestor(target_pheno_to_check,t ))
+            {
+                probs+= pheno_disease_freq1.get(t).get(trueDiseaseMapping.name()) ;
+            }
+            ///This just has the frequency class (1-5)
+            //for now, let us use it directly as P(ph|D)
 
-            assoc.getTermID();
+
+
+
         }
-
-        if (trueDiseaseMapping.containsID(rb.slimGraph.getVertex(index).getID())){
+        Random r = new Random(21);
+        ;
+        if (r.nextDouble() <= probs)
             return true;
-        }
-
-        return false;
+        else
+            return false;
     }
 
     public ReducedBoqa.Result reduceDiseases(final ReducedBoqa.Result res) {
