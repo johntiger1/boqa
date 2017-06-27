@@ -72,8 +72,22 @@ public class ReducedBoqa {
     //public HashMap<Integer,Boolean> registered_obserations; //we still need this to store whether observed
     public Observations o;
 
-    private double initial_beta = 0.01; //0.3 ; //this will approach the experimental beta
+    private double initial_beta = 0.3 ; //this will approach the experimental beta
     private double experimental_beta = 0.01 ;
+
+    public void setInitial_beta(double new_beta)
+    {
+        if (new_beta >= experimental_beta)
+        {
+            initial_beta = new_beta;
+        }
+
+    }
+
+    public double getInitial_beta()
+    {
+        return initial_beta;
+    }
 
 
     Ontology graph;
@@ -244,6 +258,7 @@ public class ReducedBoqa {
             for (int i = 0; i < this.term2Parents[node].length; i++) {
                 int parent = this.term2Parents[node][i];
                 //handle both false and null case
+                //TODO fix this so that null is checked FIRST (to avoid !null errors)
                 if (!o.real_observations.get(parent) || o.real_observations.get(parent) == null) {
                     if (!o.real_observations.get(node) || o.real_observations.get(node) == null) {
                         return ReducedConfiguration.NodeCase.INHERIT_FALSE; //wasn't actually false but inherited it..
