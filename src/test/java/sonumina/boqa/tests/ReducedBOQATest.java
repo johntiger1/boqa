@@ -493,22 +493,28 @@ public class ReducedBOQATest {
 
     /***
      * TODO skip phenotypes that have already been observed
-     * TODO take into account descendant frequencies too
      */
     //it would need to compute the intrinsics separately
 
     public void computePhiPhenotypeFrequencies(ReducedBoqa rb) {
 
         double temp;
-        for (Integer pheno : pheno_disease_freq.keySet()) {
+        int pheno;
+        for (Term pheno_term : pheno_disease_freq1.keySet()) {
             temp = 0;
+            //alternatively:
+            //rb.slimGraph.getVertexIndex()
+
+
             //if we are just doing phenotype to disease, then we can directly use these elements
-            for (Map.Entry annotation : pheno_disease_freq.get(pheno).entrySet()) {
+            for (Map.Entry annotation : pheno_disease_freq1.get(pheno_term).entrySet()) {
                 //Updates it based on the new disease_frequencies, and the original disease
-                temp += disease_frequencies[(Integer) annotation.getKey()] * (Integer) annotation.getValue();
+                temp += disease_frequencies[rb.item2Index.get(annotation.getKey())] * (Integer) annotation.getValue();
+                //now, we need to use the index of the Bytestring now!
 
 
             }
+            pheno = rb.getOntology().getSlimGraphView().getVertexIndex(pheno_term);
             phi_phenotype_frequencies[pheno] = temp;
 
         }
