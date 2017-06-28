@@ -74,7 +74,7 @@ public class ReducedBOQATest {
     //Diseases get 2 to 18 annotations, mirroring real life.
     public AssociationContainer generateAnnotations(int num, SlimDirectedGraphView<Term> slim
     ) {
-        pheno_disease_freq1 = new HashMap<>();
+        pheno_disease_freq = new HashMap<>();
 
         //initialize all the inner hashmaps:
 
@@ -97,12 +97,12 @@ public class ReducedBOQATest {
                 //we CAN do that!
                 //since for example, the interface between
                 //let us make it a mapping between terms, and items and frequencies
-                if (pheno_disease_freq1.containsKey(t)) {
-                    pheno_disease_freq1.get(t).put(item, 2);
+                if (pheno_disease_freq.containsKey(t)) {
+                    pheno_disease_freq.get(t).put(item, 2);
 
                 } else {
-                    pheno_disease_freq1.put(t, new HashMap<ByteString, Integer>());
-                    pheno_disease_freq1.get(t).put(item, 2); //these correspond to the frequency classes
+                    pheno_disease_freq.put(t, new HashMap<ByteString, Integer>());
+                    pheno_disease_freq.get(t).put(item, 2); //these correspond to the frequency classes
 
                 }
 
@@ -222,12 +222,12 @@ public class ReducedBOQATest {
             //System.err.println(a.toString());
             //print(a);
 
-            if (pheno_disease_freq1.containsKey(t)) {
-                pheno_disease_freq1.get(t).put(trueDisease, 2);
+            if (pheno_disease_freq.containsKey(t)) {
+                pheno_disease_freq.get(t).put(trueDisease, 2);
 
             } else {
-                pheno_disease_freq1.put(t, new HashMap<ByteString, Integer>());
-                pheno_disease_freq1.get(t).put(trueDisease, 2); //these correspond to the frequency classes
+                pheno_disease_freq.put(t, new HashMap<ByteString, Integer>());
+                pheno_disease_freq.get(t).put(trueDisease, 2); //these correspond to the frequency classes
 
             }
             trueDiseaseMapping.add(trueDiseasePhenotype);
@@ -287,6 +287,9 @@ public class ReducedBOQATest {
             initial_guesses = getTopDiseasesAsStrings(res); //we have essentially the top ids now
             //from the ids, we can get the mappings they have
 
+            computePhiPhenotypeFrequencies(boqa);
+            computePhenotypeFrequencies(boqa);
+            //update with the results of the new boqa run
             int phenotype_to_check = getBestPhenotype(boqa, phi_phenotype_frequencies); //in here we do all the phenotype checks
 
             //This allows us to go from TermID->index, but what about the other way>
@@ -362,7 +365,7 @@ public class ReducedBOQATest {
             //Because you are your own ancestor, we do not need to deal with the self case specially.
             if (rb.getOntology().getSlimGraphView().isAncestor(target_pheno_to_check,t ))
             {
-                probs+= pheno_disease_freq1.get(t).get(trueDiseaseMapping.name()) ;
+                probs+= pheno_disease_freq.get(t).get(trueDiseaseMapping.name()) ;
             }
             ///This just has the frequency class (1-5)
             //for now, let us use it directly as P(ph|D)
@@ -482,7 +485,8 @@ public class ReducedBOQATest {
     double[] phi_phenotype_frequencies;
     double[] phenotype_frequencies;
     double[] disease_frequencies;
-    HashMap<Term, HashMap<ByteString, Integer>> pheno_disease_freq1;
+    HashMap<Term, HashMap<ByteString, Integer>> pheno_disease_freq;
+    double [] freq_categories = {0.2,0.4,0.6,0.8,1};
     ByteString trueDisease;
     Set<Term> trueDiseasePhentoypes; //perhaps an association container might have been best
     //AssociationContainer;
@@ -498,16 +502,16 @@ public class ReducedBOQATest {
 
         double temp;
         int pheno;
-        for (Term pheno_term : pheno_disease_freq1.keySet()) {
+        for (Term pheno_term : pheno_disease_freq.keySet()) {
             temp = 0;
             //alternatively:
             //rb.slimGraph.getVertexIndex()
 
 
             //if we are just doing phenotype to disease, then we can directly use these elements
-            for (Map.Entry annotation : pheno_disease_freq1.get(pheno_term).entrySet()) {
+            for (Map.Entry annotation : pheno_disease_freq.get(pheno_term).entrySet()) {
                 //Updates it based on the new disease_frequencies, and the original disease
-                temp += disease_frequencies[rb.item2Index.get(annotation.getKey())] * (Integer) annotation.getValue();
+                temp += disease_frequencies[rb.item2Index.get((Integer) annotation.getKey())] * freq_categories[(Integer) annotation.getValue()];
                 //now, we need to use the index of the Bytestring now!
 
 
@@ -524,7 +528,7 @@ public class ReducedBOQATest {
         double temp;
         int pheno;
         //either fill it left to right, or using the order found in the hashmap
-        for (Term pheno_term : pheno_disease_freq1.keySet()) {
+        for (Term pheno_term : pheno_disease_freq.keySet()) {
             temp = 0;
             pheno = rb.getOntology().getSlimGraphView().getVertexIndex(pheno_term);
             //The self component
