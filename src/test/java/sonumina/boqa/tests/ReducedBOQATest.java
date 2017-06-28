@@ -524,10 +524,11 @@ public class ReducedBOQATest {
     public void computePhenotypeFrequencies(ReducedBoqa rb)
     {
         double temp;
+        int pheno;
         //either fill it left to right, or using the order found in the hashmap
-        for (Integer pheno : pheno_disease_freq.keySet()) {
+        for (Term pheno_term : pheno_disease_freq1.keySet()) {
             temp = 0;
-
+            pheno = rb.getOntology().getSlimGraphView().getVertexIndex(pheno_term);
             //The self component
             temp+= phi_phenotype_frequencies[pheno];
 
