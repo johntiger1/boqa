@@ -150,7 +150,7 @@ public class ReducedBoqa {
     public void setup(Ontology ontology, AssociationContainer assocs)
     {
         //this.registered_obserations = new HashMap<>();
-        this.o = new Observations();
+        //this.o = new Observations();
 
         this.assoc = assocs;
         this.graph = ontology;
@@ -282,7 +282,7 @@ public class ReducedBoqa {
             //when they are NOT inherited, what happens? a node CANNOT be made into a false
             //by another node--hence it IS conclusively false positve/negative
             //observed just means whether it was actually looked at or not
-            if (o.real_observations.get(node)) {
+            if (o.real_observations.containsKey(node) && o.real_observations.get(node)) {
                 return ReducedConfiguration.NodeCase.TRUE_OBSERVED_POSITIVE;
                 //ensure this is based on the correct beta being used (when being scored)
                 //however, it depends. Say we go with annotation propagation. Then, there is a
@@ -295,9 +295,6 @@ public class ReducedBoqa {
                 //however, under our current semantics, the probabilities no longer add to 1!
                 //since (1-e_beta) + (n_beta) > 1
                 //this probably has an effect on the probability distributions though
-
-                //MIA CIBC??! idk
-
             } else {
 
                 //really, this should just be false
@@ -306,7 +303,10 @@ public class ReducedBoqa {
                     return ReducedConfiguration.NodeCase.FALSE_OBSERVED_NEGATIVE;
 
                 }
-                return ReducedConfiguration.NodeCase.FALSE_UNOBSERVED_NEGATIVE;
+                return ReducedConfiguration.NodeCase.FALSE_UNOBSERVED_NEGATIVE; //this implicitly had two cases before
+                //hidden[node] AND the thing is NOT in the realo observations
+                //note that one case is messed up, since in order for it to have a value of true, it MUST be in the real_observations,
+                //i.e. AN observation must have been made
 
             }
         } else {
@@ -388,7 +388,10 @@ public class ReducedBoqa {
             return this.marginals.length;
         }
     }
-
+    public void setO(Observations o)
+    {
+        this.o = o;
+    }
     public Ontology getOntology()
     {
         return this.graph;

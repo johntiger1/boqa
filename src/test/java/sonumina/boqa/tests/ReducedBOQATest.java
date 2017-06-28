@@ -148,7 +148,7 @@ public class ReducedBOQATest {
         return results;
     }
 
-    //@Test
+    @Test
     //this test
     //in reality, it seems like we really only need one giant test of correctness
     //the test needs to simulate the physician entering phenotypes in and getting the diseases out
@@ -209,7 +209,6 @@ public class ReducedBOQATest {
             //how it works, is we store key:value pairs, regardless of whether key already exists
             //(hence not like a dictionary)
             Association trueDiseasePhenotype = new Association(trueDisease, t.getIDAsString());
-            System.out.println(trueDiseasePhenotype.getEvidence());
 
             //we have a huge array of size (#items by #terms large)
             //alternatively just maintain an arraylist of <item, arraylist <terms>>
@@ -223,11 +222,11 @@ public class ReducedBOQATest {
             //print(a);
 
             if (pheno_disease_freq.containsKey(t)) {
-                pheno_disease_freq.get(t).put(trueDisease, 2);
+                pheno_disease_freq.get(t).put(trueDisease, rnd.nextInt(freq_categories.length));
 
             } else {
                 pheno_disease_freq.put(t, new HashMap<ByteString, Integer>());
-                pheno_disease_freq.get(t).put(trueDisease, 2); //these correspond to the frequency classes
+                pheno_disease_freq.get(t).put(trueDisease, rnd.nextInt(freq_categories.length)); //these correspond to the frequency classes
 
             }
             trueDiseaseMapping.add(trueDiseasePhenotype);
@@ -235,17 +234,18 @@ public class ReducedBOQATest {
 
             assocs.addAssociation(trueDiseasePhenotype); //this seems to not hve any effect on BOQA... (nvm, it is used inb boqa.setup)
         }
-
+        Observations o = new Observations();
+        o.observations = new boolean[ontology.getNumberOfTerms()];
         //Run BOQA once to get the initial guesses.
         ArrayList<String> initial_guesses = null;
 
         boqa.setup(ontology, assocs);
+        boqa.setO(o);
         //provides a reverse mapping (from HPO term to disease)
         GOTermEnumerator x = boqa.termEnumerator;
         x.getGenes();
 
-        Observations o = new Observations();
-        o.observations = new boolean[boqa.getOntology().getNumberOfTerms()];
+
 
 
         long start = System.nanoTime();
@@ -253,11 +253,14 @@ public class ReducedBOQATest {
         int steps = 0;
         double increment = 0.01;
         boolean discovered = false;
+
         while (!discovered) {
 
             //boqa.setInitial_beta(boqa.getInitial_beta()-boqa.getInitial_beta()/30);
             //Alternatively, we could jsut have the difference too (inital beta-experimental beta)
             boqa.setInitial_beta(increment * steps);
+
+            //assign marginals with the new o.
             ReducedBoqa.Result res = boqa.assignMarginals(o, false, 1);
             //this returns an int array[], where each elt is the prob of item with that index
             //we can introconvert if we have the index2term for example
@@ -332,6 +335,7 @@ public class ReducedBOQATest {
             //o.setValue()if ()
             if (trueDiseaseInTopNDiseases(trueDisease.toString(), initial_guesses)) {
                 discovered = true;
+                System.out.println("we are finishedd!");
             }
 
 
