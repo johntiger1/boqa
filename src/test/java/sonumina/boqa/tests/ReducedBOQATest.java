@@ -158,7 +158,6 @@ public class ReducedBOQATest {
     //"lying akinator" you are allowed to tell one lie (or total # of answers * lie_rate)
     //
     public void testConvergence() throws IOException, OBOParserException, URISyntaxException {
-        pheno_disease_freq = new HashMap<>();
 
         final ReducedBoqa boqa = new ReducedBoqa();
         //boqa.getOntology().
@@ -483,7 +482,6 @@ public class ReducedBOQATest {
     double[] phi_phenotype_frequencies;
     double[] phenotype_frequencies;
     double[] disease_frequencies;
-    HashMap<Integer, HashMap<Integer, Integer>> pheno_disease_freq;
     HashMap<Term, HashMap<ByteString, Integer>> pheno_disease_freq1;
     ByteString trueDisease;
     Set<Term> trueDiseasePhentoypes; //perhaps an association container might have been best
