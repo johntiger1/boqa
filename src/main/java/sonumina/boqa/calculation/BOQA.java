@@ -555,7 +555,7 @@ public class BOQA
     //this seems to treat it like a TERM (by using the term2Children lookup table
     //STEP THE BACK: this only makes sense (i.e. NodeCase is ONLY defined for) observed nodes
     //in fact, observe: term2children will be quite large, even when only 1 disease
-    private Configuration.NodeCase getNodeCase(int node, boolean[] hidden, boolean[] observed)
+    private ReducedConfiguration.NodeCase getNodeCase(int node, boolean[] hidden, boolean[] observed)
     {
 
         //these two do false ___ propagation in the observed layer
@@ -589,7 +589,7 @@ public class BOQA
                     if (observed[node]) { //in the observed layer, parent points to child, so
                         //if child is on, then parenbt is on [contrary to how BN semantrics normally
                         //work, where really only parent affects child]
-                        return Configuration.NodeCase.INHERIT_TRUE; //the causality seems backwards
+                        return ReducedConfiguration.NodeCase.INHERIT_TRUE; //the causality seems backwards
 
                         //this is explaining WHY the node is on--it is on because of ONE of its kids!
                         //it (the parent) is only on because its child was als oon
@@ -602,7 +602,7 @@ public class BOQA
                         logger
                             .error(
                                 "A child of a node is on although the parent is not: Impossible configuration encountered!");
-                        return Configuration.NodeCase.FAULT;
+                        return ReducedConfiguration.NodeCase.FAULT;
                     }
                 }
 
@@ -620,13 +620,13 @@ public class BOQA
                 int parent = this.term2Parents[node][i];
                 if (!observed[parent]) {
                     if (!observed[node]) { //i.e. that we get our falses from a parent!!
-                        return Configuration.NodeCase.INHERIT_FALSE;
+                        return ReducedConfiguration.NodeCase.INHERIT_FALSE;
                     } else {
                         /* NaN */
                         logger
                             .error(
                                 "A parent of a node is off although the child is not: Impossible configuration encountered!");
-                        return Configuration.NodeCase.FAULT;
+                        return ReducedConfiguration.NodeCase.FAULT;
                     }
                 }
             }
@@ -672,18 +672,18 @@ public class BOQA
 
             //these correspond to the parents-and = 1 in the paper
             if (observed[node]) { //this synchronizes with the results from the paper (assuming above)
-                return Configuration.NodeCase.TRUE_POSITIVE;
+                return ReducedConfiguration.NodeCase.TRUE_POSITIVE;
             } else {
-                return Configuration.NodeCase.FALSE_NEGATIVE; //this is P=1 in the textbook
+                return ReducedConfiguration.NodeCase.FALSE_NEGATIVE; //this is P=1 in the textbook
             }
 
 
         } else { // if hidden is off
             /* Term is truly off */
             if (!observed[node]) {
-                return Configuration.NodeCase.TRUE_NEGATIVE;
+                return ReducedConfiguration.NodeCase.TRUE_NEGATIVE;
             } else {
-                return Configuration.NodeCase.FALSE_POSITIVE; //alpha (from the paper)
+                return ReducedConfiguration.NodeCase.FALSE_POSITIVE; //alpha (from the paper)
             }
         }
     }
@@ -719,7 +719,7 @@ public class BOQA
      * @return
      */
     private WeightedConfigurationList determineCasesForItem(int item, boolean[] observed,
-        boolean takeFrequenciesIntoAccount, boolean[] previousHidden, Configuration previousStats)
+        boolean takeFrequenciesIntoAccount, boolean[] previousHidden, ReducedConfiguration previousStats)
     {
         int numTerms = this.slimGraph.getNumberOfVertices();
 
