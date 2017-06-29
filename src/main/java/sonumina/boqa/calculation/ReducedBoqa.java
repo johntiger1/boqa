@@ -618,6 +618,7 @@ public class ReducedBoqa {
                     //System.out.print("aaa");
                     for (WeightedConfiguration wc : stats) //this is a list of weighted configs, which itself is simply a list of
                     {
+
                         System.out.println("Itme " + item);
                         System.out.println((ReducedConfiguration)wc.stat);
 

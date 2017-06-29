@@ -44,5 +44,5 @@ class WeightedConfiguration
 {
     public double factor;
 
-    public Configuration stat; //ideally this would be an interface
+    public ReducedConfiguration stat; //ideally this would be an interface
 }

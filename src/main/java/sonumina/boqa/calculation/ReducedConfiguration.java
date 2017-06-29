@@ -112,5 +112,14 @@ final public class ReducedConfiguration extends Configuration implements Cloneab
 
         return str;
     }
+    @Override
+    public Configuration clone()
+    {
+        ReducedConfiguration c = new ReducedConfiguration();
+        for (int i = 0; i < this.stats.length; i++) {
+            c.stats[i] = this.stats[i];
+        }
+        return c;
+    }
 
 }

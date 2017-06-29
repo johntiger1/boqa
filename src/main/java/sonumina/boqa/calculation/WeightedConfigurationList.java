@@ -57,7 +57,7 @@ public class WeightedConfigurationList implements Iterable<WeightedConfiguration
         return this.tupelList.iterator();
     }
 
-    public void add(Configuration stat, double factor)
+    public void add(ReducedConfiguration stat, double factor)
     {
         WeightedConfiguration t = new WeightedConfiguration();
         t.stat = stat;

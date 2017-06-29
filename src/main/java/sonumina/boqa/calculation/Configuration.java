@@ -167,7 +167,7 @@ package sonumina.boqa.calculation;
     }
 
     @Override
-    final public Configuration clone()
+    public Configuration clone()
     {
         Configuration c = new Configuration();
         for (int i = 0; i < this.stats1.length; i++) {

@@ -740,7 +740,7 @@ public class BOQA
         WeightedConfigurationList statsList = new WeightedConfigurationList();
 
         boolean[] hidden;
-        Configuration stats;
+        ReducedConfiguration stats;
 
         if (previousHidden == null) {
             hidden = new boolean[numTerms];
