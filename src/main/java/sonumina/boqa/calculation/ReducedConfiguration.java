@@ -42,7 +42,7 @@ import java.util.HashMap;
  *
  * @author Sebastian Bauer
  */
-final public class ReducedConfiguration extends Configuration implements Cloneable
+final public class ReducedConfiguration implements Cloneable
 {
     public static enum NodeCase
     {
@@ -113,13 +113,34 @@ final public class ReducedConfiguration extends Configuration implements Cloneab
         return str;
     }
     @Override
-    public Configuration clone()
+    public ReducedConfiguration clone()
     {
         ReducedConfiguration c = new ReducedConfiguration();
         for (int i = 0; i < this.stats.length; i++) {
             c.stats[i] = this.stats[i];
         }
         return c;
+    }
+
+    final public double falsePositiveRate()
+    {
+        return getCases(ReducedConfiguration.NodeCase.FALSE_POSITIVE)
+                / (double) (getCases(ReducedConfiguration.NodeCase.FALSE_POSITIVE)
+                + getCases(ReducedConfiguration.NodeCase.TRUE_NEGATIVE));
+    }
+
+    /**
+     * Return false negative rate.
+     *
+     * @return
+     */
+    final public double falseNegativeRate()
+    {
+        int num_false_obs_neg = getCases(NodeCase.FALSE_OBSERVED_NEGATIVE);
+        int num_false_unobs_neg = getCases(NodeCase.FALSE_UNOBSERVED_NEGATIVE);
+        return (num_false_obs_neg + num_false_unobs_neg)
+                / (double) (num_false_obs_neg + num_false_unobs_neg
+                + getCases(NodeCase.TRUE_OBSERVED_POSITIVE));
     }
 
 }

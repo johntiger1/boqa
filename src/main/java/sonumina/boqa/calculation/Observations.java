@@ -68,7 +68,7 @@ public class Observations
     }
     //public ArrayList<obs_value> real_observations= new ArrayList<>();
     public HashMap<Integer, Boolean> real_observations;
-    public Configuration observationStats; //this is our familiar 4 term!
+    public ReducedConfiguration observationStats; //this is our familiar 4 term!
 
 //    //TODO UNSAFE METHOD
 //    public void recordObservation(int index, boolean value)

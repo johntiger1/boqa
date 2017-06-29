@@ -618,9 +618,8 @@ public class ReducedBoqa {
                     //System.out.print("aaa");
                     for (WeightedConfiguration wc : stats) //this is a list of weighted configs, which itself is simply a list of
                     {
-
                         System.out.println("Itme " + item);
-                        System.out.println((ReducedConfiguration)wc.stat);
+                        System.out.println(wc.stat);
 
 
 
@@ -645,7 +644,8 @@ public class ReducedBoqa {
                         for (int b = 0; b < ReducedBoqa.this.BETA_GRID.length; b++) {
                             //This scor is a weighted sum!
                             scores[item][a][b] = stats.score(ReducedBoqa.this.ALPHA_GRID[a],
-                                    ReducedBoqa.this.BETA_GRID[b]);
+                                    experimental_beta,initial_beta);
+
                             //normally we maximize this
                             res.scores[item] = Util.logAdd(res.scores[item], scores[item][a][b]);
                         }
@@ -674,7 +674,7 @@ public class ReducedBoqa {
                             fnr = 0.5;
                         }
 
-                        idealScores[item] = stats.score(fpr, fnr);
+                        idealScores[item] = stats.score(fpr, experimental_beta,initial_beta);
                         //run it again with the **actual** scores
                     }
                 }
