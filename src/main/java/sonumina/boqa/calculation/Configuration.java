@@ -54,25 +54,25 @@ package sonumina.boqa.calculation;
     }
     //internal record of the states of all the nodes @TODO optimize to just link it directly
     //to the ontology?
-    final private int[] stats = new int[NodeCase.values().length]; ///this is literally just 8 or so
+    final private int[] stats1 = new int[NodeCase.values().length]; ///this is literally just 8 or so
     //values wide!!!
     //J I finally get it: these are the BUCKETS from before, that we use to multiply everything
     public void increment(Configuration.NodeCase c)
     {
-        this.stats[c.ordinal()]++;
+        this.stats1[c.ordinal()]++;
     }
 
     public void decrement(Configuration.NodeCase c)
     {
-        this.stats[c.ordinal()]--;
+        this.stats1[c.ordinal()]--;
     }
 
     @Override
     public String toString()
     {
         String str = "";
-        for (int i = 0; i < this.stats.length; i++) {
-            str += " " + NodeCase.values()[i].name() + ": " + this.stats[i] + "\n";
+        for (int i = 0; i < this.stats1.length; i++) {
+            str += " " + NodeCase.values()[i].name() + ": " + this.stats1[i] + "\n";
         }
 
         return str;
@@ -86,7 +86,7 @@ package sonumina.boqa.calculation;
      */
     public int getCases(Configuration.NodeCase c)
     {
-        return this.stats[c.ordinal()];
+        return this.stats1[c.ordinal()];
     }
 
     /**
@@ -97,7 +97,7 @@ package sonumina.boqa.calculation;
     final public int getTotalCases()
     {
         int c = 0;
-        for (int stat : this.stats) {
+        for (int stat : this.stats1) {
             c += stat;
         }
         return c;
@@ -151,18 +151,18 @@ package sonumina.boqa.calculation;
      */
     final public void add(Configuration toAdd)
     {
-        for (int i = 0; i < this.stats.length; i++) {
-            this.stats[i] += toAdd.stats[i];
+        for (int i = 0; i < this.stats1.length; i++) {
+            this.stats1[i] += toAdd.stats1[i];
         }
     }
 
     /**
-     * Clear the stats.
+     * Clear the stats1.
      */
     final public void clear()
     {
-        for (int i = 0; i < this.stats.length; i++) {
-            this.stats[i] = 0;
+        for (int i = 0; i < this.stats1.length; i++) {
+            this.stats1[i] = 0;
         }
     }
 
@@ -170,16 +170,16 @@ package sonumina.boqa.calculation;
     final public Configuration clone()
     {
         Configuration c = new Configuration();
-        for (int i = 0; i < this.stats.length; i++) {
-            c.stats[i] = this.stats[i];
+        for (int i = 0; i < this.stats1.length; i++) {
+            c.stats1[i] = this.stats1[i];
         }
         return c;
     }
 
     public boolean equals(Configuration obj)
     {
-        for (int i = 0; i < obj.stats.length; i++) {
-            if (obj.stats[i] != this.stats[i]) {
+        for (int i = 0; i < obj.stats1.length; i++) {
+            if (obj.stats1[i] != this.stats1[i]) {
                 return false;
             }
         }

@@ -619,7 +619,9 @@ public class ReducedBoqa {
                     for (WeightedConfiguration wc : stats) //this is a list of weighted configs, which itself is simply a list of
                     {
                         System.out.println("Itme " + item);
-                        System.out.println(wc.stat);
+                        System.out.println((ReducedConfiguration)wc.stat);
+
+
 
                     }
                     //since multithreading with the differentials would be too difficult,

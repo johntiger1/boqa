@@ -749,7 +749,7 @@ public class BOQA
         }
 
         if (previousStats == null) {
-            stats = new Configuration();
+            stats = new ReducedConfiguration();
         } else {
             stats = previousStats;
         }
@@ -788,6 +788,7 @@ public class BOQA
             }
 
             statsList.add(stats.clone(), 0);
+
         } else {
             /* Initialize stats */
             if (previousHidden != null) {

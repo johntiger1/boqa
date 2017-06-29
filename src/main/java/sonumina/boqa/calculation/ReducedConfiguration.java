@@ -57,7 +57,7 @@ final public class ReducedConfiguration extends Configuration implements Cloneab
         FALSE_OBSERVED_NEGATIVE
     }
 
-    final private int[] stats = new int[ReducedConfiguration.NodeCase.values().length]; ///this is literally just 8 or so
+    final public int[] stats = new int[ReducedConfiguration.NodeCase.values().length]; ///this is literally just 8 or so
 
     public int getCases(ReducedConfiguration.NodeCase c)
     {
@@ -102,6 +102,15 @@ final public class ReducedConfiguration extends Configuration implements Cloneab
         this.stats[c.ordinal()]++;
     }
 
+    @Override
+    public String toString()
+    {
+        String str = "";
+        for (int i = 0; i < this.stats.length; i++) {
+            str += " " + ReducedConfiguration.NodeCase.values()[i].name() + ": " + this.stats[i] + "\n";
+        }
 
+        return str;
+    }
 
 }
