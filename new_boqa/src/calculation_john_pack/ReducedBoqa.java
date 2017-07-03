@@ -207,13 +207,13 @@ public class ReducedBoqa {
     boolean areFalsePositivesPropagated()
     {
 
-        return false;
+        return true;
     }
 
     boolean areFalseNegativesPropagated()
     {
 
-        return false;
+        return true;
     }
 
     private ReducedConfiguration.NodeCase getNodeCase(int node, boolean[] hidden,Observations o)
@@ -225,7 +225,9 @@ public class ReducedBoqa {
               * and that correspondingly sets my calculations)*/
             for (int i = 0; i < this.term2Children[node].length; i++) {
                 int chld = this.term2Children[node][i]; //TODO use a lambda here, or some python syn
-                if (o.real_observations.get(chld)) { //this explains false positive propagation
+                //one reeason the following line works is because containsKey is a necessary condition for real_observations.get(chld)
+                //the opposite case is if o.real_observations.get() is false, which is not handled anyways--this is not a False Positive!
+                if (o.real_observations.containsKey(chld) && o.real_observations.get(chld)) { //this explains false positive propagation
                     //translation: if both are observed has no real analogue anymore
                     //actually, if we actually do do true propagation, then
                     //we can just check that both are in
@@ -236,7 +238,7 @@ public class ReducedBoqa {
                     //if both are unobserved, it DOES have an analogue though! Both are not in
                     //the registered observations
 
-                    if (o.real_observations.get(node)) { //in the observed layer, parent points to child, so
+                    if (o.real_observations.containsKey(node) && (o.real_observations.get(node))) { //in the observed layer, parent points to child, so
                         //if child is on, then parenbt is on [contrary to how BN semantrics normally
                         //work, where really only parent affects child]
                         return ReducedConfiguration.NodeCase.INHERIT_TRUE; //the causality seems backwards
@@ -245,7 +247,7 @@ public class ReducedBoqa {
                         //preprocessing step
 
                         //we assume that it became true via inheritance
-                    } else {
+                    } else if (o.real_observations.containsKey(node) && (!o.real_observations.get(node))) {
                         /* NaN */
                         return ReducedConfiguration.NodeCase.FAULT;
                     }
@@ -258,11 +260,10 @@ public class ReducedBoqa {
             for (int i = 0; i < this.term2Parents[node].length; i++) {
                 int parent = this.term2Parents[node][i];
                 //handle both false and null case
-                //TODO fix this so that null is checked FIRST (to avoid !null errors)
-                if (!o.real_observations.get(parent) || o.real_observations.get(parent) == null) {
-                    if (!o.real_observations.get(node) || o.real_observations.get(node) == null) {
+                if (o.real_observations.containsKey(parent) && !o.real_observations.get(parent)) {
+                    if (o.real_observations.containsKey(node) && !o.real_observations.get(node)) {
                         return ReducedConfiguration.NodeCase.INHERIT_FALSE; //wasn't actually false but inherited it..
-                    } else {
+                    } else if (o.real_observations.containsKey(node) && o.real_observations.get(node)){
                         /* NaN */
                          return ReducedConfiguration.NodeCase.FAULT;
                     }
