@@ -260,11 +260,11 @@ public class ReducedBoqa {
             for (int i = 0; i < this.term2Parents[node].length; i++) {
                 int parent = this.term2Parents[node][i];
                 //handle both false and null case
-                if (o.real_observations.containsKey(parent) && !o.real_observations.get(parent)) {
-                    if (o.real_observations.containsKey(node) && !o.real_observations.get(node)) {
+                if (o.real_observations.get(parent) == null || !o.real_observations.get(parent))  {
+                    if (o.real_observations.get(node) == null || !o.real_observations.get(node)) {
                         return ReducedConfiguration.NodeCase.INHERIT_FALSE; //wasn't actually false but inherited it..
-                    } else if (o.real_observations.containsKey(node) && o.real_observations.get(node)){
-                        /* NaN */
+                    } else {
+                        /* NaN (the only other case is where it isnt null and it WAS observed!)*/
                          return ReducedConfiguration.NodeCase.FAULT;
                     }
                 }
@@ -313,7 +313,9 @@ public class ReducedBoqa {
         } else {
             //Note this will cause errors!: !o.real_observations.get(node)
             /* Term is truly off */
+
             if (o.real_observations.get(node) == null|| !o.real_observations.get(node)) {
+
                 return ReducedConfiguration.NodeCase.TRUE_NEGATIVE;
             } else {
                 //however, this doesn't really make sense anymore: how can it be fp if indeed
