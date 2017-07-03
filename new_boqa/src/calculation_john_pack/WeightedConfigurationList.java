@@ -35,8 +35,6 @@
 
 package calculation_john_pack;
 
-import calculation_john_pack.Util;
-
 import java.util.ArrayList;
 import java.util.Iterator;
 

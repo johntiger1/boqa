@@ -8,7 +8,6 @@ import ontologizer.go.Term;
 import ontologizer.go.TermID;
 import ontologizer.set.PopulationSet;
 import ontologizer.types.ByteString;
-import calculation_john_pack.Util;
 import sonumina.math.graph.SlimDirectedGraphView;
 
 import java.util.ArrayList;
