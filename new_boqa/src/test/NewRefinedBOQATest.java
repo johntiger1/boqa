@@ -59,6 +59,7 @@ public class NewRefinedBOQATest {
     }
 
     public boolean trueDiseaseInTopNDiseases(String target, List<String> top) {
+
         for (String s : top) {
             if (target.equals(s))
                 return true;
@@ -94,7 +95,7 @@ public class NewRefinedBOQATest {
                 //since for example, the interface between
                 //let us make it a mapping between terms, and items and frequencies
                 if (pheno_disease_freq.containsKey(t)) {
-                    pheno_disease_freq.get(t).put(item, 2);
+                    pheno_disease_freq.get(t).put(item, 2); //TODO, make this vary based on the length of the freq array
 
                 } else {
                     pheno_disease_freq.put(t, new HashMap<ByteString, Integer>());
@@ -203,7 +204,7 @@ public class NewRefinedBOQATest {
     //I3: Frequency Category
     double[] phi_phenotype_frequencies;
     double[] phenotype_frequencies;
-    double[] disease_frequencies;
+    double[] disease_frequencies; //this is actually just BOQA's marginals
     HashMap<Term, HashMap<ByteString, Integer>> pheno_disease_freq;
     double [] freq_categories = {0.2,0.4,0.6,0.8,1};
     ByteString trueDisease;
@@ -218,19 +219,31 @@ public class NewRefinedBOQATest {
     //it would need to compute the intrinsics separately
 
     public void computePhiPhenotypeFrequencies(ReducedBoqa rb) {
-
+        System.out.println("starting compute of Phi");
         double temp;
+        double counter = 0;
         int pheno;
+        System.out.println("size is" + pheno_disease_freq.size());
         for (Term pheno_term : pheno_disease_freq.keySet()) {
+            counter++;
+
             temp = 0;
             //alternatively:
             //rb.slimGraph.getVertexIndex()
 
-
+            ByteString bs;
+            //ideally, we have a bytestring->index
             //if we are just doing phenotype to disease, then we can directly use these elements
             for (Map.Entry annotation : pheno_disease_freq.get(pheno_term).entrySet()) {
+
+                pheno_disease_freq.get(pheno_term).size();
                 //Updates it based on the new disease_frequencies, and the original disease
-                temp += disease_frequencies[rb.item2Index.get((Integer) annotation.getKey())] * freq_categories[(Integer) annotation.getValue()];
+                double phen_given_disease;
+                phen_given_disease = disease_frequencies[rb.item2Index.get( annotation.getKey())];
+
+                double basal_disease_rate = freq_categories[(Integer) annotation.getValue()];
+
+                temp += disease_frequencies[rb.item2Index.get( annotation.getKey())] * freq_categories[(Integer) annotation.getValue()];
                 //now, we need to use the index of the Bytestring now!
 
 
@@ -239,11 +252,13 @@ public class NewRefinedBOQATest {
             phi_phenotype_frequencies[pheno] = temp;
 
         }
+        System.out.println("finish compute of Phi");
 
     }
 
     public void computePhenotypeFrequencies(ReducedBoqa rb)
     {
+        System.out.println("starting compute of phen-freq");
         double temp;
         int pheno;
         //either fill it left to right, or using the order found in the hashmap
@@ -265,6 +280,7 @@ public class NewRefinedBOQATest {
 
             phenotype_frequencies[pheno] =temp;
         }
+        System.out.println("finish compute of phen-freq");
 
 
 
@@ -427,7 +443,11 @@ public class NewRefinedBOQATest {
         int steps = 0;
         double increment = 0.01;
         boolean discovered = false;
-
+        phenotype_frequencies = new double[boqa.getOntology().getNumberOfTerms()]; //alternatively, just copy over the
+        //array length from the item2ancestors for example
+        phi_phenotype_frequencies = new double[boqa.getOntology().getNumberOfTerms()];
+        ReducedBoqa.Result res=new ReducedBoqa.Result();
+         //null for now, but will later be updated
         while (!discovered) {
 
             //boqa.setInitial_beta(boqa.getInitial_beta()-boqa.getInitial_beta()/30);
@@ -435,7 +455,9 @@ public class NewRefinedBOQATest {
             boqa.setInitial_beta(increment * steps);
 
             //assign marginals with the new o.
-            ReducedBoqa.Result res = boqa.assignMarginals(o, false, 1);
+            res = boqa.assignMarginals(o, false, 1);
+            disease_frequencies = res.marginals; //TODO doesn't need to be called on every loop
+
             //this returns an int array[], where each elt is the prob of item with that index
             //we can introconvert if we have the index2term for example
             //it is interesting since they almost exclusively interface with the int id representations
@@ -464,8 +486,10 @@ public class NewRefinedBOQATest {
             initial_guesses = getTopDiseasesAsStrings(res); //we have essentially the top ids now
             //from the ids, we can get the mappings they have
 
+            System.out.println("got to this point11");
             computePhiPhenotypeFrequencies(boqa);
             computePhenotypeFrequencies(boqa);
+
             //update with the results of the new boqa run
             int phenotype_to_check = getBestPhenotype(boqa, phi_phenotype_frequencies); //in here we do all the phenotype checks
 
@@ -512,6 +536,7 @@ public class NewRefinedBOQATest {
                 System.out.println("we are finishedd!");
             }
 
+            System.out.println("got to this point");
 
         }
     }
