@@ -381,7 +381,7 @@ public class NewRefinedBOQATest {
 
         Ontology ontology = new Ontology(tc);
         SlimDirectedGraphView<Term> slim = ontology.getSlimGraphView();
-        int num = 1000;
+        int num = 20;
         assocs = generateAnnotations(num, slim);
 
         trueDisease = new ByteString("item" + num);

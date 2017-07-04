@@ -619,21 +619,21 @@ public class ReducedBoqa {
                     //stats only has 1 element
                     //moreover, we can get a new element each time using the iterator
                     //System.out.print("aaa");
-                    for (WeightedConfiguration wc : stats) //this is a list of weighted configs, which itself is simply a list of
-                    {
-                        System.out.println("Itme " + item);
-                        System.out.println(wc.stat);
-
-
-
-                    }
+//                    for (WeightedConfiguration wc : stats) //this is a list of weighted configs, which itself is simply a list of
+//                    {
+//                        System.out.println("Itme " + item);
+//                        System.out.println(wc.stat);
+//
+//
+//
+//                    }
                     //since multithreading with the differentials would be too difficult,
                     //we only sequentially set flags in the stats, (when we only have one process)
 
                     //PERHAPS: we should assign stats to some of the res.
                     //In general, res.stats is not updated again, sadly
 
-                    System.out.println(stats.toString());
+                    //System.out.println(stats.toString());
                     //if numthreads > 1 then null, else previousHidden
 
                     //J: the scoring function is critical; also this seems to be finding the best
@@ -654,7 +654,7 @@ public class ReducedBoqa {
                         }
                     }
 
-                    System.out.println(observations.observationStats != null);
+                    //System.out.println(observations.observationStats != null);
                     if (observations.observationStats != null) {
                         double fpr = observations.observationStats.falsePositiveRate();
                         if (fpr == 0) {
