@@ -252,19 +252,21 @@ public class NewRefinedBOQATest {
 
         }
         System.out.println("finish compute of Phi");
-        System.out.println("done, took " + (System.nanoTime()-start));
+        //System.out.println("done, took " + (System.nanoTime()-start));
 
     }
 
     public void computePhenotypeFrequencies(ReducedBoqa rb)
     {
+        long start = System.nanoTime();
         System.out.println("starting compute of phen-freq");
         double temp;
         int pheno;
+        SlimDirectedGraphView<Term> graph = rb.getOntology().getSlimGraphView();
         //either fill it left to right, or using the order found in the hashmap
         for (Term pheno_term : pheno_disease_freq.keySet()) {
             temp = 0;
-            pheno = rb.getOntology().getSlimGraphView().getVertexIndex(pheno_term);
+            pheno = graph.getVertexIndex(pheno_term);
             //The self component
             temp+= phi_phenotype_frequencies[pheno];
 
@@ -281,6 +283,7 @@ public class NewRefinedBOQATest {
             phenotype_frequencies[pheno] =temp;
         }
         System.out.println("finish compute of phen-freq");
+        System.out.println("done, took " + (System.nanoTime()-start));
 
 
 
@@ -381,7 +384,7 @@ public class NewRefinedBOQATest {
 
         Ontology ontology = new Ontology(tc);
         SlimDirectedGraphView<Term> slim = ontology.getSlimGraphView();
-        int num = 100;
+        int num = 1000;
         assocs = generateAnnotations(num, slim);
 
         trueDisease = new ByteString("item" + num);
