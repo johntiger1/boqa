@@ -544,7 +544,7 @@ public class ReducedBoqa {
         return statsList;
     }
 
-    public Result assignMarginals(final Observations observations, final boolean takeFrequenciesIntoAccount,
+    public Result assignMarginals( Observations observations, final boolean takeFrequenciesIntoAccount,
                                        final int numThreads)
     {
 

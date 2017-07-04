@@ -65,6 +65,7 @@ public class Observations
     public Observations()
     {
         this.real_observations = new HashMap<>();
+        //observations should be set when necessary (fixed size)
     }
     //public ArrayList<obs_value> real_observations= new ArrayList<>();
     public HashMap<Integer, Boolean> real_observations;

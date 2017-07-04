@@ -136,7 +136,7 @@ public class NewRefinedBOQATest {
         //for (int i = 0; i < 20 && i<order.length; i++) {
 
         //order.length/2
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < 11; i++) {
             int id = order[i]; //presumably, order[i] is now in order from lowest to msot score
             results.add("item" + id); //bytestrings can be immediately constructed from this
             //"Disease "+ id + "\t"  + "Probs"  + res.getScore(id) ); //all amrginals are the same...
@@ -381,7 +381,7 @@ public class NewRefinedBOQATest {
 
         Ontology ontology = new Ontology(tc);
         SlimDirectedGraphView<Term> slim = ontology.getSlimGraphView();
-        int num = 20;
+        int num = 10;
         assocs = generateAnnotations(num, slim);
 
         trueDisease = new ByteString("item" + num);
@@ -449,7 +449,9 @@ public class NewRefinedBOQATest {
         ReducedBoqa.Result res=new ReducedBoqa.Result();
          //null for now, but will later be updated
         while (!discovered) {
-
+            System.out.println("this is step" + steps);
+            System.out.println("These are the new observations");
+            System.out.println(boqa.o.real_observations.toString());
             //boqa.setInitial_beta(boqa.getInitial_beta()-boqa.getInitial_beta()/30);
             //Alternatively, we could jsut have the difference too (inital beta-experimental beta)
             boqa.setInitial_beta(increment * steps);
