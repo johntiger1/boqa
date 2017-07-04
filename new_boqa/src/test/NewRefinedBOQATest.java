@@ -219,11 +219,16 @@ public class NewRefinedBOQATest {
     //it would need to compute the intrinsics separately
 
     public void computePhiPhenotypeFrequencies(ReducedBoqa rb) {
+        long start = System.nanoTime();
         System.out.println("starting compute of Phi");
+
         double temp;
         double counter = 0;
         int pheno;
         System.out.println("size is" + pheno_disease_freq.size());
+
+        SlimDirectedGraphView<Term> graph = rb.getOntology().getSlimGraphView();
+
         for (Term pheno_term : pheno_disease_freq.keySet()) {
             counter++;
 
@@ -236,23 +241,18 @@ public class NewRefinedBOQATest {
             //if we are just doing phenotype to disease, then we can directly use these elements
             for (Map.Entry annotation : pheno_disease_freq.get(pheno_term).entrySet()) {
 
-                pheno_disease_freq.get(pheno_term).size();
-                //Updates it based on the new disease_frequencies, and the original disease
-                double phen_given_disease;
-                phen_given_disease = disease_frequencies[rb.item2Index.get( annotation.getKey())];
-
-                double basal_disease_rate = freq_categories[(Integer) annotation.getValue()];
-
                 temp += disease_frequencies[rb.item2Index.get( annotation.getKey())] * freq_categories[(Integer) annotation.getValue()];
                 //now, we need to use the index of the Bytestring now!
 
 
             }
-            pheno = rb.getOntology().getSlimGraphView().getVertexIndex(pheno_term);
+            pheno = graph.getVertexIndex(pheno_term);
+            //pheno = rb.getOntology().getSlimGraphView().getVertexIndex(pheno_term);
             phi_phenotype_frequencies[pheno] = temp;
 
         }
         System.out.println("finish compute of Phi");
+        System.out.println("done, took " + (System.nanoTime()-start));
 
     }
 
@@ -381,7 +381,7 @@ public class NewRefinedBOQATest {
 
         Ontology ontology = new Ontology(tc);
         SlimDirectedGraphView<Term> slim = ontology.getSlimGraphView();
-        int num = 10;
+        int num = 100;
         assocs = generateAnnotations(num, slim);
 
         trueDisease = new ByteString("item" + num);
