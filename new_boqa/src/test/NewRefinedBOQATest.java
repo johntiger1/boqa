@@ -95,11 +95,11 @@ public class NewRefinedBOQATest {
                 //since for example, the interface between
                 //let us make it a mapping between terms, and items and frequencies
                 if (pheno_disease_freq.containsKey(t)) {
-                    pheno_disease_freq.get(t).put(item, 2); //TODO, make this vary based on the length of the freq array
+                    pheno_disease_freq.get(t).put(item, rnd.nextInt(freq_categories.length)); //TODO, make this vary based on the length of the freq array
 
                 } else {
                     pheno_disease_freq.put(t, new HashMap<ByteString, Integer>());
-                    pheno_disease_freq.get(t).put(item, 2); //these correspond to the frequency classes
+                    pheno_disease_freq.get(t).put(item, rnd.nextInt(freq_categories.length)); //these correspond to the frequency classes
 
                 }
 
@@ -136,7 +136,7 @@ public class NewRefinedBOQATest {
         //for (int i = 0; i < 20 && i<order.length; i++) {
 
         //order.length/2
-        for (int i = 0; i < 11; i++) {
+        for (int i = 0; i < 10; i++) {
             int id = order[i]; //presumably, order[i] is now in order from lowest to msot score
             results.add("item" + id); //bytestrings can be immediately constructed from this
             //"Disease "+ id + "\t"  + "Probs"  + res.getScore(id) ); //all amrginals are the same...
