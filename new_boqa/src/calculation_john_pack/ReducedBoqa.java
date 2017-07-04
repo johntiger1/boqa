@@ -207,13 +207,13 @@ public class ReducedBoqa {
     boolean areFalsePositivesPropagated()
     {
 
-        return true;
+        return false;
     }
 
     boolean areFalseNegativesPropagated()
     {
 
-        return true;
+        return false;
     }
 
     private ReducedConfiguration.NodeCase getNodeCase(int node, boolean[] hidden,Observations o)
