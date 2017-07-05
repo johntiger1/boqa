@@ -164,13 +164,21 @@ public class NewRefinedBOQATest {
                 //actually, we must set ALL the above nodes to true too!
                 rb.o.recordObs(i, true); //actually this is almost NEVER true (since negatives don't tell us anything more)
                 turnedOn = setAncestors(rb, i);
-                res = rb.assignMarginals(rb.o, false, 1);
+                System.out.println("starting assignmarginals");
+                long start = System.nanoTime();
 
+                res = rb.assignMarginals(rb.o, false, 1);
+                System.out.println("done assignmarginals. Took" + (System.nanoTime()-start));
 
                 //after assignMarginals, the scores array is updated
                 //boqa roll back: undoes the last one
 
                 //if our current best worse than this new one, update it
+                System.out.println("starting scoring and misc");
+                start = System.nanoTime();
+
+                //Should be memoized (in order to use the previous value (from the previous iteration), we need to
+                //write it down somewhere!
                 if (best_phenotype_value <
                         (temp = scoringFunction(res, rb) * phenotype_frequencies[i])) //pass in rb in case we need ot infer other things
                 {       //weight on the phenotype_frequency! (how likely it is to be true)
@@ -184,6 +192,7 @@ public class NewRefinedBOQATest {
                     //hence we should use 3termcontainer to send it into
 
                 }
+                System.out.println("done assignmarginals. Took" + (System.nanoTime()-start));
 
                 //undoes the setting action
                 rb.o.removeObs(i);
@@ -345,7 +354,7 @@ public class NewRefinedBOQATest {
 
     @Test
     public void testConvergence() throws IOException, OBOParserException, URISyntaxException {
-
+        int num = 10000;
         final ReducedBoqa boqa = new ReducedBoqa();
         //boqa.getOntology().
         //boqa.getOntology().getTerm() //FROM THE TERMID, we can recover the terms, and also recover the indexes?
@@ -384,7 +393,7 @@ public class NewRefinedBOQATest {
 
         Ontology ontology = new Ontology(tc);
         SlimDirectedGraphView<Term> slim = ontology.getSlimGraphView();
-        int num = 1000;
+
         assocs = generateAnnotations(num, slim);
 
         trueDisease = new ByteString("item" + num);
@@ -442,7 +451,7 @@ public class NewRefinedBOQATest {
 
 
 
-        long start = System.nanoTime();
+
         int steps = 0;
         double increment = 0.01;
         boolean discovered = false;
@@ -491,13 +500,16 @@ public class NewRefinedBOQATest {
             initial_guesses = getTopDiseasesAsStrings(res); //we have essentially the top ids now
             //from the ids, we can get the mappings they have
 
-            System.out.println("got to this point11");
+
             computePhiPhenotypeFrequencies(boqa);
             computePhenotypeFrequencies(boqa);
 
             //update with the results of the new boqa run
+            System.out.println("starting pheno check");
+            long start = System.nanoTime();
             int phenotype_to_check = getBestPhenotype(boqa, phi_phenotype_frequencies); //in here we do all the phenotype checks
 
+            System.out.println("done pheno check. Took" + (System.nanoTime()-start));
             //This allows us to go from TermID->index, but what about the other way>
             //int index =boqa.slimGraph.getVertexIndex(boqa.getOntology().getTerm(phenotype_to_check));
 
