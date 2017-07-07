@@ -9,6 +9,7 @@ import ontologizer.go.TermID;
 import ontologizer.set.PopulationSet;
 import ontologizer.types.ByteString;
 import sonumina.math.graph.SlimDirectedGraphView;
+import test.NewRefinedBOQATest;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -455,7 +456,192 @@ public class ReducedBoqa {
 
     }
 
+    //provides TWO arrays such that phenoOn specifies the nodes which must
+    //be switched on vs. the previous phenotype, while diffOff specifies which
+    //nodes must be switched OFf vs. the previous phenotype
+    //uses a HashSset based approach
+    int [][] phenoOn;
+    int [][] phenoOff;
+    HashSet [] pOn;
+    HashSet [] pOff;
+    private void computePhenoDifferentials()
+    {
+        phenoOn = new int[this.slimGraph.getNumberOfVertices()][];
+        phenoOff = new int[this.slimGraph.getNumberOfVertices()][];
 
+        //contains itself, plus all other ancestors
+        phenoOn[0] = term2Ancestors[0]; //ancestors contains itself
+        pOn = new HashSet[this.slimGraph.getNumberOfVertices()];
+        pOff = new HashSet[this.slimGraph.getNumberOfVertices()];
+
+
+        HashSet h = new HashSet();
+        HashSet new_h = new HashSet();
+
+        //since we must compute n different duplicates, we do in fact need
+        //double for loop
+
+
+        //if duplicates are encountered skip
+        //else, add it to the OTHER hashset
+
+        //after done BOTH for loops we have computed the diff between
+        //what i am actually computing now is the term with its next term differences
+        //
+        for (int i =0; i < this.slimGraph.getNumberOfVertices()-1; i++)
+        {
+            for (int k = 0; k < term2Ancestors[i].length; k++)
+            {
+                h.add(term2Ancestors[i][k]);
+            }
+
+            //goes over the term2ancestors of the next term
+            for (int j = 0; j < term2Ancestors[i+1].length; j++)
+            {
+                if (!h.contains(term2Ancestors[i+1][j]))
+                {
+                    new_h.add(term2Ancestors[i+1][j]);
+                    //these are definitely in B
+                    //the ones in A - the duplicates are the ones exclusive to just A
+                }
+
+                else //previous hashset and this one both contain the term
+                {
+                    h.remove(term2Ancestors[i+1][j]);
+                    //now at this point, h will only have items which are exclusive ot itself
+                    //then:
+                }
+
+                //we need a case of A-B => this implies what to TURN OFF
+                //(actually, they have a neat trick: )
+                //it just is to run it in the reverse way!
+            }
+
+            //what must be turned on from i to i+1
+            pOn[i] = (HashSet) new_h.clone();
+            //what must be turned off from i to i+1
+            pOff[i] = (HashSet) h.clone();
+
+            h.clear();
+            new_h.clear();
+
+
+
+        }
+
+
+    }
+
+    //Takes in a stats, and implictly needs the diffOn to be created
+    //it shall update the stats with the result.
+
+    //however, the new setting on will not score anything, instead it will
+    //
+    //actually it may be impossible to decouple these
+    //it isn't. what we must do however is pass out the
+    //actually: the diffOnTerms is ALREADY OK
+    //i.e. it is already sufficient to specify the deltas/differentials
+    //between one diseaase to the next
+    //hence just replace the code below with a for loop that loops thru the
+    //phenotypes
+    //rename this: just return a multiarray of all the different disease probabiloitiews
+    //under the different phenotypes
+    private void actuateDiseaseDifferentials(ReducedConfiguration previousStats)
+    {
+        int[] diffOn = this.diffOnTerms[item];
+        int[] diffOff = this.diffOffTerms[item];
+
+        //make these arraylist
+        //these specify the delta between phenotypes
+
+        int [] prevPheno;
+        int [] nextPheno;
+
+            /* Decrement config stats of the nodes we are going to change */
+        //J: we will change them back (update) later!
+        //presumably this is JUST like items2terms, except it takes into account some existing frequency stuff
+        ReducedConfiguration decrement_config = new ReducedConfiguration();
+        ReducedConfiguration increment_config = new ReducedConfiguration();
+        for (int element : diffOn) {
+            //another for loop here
+            for (int pheno: terms)
+            {
+                if i == 1
+                {
+                    //compute all your nodes
+                    //unnecessary--we start off with a fully computed one.
+                    //this is exactly what I want to change
+                    //we don't start off with ANY (relevant) computation yet
+                    //--what about the succesful computation of the last one?!
+                    //if that configuration can be passed in, then we can work off of it
+                    //the diffOn will always remain the same. (the reason is that
+                    //disease phenotypes do not change from iteration to iteration)
+                    //assume we have a stats passed in.
+                    //why not just memoize all 10000 versions of the network!!
+                    //10 million->this will be too large actually
+
+                    //given a config to start out with.
+                    //now, go through the different diseases
+                    //and go through the different phenotypes
+                    //the first one changes the hiddens.
+                    //the second one changes the observations.
+                    //both will modify the configuration of the nodes
+                    //our diffOn auto knows the nodes to turn on/off between each
+                    //disease. otoh our phenoOn will know which observations to remove/add
+                    //per each phenotype.
+                    //note there are strictly good orderings to pursue! for example: one in which
+                    //the ancestors come directly after require only one node to change.
+                    //a topological sort would be quite nice.
+                    //all these results go in an array, representing the different probabilities
+                    //of the disease under each phenotype regime
+
+
+                }
+                //for the very first one, we probably need to seed it
+                //otherwise, there is nothing to delta from
+
+                //this will specify which terms to switch on for each one
+                //perhaps an arraylist might be better
+                //determine the case, for the new observations.
+                //really, we only want the observed layer to be computed,
+                //whereas
+                //perhaps move this INTO the getNodeCase
+                //--alternatively: generate all possible configurations, and
+                //just match with the existing configs.
+                nextPheno[pheno]
+                //make sure to revert the changes right after
+            }
+            decrement_config.increment(getNodeCase(element, hidden, o));
+            stats.decrement(getNodeCase(element, hidden, o));
+            //these 3 uniquely can identify a state
+        }
+        for (int element : diffOff) {
+            decrement_config.increment(getNodeCase(element, hidden, o));
+            stats.decrement(getNodeCase(element, hidden, o)); //lookup the hidden and observed too
+        }
+
+            /* Change nodes states */ //why is hidden[0] always on, esp. when we set observed to be on only
+        for (int i = 0; i < diffOn.length; i++) {
+            hidden[diffOn[i]] = true; //each element in the diffOn array, will change
+            //(regarde, diffon is fixed for the item)
+        }
+        for (int i = 0; i < diffOff.length; i++) {
+            hidden[diffOff[i]] = false; //what we need to switch off to get to disease i
+        }
+
+            /* Increment config states of nodes that we have just changed */
+        for (int element : diffOn) {
+            increment_config.increment(getNodeCase(element, hidden, o));
+            stats.increment(getNodeCase(element, hidden, o));
+        }
+        for (int element : diffOff) {
+            increment_config.increment(getNodeCase(element, hidden, o));
+            stats.increment(getNodeCase(element, hidden, o));
+        } //this winds up exactly undoing what we just earlier did. however, apparently, the state of hidden
+        //must have changed.
+
+        statsList.add(stats.clone(), 0);
+    }
 
     private WeightedConfigurationList determineCasesForItem(int item, Observations o,
                                                             boolean takeFrequenciesIntoAccount, boolean[] previousHidden, ReducedConfiguration previousStats)
@@ -497,7 +683,7 @@ public class ReducedBoqa {
 
 
         if (!takeFrequenciesIntoAccount) {
-            /* New */
+            /* New */ //note that at 0, many thing smust be turned on (since it is the first one)
             int[] diffOn = this.diffOnTerms[item];
             int[] diffOff = this.diffOffTerms[item];
 
@@ -604,6 +790,7 @@ public class ReducedBoqa {
                         //we cannot change it inside this scope!
                 {
 
+
                     //for 1 item, we get a WCL
                     //then we check it against all values of alpha, beta
                     //then we ge tthe score of the WCL
@@ -615,6 +802,233 @@ public class ReducedBoqa {
                     WeightedConfigurationList stats =
                             determineCasesForItem(item, observations, takeFrequenciesIntoAccount,
                                     numThreads > 1 ? null : previousHidden, numThreads > 1 ? null : previousStat);
+
+                    //stats only has 1 element
+                    //moreover, we can get a new element each time using the iterator
+                    //System.out.print("aaa");
+//                    for (WeightedConfiguration wc : stats) //this is a list of weighted configs, which itself is simply a list of
+//                    {
+//                        System.out.println("Itme " + item);
+//                        System.out.println(wc.stat);
+//
+//
+//
+//                    }
+                    //since multithreading with the differentials would be too difficult,
+                    //we only sequentially set flags in the stats, (when we only have one process)
+
+                    //PERHAPS: we should assign stats to some of the res.
+                    //In general, res.stats is not updated again, sadly
+
+                    //System.out.println(stats.toString());
+                    //if numthreads > 1 then null, else previousHidden
+
+                    //J: the scoring function is critical; also this seems to be finding the best
+                    //rate for alpha and beta.at a particular alpha, beta value
+                    //this puts the score in for an item;
+
+                    //int temp_terms [] = new int[] ; // since this is inside a void run inside an interface
+                    //might be tricky...
+
+                    for (int a = 0; a < ReducedBoqa.this.ALPHA_GRID.length; a++) {
+                        for (int b = 0; b < ReducedBoqa.this.BETA_GRID.length; b++) {
+                            //This scor is a weighted sum!
+                            scores[item][a][b] = stats.score(ReducedBoqa.this.ALPHA_GRID[a],
+                                    experimental_beta,initial_beta);
+
+                            //normally we maximize this
+                            res.scores[item] = Util.logAdd(res.scores[item], scores[item][a][b]);
+                        }
+                    }
+
+                    //System.out.println(observations.observationStats != null);
+                    if (observations.observationStats != null) {
+                        double fpr = observations.observationStats.falsePositiveRate();
+                        if (fpr == 0) {
+                            fpr = 0.0000001; //get the false positive rate, which for some reason
+                            //cannot be exactly 0 or 1 (this is so that we do not get a 0 term in the
+                            //product which will just wipe our probabilities
+
+                        } else if (fpr == 1.0) {
+                            fpr = 0.999999;
+                        } else if (Double.isNaN(fpr)) {
+                            fpr = 0.5;
+                        }
+
+                        double fnr = observations.observationStats.falseNegativeRate();
+                        if (fnr == 0) {
+                            fnr = 0.0000001;
+                        } else if (fnr == 1) {
+                            fnr = 0.999999;
+                        } else if (Double.isNaN(fnr)) {
+                            fnr = 0.5;
+                        }
+
+                        idealScores[item] = stats.score(fpr, experimental_beta,initial_beta);
+                        //run it again with the **actual** scores
+                    }
+                }
+            };
+
+            if (es != null) {
+                futureList.add(es.submit(run));
+            } else {
+                run.run();
+            }
+        }
+
+        if (es != null) {
+            es.shutdown();
+
+            for (Future<?> f : futureList) {
+                try {
+                    f.get();
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            }
+
+            try {
+                while (!es.awaitTermination(10, TimeUnit.SECONDS)) {
+                    ;
+                }
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
+        double normalization = Math.log(0);
+        double idealNormalization = Math.log(0);
+        //already at this point, why are all the scores the same?
+        for (i = 0; i < this.allItemList.size(); i++) {
+            normalization = Util.logAdd(normalization, res.scores[i]);
+            idealNormalization = Util.logAdd(idealNormalization, idealScores[i]);
+        }
+
+        for (i = 0; i < this.allItemList.size(); i++) {
+            res.marginals[i] = Math.min(Math.exp(res.scores[i] - normalization), 1); //no, also the scores are same
+            res.marginalsIdeal[i] = Math.min(Math.exp(idealScores[i] - idealNormalization), 1);
+
+            // System.out.println(i + ": " + idealScores[i] + " (" + res.getMarginalIdeal(i) + ") " + res.scores[i] +
+            // " (" + res.getMarginal(i) + ")");
+            // System.out.println(res.marginals[i] + " " + res.marginalsIdeal[i]);
+        }
+
+        if (res.marginalsIdeal[observations.item] < res.marginals[observations.item]) {
+            for (i = 0; i < this.allItemList.size(); i++) {
+                res.marginalsIdeal[i] = res.marginals[i];
+            }
+        }
+
+        // System.out.println(idealNormalization + " " + normalization);
+        // if (exitNow)
+        // System.exit(10);
+        return res;
+    }
+
+
+    //Returns an array of Result objects
+    //will now be quite an expensive operation
+    public Result[] assignMultiShotMarginals( Observations observations, final boolean takeFrequenciesIntoAccount,
+                                   final int numThreads)
+    {
+
+        int i;
+
+        final Result res = new Result();
+        res.scores = new double[this.allItemList.size()]; //its an array size of the entire BN
+        res.marginals = new double[this.allItemList.size()];
+        res.marginalsIdeal = new double[this.allItemList.size()];
+        res.stats = new ReducedConfiguration[this.allItemList.size()]; // an ARRAY of ReducedConfigurations..
+        //perhaps they are saying how for each node in THE BN, there is a cofig?
+
+
+        //this is just initializing each stats[i] to contain something
+        for (i = 0; i < res.stats.length; i++) {
+            res.stats[i] = new ReducedConfiguration(); //each ITEM gets its own ReducedConfiguration
+        }
+        for (i = 0; i < res.scores.length; i++) {
+            res.scores[i] = Double.NEGATIVE_INFINITY;
+        }
+
+        //J for all of this
+        //n^3 matrix, one dimension each for parameters (alpha and beta) and one dimension for all the scores
+        //i.e. at this alpha, beta, what are all the scores for all the nodes?
+        final double[][][] scores = new double[this.allItemList.size()][this.ALPHA_GRID.length][this.BETA_GRID.length];
+        final double[] idealScores = new double[this.allItemList.size()]; //this is likely a "target" whom we wish to approximate
+        //as much as possible
+        //interestingly we also have ideal marginals, which I am not sure how the two differ by
+
+
+
+        final ExecutorService es;
+        if (numThreads > 1) {
+            es = Executors.newFixedThreadPool(numThreads);
+        } else {
+            es = null;
+        }
+
+        final boolean[] previousHidden = new boolean[this.slimGraph.getNumberOfVertices()];
+        final ReducedConfiguration previousStat = new ReducedConfiguration();
+
+        //ReducedConfiguration is not null, but: it also was not initalized to anything //previousstat contains all the info from runnign determinecases--do we run it first just for the multithreading?; part of the diffOn, etc.?
+        determineCases(observations, previousHidden, previousStat);
+        //this pops back with all the cases; and having incremented the particular stats
+        //(i.e previousStat)
+
+        ArrayList<Future<?>> futureList = new ArrayList<Future<?>>();
+
+        for (i = 0; i < this.allItemList.size(); i++) {
+            final int item = i;
+
+            Runnable run = new Runnable()
+            {
+
+                @Override
+                public void run() //since this is an inner, class, we need final int item
+                //we cannot change it inside this scope!
+                {
+                    WeightedConfigurationList stats =
+                            determineCasesForItem(item, observations, takeFrequenciesIntoAccount,
+                                    numThreads > 1 ? null : previousHidden, numThreads > 1 ? null : previousStat);
+                    for (int i =0; i < o.observations.length; i++)
+                    {
+                        if (!o.observations[i]) {
+
+                            //actually, we must set ALL the above nodes to true too!
+                            o.recordObs(i, true); //actually this is almost NEVER true (since negatives don't tell us anything more)
+                            turnedOn = NewRefinedBOQATest.setAncestors(ReducedBoqa.this, i);
+
+
+                            //Should be memoized (in order to use the previous value (from the previous iteration), we need to
+                            //write it down somewhere!
+                            if (best_phenotype_value <
+                                    (temp = scoringFunction(res, rb) * phenotype_frequencies[i])) //pass in rb in case we need ot infer other things
+                            {       //weight on the phenotype_frequency! (how likely it is to be true)
+                                best_phenotype_index = i;
+                                best_phenotype_value = temp;
+
+                                //index to termID is not well supported.
+                                //since these things only make sense wrt a graph
+                                //also termid and term are not well related, we really just want
+                                //term,since it encapsulates everything
+                                //hence we should use 3termcontainer to send it into
+
+                            }
+                            System.out.println("done assignmarginals. Took" + (System.nanoTime()-start));
+
+                            //undoes the setting action
+                            rb.o.removeObs(i);
+                            rollback(rb, turnedOn);
+
+
+                            //SUM OF SQUARES FORMULA HERE
+                        }
+                    }
+                    //Compute for the different phenotypes in turn, looking into the o.observatiosn array to see
+                    //what should be checked and what shouldn't. Note that it might be better to move this outsidet
+                    //the multithreading scope.
+
 
                     //stats only has 1 element
                     //moreover, we can get a new element each time using the iterator

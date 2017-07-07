@@ -312,7 +312,7 @@ public class NewRefinedBOQATest {
     //however, this has the possiblity of turning OFF nodes that were turnt on by others
     //for example, the root node will be turned on by anything, but rolling back in this
     //way will turn it off (undesired), this violates true path rule etc.
-    public ArrayList<Integer> setAncestors(ReducedBoqa rb, int index) {
+    public static ArrayList<Integer> setAncestors(ReducedBoqa rb, int index) {
         //list of terms that were turned on by setting the index to 1 (or true)
         ArrayList<Integer> turnedOnTerms = new ArrayList<>();
         for (int anc : rb.term2Ancestors[index]) {
