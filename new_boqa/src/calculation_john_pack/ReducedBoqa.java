@@ -558,222 +558,16 @@ public class ReducedBoqa {
     private void actuateDiseaseDifferentials(ReducedConfiguration previousStats, int item, Observations o,
                                              boolean takeFrequenciesIntoAccount, boolean[] previousHidden)
     {
-        //even though we have many ways of getting the same value, the underlying causal reason is this
-        //ideally this would be different configurations--however, we are build A[fast][slow]
-        //instead of A[slow][fast] like it should be (i.e. we are iterating over the columns of the matrix
-        double [] diseaseProbUnderDifferentPhenotypes = new double[this.slimGraph.getNumberOfVertices()];
-
         ReducedConfiguration stats = previousStats;
         boolean [] hidden = previousHidden;
 
         int[] diffOn = this.diffOnTerms[item];
         int[] diffOff = this.diffOffTerms[item];
 
-        //make these arraylist
-        //these specify the delta between phenotypes
-
-        int [] prevPheno;
-        int [] nextPheno;
-
-            /* Decrement config stats of the nodes we are going to change */
-        //J: we will change them back (update) later!
-        //presumably this is JUST like items2terms, except it takes into account some existing frequency stuff
-        ReducedConfiguration decrement_config = new ReducedConfiguration();
-        ReducedConfiguration increment_config = new ReducedConfiguration();
         for (int element : diffOn) {
-            //
-
-            //j=0 step
-            //Set the initial configuration, for the first term
-
-            //we don't actually need this if we are using the diffon. What we need instead is to set the baseline phenotype
-            //so for example: set ALL the ancestors of the "first" phenotype to ON, which will then get it in the correct
-            //state for the diff On to work
-            //
-            for (int anc: term2Ancestors[item])
-            {
-                //activate them all (we assume they are all off to start off)
-                o.recordObs(anc, true);
-                //one issue is that we CAN'T score after every observation,
-                //really we must build a function that rescores changed nodes
-                //or score the terms, as opposed to the items4
-                // like we want to rescore all nodes that were changed.
-                //we dont want to rescore the disease after each observation
-                //does it make sense to call getNodeCase n times at the end though?
-                //(nothing is changing at this point...)
-
-                //just call it with term in place of itme, and this will tell us how the case of that node has changed,
-                //in the current disease context, in the current propagation context.
-
-                //note that for the same disease, the value of a node is constant, except when it is for example
-                //explictly observed
-                //hence only two cases (however, there is ancestor prop--hence why it is necessary to even handle the case)
-                //it was either a false negative or a true negative before
-                //now, when we set it, we turn it to either false positives or true positives
-                //later, when we switch the diffOn, we have the reverse settings--certain nodes from before come false positives/true negatives
-                //while for those that turn on, they become true positive/false negatives  and so forth
-
-
-
-            }
-
-            for (int anc: term2Ancestors[0])
-            {
-                stats.increment(getNodeCase(anc,hidden,o));
-                //procedural code--might be hard to execute in racket!
-            }
-            //save all the ancs somewhere, then iterate through them
-
-            //why it may work: these nodes may have changed, because now they are included in the observations
-            //ex. might have been a false  positive, and now it is a true positive
-
-
-
-
-            //score it once here. (we can either keep the configuration, or only keep the number)
-            //most likely there will be no space/memory to keep the entire config, barely enough for a double
-            diseaseProbUnderDifferentPhenotypes[0]=stats.getScore(this.ALPHA_GRID[0], this.initial_beta, this.experimental_beta);
-
-            //This block: goes through each phenotype and scores them, filling out an array.
-            //note the j is just to find the total number of phenotypes to iterate over
-            for (int j =0; j<this.term2Parents.length-1; j++) //couple of approaches to this
-            {
-                //we want an ordered hashset...need to contain the elements in the diffOn order!
-                //
-
-                //decrement the states of the nodes we are going to change
-
-
-                //increment the states of the nodes we have just changed.
-                //instead of hidden changing though, it will be observations changing
-                //do this all before we have made any changes to observations
-                //for all the nodes in diffOn
-                //decrement the nodes that we will have to change to get to 1
-
-                while (pOn[j].iterator().hasNext())
-                {
-                    //actually we can memoize this info from directly the prev. iteration
-                    stats.decrement(getNodeCase((int)pOn[j].iterator().next(), hidden, o));
-                    //also increment by the new cases of the nodes we switched off
-                }
-
-                while (pOff[j].iterator().hasNext())
-                {
-                    stats.decrement(getNodeCase((int)pOff[j].iterator().next(), hidden, o));
-                }
-
-                //the remaining nodes can stay the same
-
-                while (pOff[j].iterator().hasNext())
-                {
-                    //TODO think about how we can infer duplicates/etc. using this system
-                    //(since the record obs already stores the stae of the previous observation)
-                    o.removeObs((int) pOff[j].iterator().next());
-
-                }
-
-
-
-
-                while (pOn[j].iterator().hasNext())
-                {
-                    //TODO think about how we can infer duplicates/etc. using this system
-                    //(since the record obs already stores the stae of the previous observation)
-                    //we do not actually need the indexing terms2ancestors[i][j], since that is already completely
-                    //reflected in the state of the o
-                    o.recordObs((int) pOn[j].iterator().next(), true);
-
-                    //initialize the first one to be the actual terms that need to be turned on.
-                    //all others will be computed from differentials
-                }
-
-
-                //Note that while the function expects an item (hidden node) to change, here we are actually changing
-                //the observed node!
-                while (pOn[j].iterator().hasNext())
-                {
-                    //actually we can memoize this info from directly the prev. iteration
-                    stats.increment(getNodeCase((int)pOn[j].iterator().next(), hidden, o));
-                    //also increment by the new cases of the nodes we switched off
-                }
-
-                while (pOff[j].iterator().hasNext())
-                {
-                    stats.increment(getNodeCase((int)pOff[j].iterator().next(), hidden, o));
-                }
-
-                //now, we simply need to score it and store its value
-                multiDiseaseDistributions[j][item] = stats.getScore(this.ALPHA_GRID[0],initial_beta, experimental_beta);
-
-                getNode
-                //score the single item again (repeatedly)
-                //get all 10 000 values of this node, under all different phenotype settings.
-                //later on we need something to coalsecne
-                //alternatievly, we can only increment of the 10000 different stats that we want
-                //this stats will depend on the OUTER for loop
-                //actually since we score for each onfiguraiton of diseases, we need a new
-                //not quite: we need a FULL configuration for the disease, under all these different phenotypes
-                //hence, indeed what we store is the
-                getNodeCase(item, hidden, o);
-
-
-                stats.decrement
-
-            }
-            //another for loop here
-            for (int pheno: terms)
-            {
-                if i == 1
-                {
-                    //compute all your nodes
-                    //unnecessary--we start off with a fully computed one.
-                    //this is exactly what I want to change
-                    //we don't start off with ANY (relevant) computation yet
-                    //--what about the succesful computation of the last one?!
-                    //if that configuration can be passed in, then we can work off of it
-                    //the diffOn will always remain the same. (the reason is that
-                    //disease phenotypes do not change from iteration to iteration)
-                    //assume we have a stats passed in.
-                    //why not just memoize all 10000 versions of the network!!
-                    //10 million->this will be too large actually
-
-                    //given a config to start out with.
-                    //now, go through the different diseases
-                    //and go through the different phenotypes
-                    //the first one changes the hiddens.
-                    //the second one changes the observations.
-                    //both will modify the configuration of the nodes
-                    //our diffOn auto knows the nodes to turn on/off between each
-                    //disease. otoh our phenoOn will know which observations to remove/add
-                    //per each phenotype.
-                    //note there are strictly good orderings to pursue! for example: one in which
-                    //the ancestors come directly after require only one node to change.
-                    //a topological sort would be quite nice.
-                    //all these results go in an array, representing the different probabilities
-                    //of the disease under each phenotype regime
-
-
-                }
-                //for the very first one, we probably need to seed it
-                //otherwise, there is nothing to delta from
-
-                //this will specify which terms to switch on for each one
-                //perhaps an arraylist might be better
-                //determine the case, for the new observations.
-                //really, we only want the observed layer to be computed,
-                //whereas
-                //perhaps move this INTO the getNodeCase
-                //--alternatively: generate all possible configurations, and
-                //just match with the existing configs.
-                nextPheno[pheno]
-                //make sure to revert the changes right after
-            }
-            decrement_config.increment(getNodeCase(element, hidden, o));
             stats.decrement(getNodeCase(element, hidden, o));
-            //these 3 uniquely can identify a state
         }
         for (int element : diffOff) {
-            decrement_config.increment(getNodeCase(element, hidden, o));
             stats.decrement(getNodeCase(element, hidden, o)); //lookup the hidden and observed too
         }
 
@@ -786,16 +580,62 @@ public class ReducedBoqa {
             hidden[diffOff[i]] = false; //what we need to switch off to get to disease i
         }
 
-            /* Increment config states of nodes that we have just changed */
-        for (int element : diffOn) {
-            increment_config.increment(getNodeCase(element, hidden, o));
-            stats.increment(getNodeCase(element, hidden, o));
+        //assert: pOff and pOn should have the same length (they represent the # of transitions between unobserved phenotypes)
+
+        assert pOn.length==pOff.length;
+
+        //the last one specifies how to get back to n-1
+        for (int j =0; j<pOn.length-1; j++) {
+            while (pOn[j].iterator().hasNext()) {
+                stats.decrement(getNodeCase((int) pOn[j].iterator().next(), hidden, o));
+            }
+
+
+            while (pOff[j].iterator().hasNext()) {
+                stats.decrement(getNodeCase((int) pOff[j].iterator().next(), hidden, o));
+            }
+
+            //the remaining nodes can stay the same
+            while (pOff[j].iterator().hasNext()) {
+                o.removeObs((int) pOff[j].iterator().next());
+            }
+            while (pOn[j].iterator().hasNext()) {
+                //TODO think about how we can infer duplicates/etc. using this system
+                //(since the record obs already stores the stae of the previous observation)
+                //we do not actually need the indexing terms2ancestors[i][j], since that is already completely
+                //reflected in the state of the o
+                o.recordObs((int) pOn[j].iterator().next(), true);
+
+            }
+            //Note that while the function expects an item (hidden node) to change, here we are actually changing
+            //the observed node!
+            while (pOn[j].iterator().hasNext()) {
+                //actually we can memoize this info from directly the prev. iteration
+                stats.increment(getNodeCase((int) pOn[j].iterator().next(), hidden, o));
+                //also increment by the new cases of the nodes we switched off
+            }
+
+
+            while (pOff[j].iterator().hasNext()) {
+                stats.increment(getNodeCase((int) pOff[j].iterator().next(), hidden, o));
+            }
+
+            //fill in the COLUMN of the matrix!
+            multiDiseaseDistributions[j][item] = stats.getScore(this.ALPHA_GRID[0],initial_beta, experimental_beta);
         }
-        for (int element : diffOff) {
-            increment_config.increment(getNodeCase(element, hidden, o));
-            stats.increment(getNodeCase(element, hidden, o));
-        } //this winds up exactly undoing what we just earlier did. however, apparently, the state of hidden
-        //must have changed.
+
+        //reset to the original/baseline phenotype
+        //TODO fix the pOn/pOff mismatches later
+        while (pOff[pOn.length-1].iterator().hasNext()) {
+            o.removeObs((int) pOff[pOn.length-1].iterator().next());
+        }
+        while (pOn[pOn.length-1].iterator().hasNext()) {
+            o.recordObs((int) pOn[pOn.length-1].iterator().next(), true);
+
+        }
+
+
+
 
         statsList.add(stats.clone(), 0); //we add the stas configuration to a list. Later, we will compute this.
     }
