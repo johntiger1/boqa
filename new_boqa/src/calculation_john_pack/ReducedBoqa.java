@@ -344,6 +344,12 @@ public class ReducedBoqa {
         }
     }
 
+    //this "initializes the array" to a known default state, one where the target disease has NO hiddens.
+    //Hence why the veyr first run of determineCasesForItem succeeds
+    //Note also diffOff is also good here, since we literally have NO hiddens on so nothing to turn off
+    //we most likely need something like this (initializing the STATS configuration to some known state)
+
+
 
     static public class Result
     {
@@ -555,11 +561,39 @@ public class ReducedBoqa {
 
     //This will need to be a multifaceted, all-encompassing function!
     //(i.e. the way it is written, it is difficult to encapsulate/decouple)
-    private void actuateDiseaseDifferentials(ReducedConfiguration previousStats, int item, Observations o,
-                                             boolean takeFrequenciesIntoAccount, boolean[] previousHidden)
+
+
+    private WeightedConfigurationList actuateDiseaseDifferentials( int item, Observations o,
+                                             boolean takeFrequenciesIntoAccount, boolean[] previousHidden, ReducedConfiguration previousStats)
     {
-        ReducedConfiguration stats = previousStats;
-        boolean [] hidden = previousHidden;
+
+        int numTerms = this.slimGraph.getNumberOfVertices();
+
+        if (previousHidden == null && previousStats != null) {
+            throw new IllegalArgumentException();
+        }
+        if (previousHidden != null && previousStats == null) {
+            throw new IllegalArgumentException();
+        }
+
+        WeightedConfigurationList statsList = new WeightedConfigurationList();
+
+        boolean[] hidden;
+        ReducedConfiguration stats;
+
+        if (previousHidden == null) {
+            hidden = new boolean[numTerms];
+        } else {
+            hidden = previousHidden;
+        }
+
+        if (previousStats == null) {
+            stats = new ReducedConfiguration();
+        } else {
+            stats = previousStats;
+        }
+        //we don't need diffOn, since we have the actual items as well as ancestors etc. we can just
+        //compute everything on the fly
 
         int[] diffOn = this.diffOnTerms[item];
         int[] diffOff = this.diffOffTerms[item];
@@ -766,6 +800,9 @@ public class ReducedBoqa {
             es = null;
         }
 
+        //presumably these are problematic. They should be updated, to whatever they were/should be
+        //They were FINE in the previous iteration, because in determine cases we did have an initializing case.
+        //i.e. diffOn[0] specified the entire disease to put on,
         final boolean[] previousHidden = new boolean[this.slimGraph.getNumberOfVertices()];
         final ReducedConfiguration previousStat = new ReducedConfiguration();
 
@@ -929,6 +966,7 @@ public class ReducedBoqa {
     public Result[] assignMultiShotMarginals( Observations observations, final boolean takeFrequenciesIntoAccount,
                                    final int numThreads)
     {
+        computePhenoDifferentials();
 
         int i;
 
@@ -968,10 +1006,8 @@ public class ReducedBoqa {
         final boolean[] previousHidden = new boolean[this.slimGraph.getNumberOfVertices()];
         final ReducedConfiguration previousStat = new ReducedConfiguration();
 
-        //ReducedConfiguration is not null, but: it also was not initalized to anything //previousstat contains all the info from runnign determinecases--do we run it first just for the multithreading?; part of the diffOn, etc.?
+        //Initialize it (no diseases, but with current observations). This step is necessary for the createDiffVectors to make sense.
         determineCases(observations, previousHidden, previousStat);
-        //this pops back with all the cases; and having incremented the particular stats
-        //(i.e previousStat)
 
         ArrayList<Future<?>> futureList = new ArrayList<Future<?>>();
 
@@ -986,7 +1022,7 @@ public class ReducedBoqa {
                 //we cannot change it inside this scope!
                 {
                     WeightedConfigurationList stats =
-                            determineCasesForItem(item, observations, takeFrequenciesIntoAccount,
+                            actuateDiseaseDifferentials(item, observations, takeFrequenciesIntoAccount,
                                     numThreads > 1 ? null : previousHidden, numThreads > 1 ? null : previousStat);
                     for (int i =0; i < o.observations.length; i++)
                     {
