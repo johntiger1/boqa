@@ -474,8 +474,8 @@ public class ReducedBoqa {
     private void computePhenoDifferentials()
     {
         //between n numbers there are only n-1 spaces
-        pOn = new HashSet[this.slimGraph.getNumberOfVertices()-1];
-        pOff = new HashSet[this.slimGraph.getNumberOfVertices()-1];
+        pOn = new HashSet[this.slimGraph.getNumberOfVertices()];
+        pOff = new HashSet[this.slimGraph.getNumberOfVertices()];
 
 
         HashSet h = new HashSet();
@@ -491,7 +491,7 @@ public class ReducedBoqa {
         //after done BOTH for loops we have computed the diff between
         //what i am actually computing now is the term with its next term differences
         //
-        for (int i =0; i < this.slimGraph.getNumberOfVertices()-1; i++)
+        for (int i =0; i < this.slimGraph.getNumberOfVertices(); i++)
         {
             for (int k = 0; k < term2Ancestors[i].length; k++)
             {
@@ -499,7 +499,10 @@ public class ReducedBoqa {
             }
 
             //goes over the term2ancestors of the next term
-            for (int j = 0; j < term2Ancestors[i+1].length; j++)
+            //this should compute the delta between n and 0
+            //essentially, i+1%x describes a function that everywhere is i, except at the very boundary, in the range [0, n-1]
+
+            for (int j = 0; j < term2Ancestors[(i+1)%pOn.length].length; j++)
             {
                 if (!h.contains(term2Ancestors[i+1][j]))
                 {
@@ -582,7 +585,12 @@ public class ReducedBoqa {
 
             //j=0 step
             //Set the initial configuration, for the first term
-            for (int anc: term2Ancestors[0])
+
+            //we don't actually need this if we are using the diffon. What we need instead is to set the baseline phenotype
+            //so for example: set ALL the ancestors of the "first" phenotype to ON, which will then get it in the correct
+            //state for the diff On to work
+            //
+            for (int anc: term2Ancestors[item])
             {
                 //activate them all (we assume they are all off to start off)
                 o.recordObs(anc, true);
