@@ -25,7 +25,10 @@ import java.util.concurrent.TimeUnit;
  */
 public class ReducedBoqa {
 
-
+    //Represents an array of disease distributions.
+    //Each row represents a disease distribution, under a specific phenotype set to TRUE.
+    //hence the dimensions of the array should be: # of phenotypes * # of diseases
+    public double [][] multiDiseaseDistributions;
 
 
     //Most likely will be an array of all the frequencies for phenotype
@@ -203,6 +206,10 @@ public class ReducedBoqa {
         }
 
         createDiffVectors(); //need this crucial line from provideGlobals()
+
+        //
+        multiDiseaseDistributions = new double[this.slimGraph.getNumberOfVertices()][this.allItemList.size()];
+
     }
 
     boolean areFalsePositivesPropagated()
@@ -619,7 +626,8 @@ public class ReducedBoqa {
             //most likely there will be no space/memory to keep the entire config, barely enough for a double
             diseaseProbUnderDifferentPhenotypes[0]=stats.getScore(this.ALPHA_GRID[0], this.initial_beta, this.experimental_beta);
 
-            //this.slimGraph.getNumberOfVertices()
+            //This block: goes through each phenotype and scores them, filling out an array.
+            //note the j is just to find the total number of phenotypes to iterate over
             for (int j =0; j<this.term2Parents.length-1; j++) //couple of approaches to this
             {
                 //we want an ordered hashset...need to contain the elements in the diffOn order!
@@ -671,6 +679,9 @@ public class ReducedBoqa {
                     //all others will be computed from differentials
                 }
 
+
+                //Note that while the function expects an item (hidden node) to change, here we are actually changing
+                //the observed node!
                 while (pOn[j].iterator().hasNext())
                 {
                     //actually we can memoize this info from directly the prev. iteration
@@ -682,6 +693,10 @@ public class ReducedBoqa {
                 {
                     stats.increment(getNodeCase((int)pOff[j].iterator().next(), hidden, o));
                 }
+
+                //now, we simply need to score it and store its value
+                multiDiseaseDistributions[j][item] = stats.getScore(this.ALPHA_GRID[0],initial_beta, experimental_beta);
+
                 getNode
                 //score the single item again (repeatedly)
                 //get all 10 000 values of this node, under all different phenotype settings.
