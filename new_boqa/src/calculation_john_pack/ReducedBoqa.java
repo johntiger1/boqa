@@ -11,10 +11,7 @@ import ontologizer.types.ByteString;
 import sonumina.math.graph.SlimDirectedGraphView;
 import test.NewRefinedBOQATest;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -463,6 +460,11 @@ public class ReducedBoqa {
 
     private void createDiffVectors()
     {
+
+        System.out.println("starting createDiffVecs");
+        long start = System.nanoTime();
+
+
         int i;
 
         long sum = 0;
@@ -486,6 +488,9 @@ public class ReducedBoqa {
 
             sum += this.diffOnTerms[i].length + this.diffOffTerms[i].length;
         }
+
+        System.out.println("done createDiffVecs. Took" + (System.nanoTime()-start));
+
 
     }
 
@@ -633,24 +638,32 @@ public class ReducedBoqa {
 
         //assert: pOff and pOn should have the same length (they represent the # of transitions between unobserved phenotypes)
 
-        assert pOn.length==pOff.length;
+
         int k;
         //the last one specifies how to get back to n-1
+        System.out.println("starting looping thru all phens");
+        long start = System.nanoTime();
+
+
         for (int j =0; j<pOn.length-1; j++) {
             //dangerous dependency: now we have a monotone list of numbers, but we cannot retrieve their original indices
-
+            System.out.println("done");
             k= j;
 
             //this finds the first index past j where observations is NOT true
+            //ensure that the array is not all observed!
             while (o.observations[k])
             {
                 k++;
             }
-            while (pOn[j].iterator().hasNext()) {
-                stats.decrement(getNodeCase((int) pOn[j].iterator().next(), hidden, o));
+            Iterator i = pOn[j].iterator();
+            //this is asking for a new iterator each time?!
+            while (i.hasNext()) {
+                stats.decrement(getNodeCase((int) (i.next()), hidden, o));
+
             }
-
-
+            //System.out.println(pOn[j].iterator().next());
+            System.out.println("got thru");
             while (pOff[j].iterator().hasNext()) {
                 stats.decrement(getNodeCase((int) pOff[j].iterator().next(), hidden, o));
             }
@@ -693,6 +706,8 @@ public class ReducedBoqa {
             o.recordObs((int) pOn[pOn.length-1].iterator().next(), true);
 
         }
+
+        System.out.println("done compute pheno diff. Took" + (System.nanoTime()-start));
     }
 
     private WeightedConfigurationList determineCasesForItem(int item, Observations o,
@@ -987,7 +1002,10 @@ public class ReducedBoqa {
     public void assignMultiShotMarginals( Observations observations, final boolean takeFrequenciesIntoAccount,
                                    final int numThreads)
     {
+        System.out.println("starting compute pheno diff");
+        long start = System.nanoTime();
         computePhenoDifferentials();
+        System.out.println("done compute pheno diff. Took" + (System.nanoTime()-start));
 
         int i;
 

@@ -347,6 +347,12 @@ public class NewRefinedBOQATest {
                 //do NOT propagate negatives up (since this is not how the true path rule works)
 
                 //if its negative, should we
+                //must be checked to see its not null too
+                if (rb.o.real_observations.get(anc))
+                    //the only way it could be true is if it is observed, or one of its children was observed
+                    //hence the first if condition (checking that it wasn't observed) is good enough
+                    //Hence we guarantee the state was off to start off with
+                    //essentially, if if it is observed, there is only one case, where it is true
                 turnedOnTerms.add(anc);//otherwise this would add index a lot!
 
             }
@@ -556,7 +562,7 @@ public class NewRefinedBOQATest {
             //o doesn't have this information, so we need to full info from boqa:
             if (present_or_not){
                 for (int anc : boqa.term2Ancestors[index]) {
-                    o.observations[anc] = true;
+                    o.observations[anc] = true; //@TODO we assume observing hte child is the same as observing the parent
                     o.recordObs(anc, present_or_not); //only do this if we propagate positives up too
                     //do NOT propagate negatives up (since this is not how the true path rule works)
 
