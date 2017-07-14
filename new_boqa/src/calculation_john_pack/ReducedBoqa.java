@@ -641,13 +641,13 @@ public class ReducedBoqa {
 
         int k;
         //the last one specifies how to get back to n-1
-        System.out.println("starting looping thru all phens");
+        //System.out.println("starting looping thru all phens");
         long start = System.nanoTime();
 
 
         for (int j =0; j<pOn.length-1; j++) {
             //dangerous dependency: now we have a monotone list of numbers, but we cannot retrieve their original indices
-            System.out.println("done");
+            //System.out.println("done");
             k= j;
 
             //this finds the first index past j where observations is NOT true
@@ -663,34 +663,43 @@ public class ReducedBoqa {
 
             }
             //System.out.println(pOn[j].iterator().next());
-            System.out.println("got thru");
-            while (pOff[j].iterator().hasNext()) {
-                stats.decrement(getNodeCase((int) pOff[j].iterator().next(), hidden, o));
+            //System.out.println("got thru");
+
+            for (i = pOff[j].iterator(); i.hasNext();)
+            {
+                stats.decrement(getNodeCase((int) i.next(), hidden, o));
             }
 
-            //the remaining nodes can stay the same
-            while (pOff[j].iterator().hasNext()) {
-                o.removeObs((int) pOff[j].iterator().next());
+            //ojbects that implement the iterator can sue the for each
+            for (Object val : pOff[j])
+            {
+                o.removeObs((int) val);
             }
-            while (pOn[j].iterator().hasNext()) {
+
+            for (Object val : pOn[j])
+            {
                 //TODO think about how we can infer duplicates/etc. using this system
                 //(since the record obs already stores the stae of the previous observation)
                 //we do not actually need the indexing terms2ancestors[i][j], since that is already completely
                 //reflected in the state of the o
-                o.recordObs((int) pOn[j].iterator().next(), true);
-
+                o.recordObs((int) val,true);
             }
+
             //Note that while the function expects an item (hidden node) to change, here we are actually changing
             //the observed node!
-            while (pOn[j].iterator().hasNext()) {
-                //actually we can memoize this info from directly the prev. iteration
-                stats.increment(getNodeCase((int) pOn[j].iterator().next(), hidden, o));
-                //also increment by the new cases of the nodes we switched off
+
+            //true: we should be able to pass this off to a function, specifying the action occurring.
+            //pass in the iterator, and the action to take n stats, and so forth
+
+            for (Object val : pOn[j])
+            {
+                stats.increment(getNodeCase((int) val, hidden, o));
             }
 
 
-            while (pOff[j].iterator().hasNext()) {
-                stats.increment(getNodeCase((int) pOff[j].iterator().next(), hidden, o));
+            for (Object val : pOff[j])
+            {
+                stats.increment(getNodeCase((int) val, hidden, o));
             }
 
             //fill in the COLUMN of the matrix!
@@ -698,16 +707,19 @@ public class ReducedBoqa {
         }
 
         //reset to the original/baseline phenotype
-        //TODO fix the pOn/pOff mismatches later
-        while (pOff[pOn.length-1].iterator().hasNext()) {
-            o.removeObs((int) pOff[pOn.length-1].iterator().next());
-        }
-        while (pOn[pOn.length-1].iterator().hasNext()) {
-            o.recordObs((int) pOn[pOn.length-1].iterator().next(), true);
 
+
+        for (Object val : pOff[pOff.length-1])
+        {
+            o.removeObs((int) val);
         }
 
-        System.out.println("done compute pheno diff. Took" + (System.nanoTime()-start));
+        for (Object val : pOn[pOn.length-1])
+        {
+            o.recordObs((int) val, true);
+        }
+
+        //System.out.println("done looping through all the phenos. Took" + (System.nanoTime()-start));
     }
 
     private WeightedConfigurationList determineCasesForItem(int item, Observations o,

@@ -346,14 +346,16 @@ public class NewRefinedBOQATest {
                 rb.o.recordObs(anc, true); //only do this if we propagate positives up too
                 //do NOT propagate negatives up (since this is not how the true path rule works)
 
-                //if its negative, should we
-                //must be checked to see its not null too
-                if (rb.o.real_observations.get(anc))
+                //if its not observed, is there any chance that it was already set to true?
+                //Yes, if it was inferred. Note that, the wya our code works is that it will still be added as a real obs even
+                //if it was jsut the kid that was checked
+                //hence only add it if it was also false, which will be the case msotly
+                if (rb.o.real_observations.get(anc) != null && !rb.o.real_observations.get(anc))
                     //the only way it could be true is if it is observed, or one of its children was observed
                     //hence the first if condition (checking that it wasn't observed) is good enough
                     //Hence we guarantee the state was off to start off with
                     //essentially, if if it is observed, there is only one case, where it is true
-                turnedOnTerms.add(anc);//otherwise this would add index a lot!
+                    turnedOnTerms.add(anc);//otherwise this would add index a lot!
 
             }
 
