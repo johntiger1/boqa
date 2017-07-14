@@ -352,6 +352,48 @@ public class NewRefinedBOQATest {
         return score;
     }
 
+
+    public void generateTrueDisease(SlimDirectedGraphView<Term> slim, AssociationContainer assocs)
+    {
+        Random rnd = new Random(3); //this is our true disease
+        for (int j = 0; j < rnd.nextInt(16) + 2; j++) {
+            Term t;
+            do {
+                t = slim.getVertex(rnd.nextInt(slim.getNumberOfVertices())); //randomly select a vertex
+                //keeps doing this til it gets a non-obsolete vertex
+            } while (t.isObsolete());
+
+            //how it works, is we store key:value pairs, regardless of whether key already exists
+            //(hence not like a dictionary)
+            Association trueDiseasePhenotype = new Association(trueDisease, t.getIDAsString());
+
+            //we have a huge array of size (#items by #terms large)
+            //alternatively just maintain an arraylist of <item, arraylist <terms>>
+            //we already have that, we just want to reconstruct new ByteStrings from
+            //the list of diseases we get back
+            //we just need to get the top numbers, from the result.
+            //take the top n/2 results from the Result
+
+            //assocs.get(item).getAssociations();
+            //System.err.println(a.toString());
+            //print(a);
+
+            if (pheno_disease_freq.containsKey(t)) {
+                pheno_disease_freq.get(t).put(trueDisease, rnd.nextInt(freq_categories.length));
+
+            } else {
+                pheno_disease_freq.put(t, new HashMap<ByteString, Integer>());
+                pheno_disease_freq.get(t).put(trueDisease, rnd.nextInt(freq_categories.length)); //these correspond to the frequency classes
+
+            }
+            trueDiseaseMapping.add(trueDiseasePhenotype);
+
+
+            assocs.addAssociation(trueDiseasePhenotype); //this seems to not hve any effect on BOQA... (nvm, it is used inb boqa.setup)
+        }
+
+    }
+
     @Test
     public void testConvergence() throws IOException, OBOParserException, URISyntaxException {
         int num = 10000;
@@ -401,42 +443,8 @@ public class NewRefinedBOQATest {
 
 
 
-        Random rnd = new Random(3); //this is our true disease
-        for (int j = 0; j < rnd.nextInt(16) + 2; j++) {
-            Term t;
-            do {
-                t = slim.getVertex(rnd.nextInt(slim.getNumberOfVertices())); //randomly select a vertex
-                //keeps doing this til it gets a non-obsolete vertex
-            } while (t.isObsolete());
+        generateTrueDisease(slim, assocs);
 
-            //how it works, is we store key:value pairs, regardless of whether key already exists
-            //(hence not like a dictionary)
-            Association trueDiseasePhenotype = new Association(trueDisease, t.getIDAsString());
-
-            //we have a huge array of size (#items by #terms large)
-            //alternatively just maintain an arraylist of <item, arraylist <terms>>
-            //we already have that, we just want to reconstruct new ByteStrings from
-            //the list of diseases we get back
-            //we just need to get the top numbers, from the result.
-            //take the top n/2 results from the Result
-
-            //assocs.get(item).getAssociations();
-            //System.err.println(a.toString());
-            //print(a);
-
-            if (pheno_disease_freq.containsKey(t)) {
-                pheno_disease_freq.get(t).put(trueDisease, rnd.nextInt(freq_categories.length));
-
-            } else {
-                pheno_disease_freq.put(t, new HashMap<ByteString, Integer>());
-                pheno_disease_freq.get(t).put(trueDisease, rnd.nextInt(freq_categories.length)); //these correspond to the frequency classes
-
-            }
-            trueDiseaseMapping.add(trueDiseasePhenotype);
-
-
-            assocs.addAssociation(trueDiseasePhenotype); //this seems to not hve any effect on BOQA... (nvm, it is used inb boqa.setup)
-        }
         Observations o = new Observations();
         o.observations = new boolean[ontology.getNumberOfTerms()];
         //Run BOQA once to get the initial guesses.
@@ -444,14 +452,7 @@ public class NewRefinedBOQATest {
 
         boqa.setup(ontology, assocs);
         boqa.setO(o);
-        //provides a reverse mapping (from HPO term to disease)
-        GOTermEnumerator x = boqa.termEnumerator;
-        x.getGenes();
-
-
-
-
-
+        
         int steps = 0;
         double increment = 0.01;
         boolean discovered = false;

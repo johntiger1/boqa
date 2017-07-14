@@ -59,6 +59,8 @@ public class ReducedBoqa {
 
     }
 
+
+
     public void scoringFunctionWrapper(double [] phen_arr, double [] dis_arr )
     {
 
@@ -91,6 +93,20 @@ public class ReducedBoqa {
     public double getInitial_beta()
     {
         return initial_beta;
+    }
+
+    public int getNumberOfUnobservedPhenotypes()
+    {
+        int count;
+
+        //go thru the arraylist
+        //
+        //for (int i = 0; i < )
+        //actually, this may be maintained in o
+        count = this.o.observations.length - this.o.real_observations.size();
+
+        return count;
+
     }
 
 
@@ -209,6 +225,13 @@ public class ReducedBoqa {
 
         //
         multiDiseaseDistributions = new double[this.slimGraph.getNumberOfVertices()][this.allItemList.size()];
+
+    }
+
+    //Returns the difference between the observed phenotypes, and the unobserved ones.
+    //Note: this can be done in cosntant time, if it is done alongside the others
+    public observedUncheckedDifferential()
+    {
 
     }
 
@@ -480,8 +503,8 @@ public class ReducedBoqa {
     private void computePhenoDifferentials()
     {
         //between n numbers there are only n-1 spaces
-        pOn = new HashSet[this.slimGraph.getNumberOfVertices()];
-        pOff = new HashSet[this.slimGraph.getNumberOfVertices()];
+        pOn = new HashSet[getNumberOfUnobservedPhenotypes()];
+        pOff = new HashSet[getNumberOfUnobservedPhenotypes()];
 
 
         HashSet h = new HashSet();
@@ -497,48 +520,44 @@ public class ReducedBoqa {
         //after done BOTH for loops we have computed the diff between
         //what i am actually computing now is the term with its next term differences
         //
-        for (int i =0; i < this.slimGraph.getNumberOfVertices(); i++)
-        {
-            for (int k = 0; k < term2Ancestors[i].length; k++)
-            {
-                h.add(term2Ancestors[i][k]);
-            }
+        for (int i =0; i < this.slimGraph.getNumberOfVertices(); i++) {
 
-            //goes over the term2ancestors of the next term
-            //this should compute the delta between n and 0
-            //essentially, i+1%x describes a function that everywhere is i, except at the very boundary, in the range [0, n-1]
-
-            for (int j = 0; j < term2Ancestors[(i+1)%pOn.length].length; j++)
-            {
-                if (!h.contains(term2Ancestors[i+1][j]))
-                {
-                    new_h.add(term2Ancestors[i+1][j]);
-                    //these are definitely in B
-                    //the ones in A - the duplicates are the ones exclusive to just A
+            if (!this.o.observations[i]) {
+                for (int k = 0; k < term2Ancestors[i].length; k++) {
+                    h.add(term2Ancestors[i][k]);
                 }
 
-                else //previous hashset and this one both contain the term
-                {
-                    h.remove(term2Ancestors[i+1][j]);
-                    //now at this point, h will only have items which are exclusive ot itself
-                    //then:
+                //goes over the term2ancestors of the next term
+                //this should compute the delta between n and 0
+                //essentially, i+1%x describes a function that everywhere is i, except at the very boundary, in the range [0, n-1]
+
+                for (int j = 0; j < term2Ancestors[(i + 1) % pOn.length].length; j++) {
+                    if (!h.contains(term2Ancestors[i + 1][j])) {
+                        new_h.add(term2Ancestors[i + 1][j]);
+                        //these are definitely in B
+                        //the ones in A - the duplicates are the ones exclusive to just A
+                    } else //previous hashset and this one both contain the term
+                    {
+                        h.remove(term2Ancestors[i + 1][j]);
+                        //now at this point, h will only have items which are exclusive ot itself
+                        //then:
+                    }
+
+                    //we need a case of A-B => this implies what to TURN OFF
+                    //(actually, they have a neat trick: )
+                    //it just is to run it in the reverse way!
                 }
 
-                //we need a case of A-B => this implies what to TURN OFF
-                //(actually, they have a neat trick: )
-                //it just is to run it in the reverse way!
+                //what must be turned on from i to i+1
+                pOn[i] = (HashSet) new_h.clone();
+                //what must be turned off from i to i+1
+                pOff[i] = (HashSet) h.clone();
+
+                h.clear();
+                new_h.clear();
+
+
             }
-
-            //what must be turned on from i to i+1
-            pOn[i] = (HashSet) new_h.clone();
-            //what must be turned off from i to i+1
-            pOff[i] = (HashSet) h.clone();
-
-            h.clear();
-            new_h.clear();
-
-
-
         }
 
 
@@ -617,9 +636,18 @@ public class ReducedBoqa {
         //assert: pOff and pOn should have the same length (they represent the # of transitions between unobserved phenotypes)
 
         assert pOn.length==pOff.length;
-
+        int k;
         //the last one specifies how to get back to n-1
         for (int j =0; j<pOn.length-1; j++) {
+            //dangerous dependency: now we have a monotone list of numbers, but we cannot retrieve their original indices
+
+            k= j;
+
+            //this finds the first index past j where observations is NOT true
+            while (o.observations[k])
+            {
+                k++;
+            }
             while (pOn[j].iterator().hasNext()) {
                 stats.decrement(getNodeCase((int) pOn[j].iterator().next(), hidden, o));
             }
@@ -655,7 +683,7 @@ public class ReducedBoqa {
             }
 
             //fill in the COLUMN of the matrix!
-            multiDiseaseDistributions[j][item] = stats.getScore(this.ALPHA_GRID[0],initial_beta, experimental_beta);
+            multiDiseaseDistributions[k][item] = stats.getScore(this.ALPHA_GRID[0],initial_beta, experimental_beta);
         }
 
         //reset to the original/baseline phenotype
@@ -1006,7 +1034,8 @@ public class ReducedBoqa {
         final boolean[] previousHidden = new boolean[this.slimGraph.getNumberOfVertices()];
         final ReducedConfiguration previousStat = new ReducedConfiguration();
 
-        //Initialize it (no diseases, but with current observations). This step is necessary for the createDiffVectors to make sense.
+        //Initialize the previousStat config(no diseases, but with current observations).
+        // This step is necessary for the createDiffVectors to make sense.
         determineCases(observations, previousHidden, previousStat);
 
         ArrayList<Future<?>> futureList = new ArrayList<Future<?>>();
@@ -1017,6 +1046,7 @@ public class ReducedBoqa {
             Runnable run = new Runnable()
             {
 
+                //we have a filled in matrix by the time this is over, so we can just op on that
                 @Override
                 public void run() //since this is an inner, class, we need final int item
                 //we cannot change it inside this scope!
@@ -1024,40 +1054,8 @@ public class ReducedBoqa {
                     WeightedConfigurationList stats =
                             actuateDiseaseDifferentials(item, observations, takeFrequenciesIntoAccount,
                                     numThreads > 1 ? null : previousHidden, numThreads > 1 ? null : previousStat);
-                    for (int i =0; i < o.observations.length; i++)
-                    {
-                        if (!o.observations[i]) {
-
-                            //actually, we must set ALL the above nodes to true too!
-                            o.recordObs(i, true); //actually this is almost NEVER true (since negatives don't tell us anything more)
-                            turnedOn = NewRefinedBOQATest.setAncestors(ReducedBoqa.this, i);
 
 
-                            //Should be memoized (in order to use the previous value (from the previous iteration), we need to
-                            //write it down somewhere!
-                            if (best_phenotype_value <
-                                    (temp = scoringFunction(res, rb) * phenotype_frequencies[i])) //pass in rb in case we need ot infer other things
-                            {       //weight on the phenotype_frequency! (how likely it is to be true)
-                                best_phenotype_index = i;
-                                best_phenotype_value = temp;
-
-                                //index to termID is not well supported.
-                                //since these things only make sense wrt a graph
-                                //also termid and term are not well related, we really just want
-                                //term,since it encapsulates everything
-                                //hence we should use 3termcontainer to send it into
-
-                            }
-                            System.out.println("done assignmarginals. Took" + (System.nanoTime()-start));
-
-                            //undoes the setting action
-                            rb.o.removeObs(i);
-                            rollback(rb, turnedOn);
-
-
-                            //SUM OF SQUARES FORMULA HERE
-                        }
-                    }
                     //Compute for the different phenotypes in turn, looking into the o.observatiosn array to see
                     //what should be checked and what shouldn't. Note that it might be better to move this outsidet
                     //the multithreading scope.
