@@ -230,10 +230,7 @@ public class ReducedBoqa {
 
     //Returns the difference between the observed phenotypes, and the unobserved ones.
     //Note: this can be done in cosntant time, if it is done alongside the others
-    public observedUncheckedDifferential()
-    {
 
-    }
 
     boolean areFalsePositivesPropagated()
     {
@@ -520,6 +517,7 @@ public class ReducedBoqa {
         //after done BOTH for loops we have computed the diff between
         //what i am actually computing now is the term with its next term differences
         //
+        int z;
         for (int i =0; i < this.slimGraph.getNumberOfVertices(); i++) {
 
             if (!this.o.observations[i]) {
@@ -531,14 +529,14 @@ public class ReducedBoqa {
                 //this should compute the delta between n and 0
                 //essentially, i+1%x describes a function that everywhere is i, except at the very boundary, in the range [0, n-1]
 
-                for (int j = 0; j < term2Ancestors[(i + 1) % pOn.length].length; j++) {
-                    if (!h.contains(term2Ancestors[i + 1][j])) {
-                        new_h.add(term2Ancestors[i + 1][j]);
+                for (int j = 0; j < term2Ancestors[z=(i + 1) % pOn.length].length; j++) {
+                    if (!h.contains(term2Ancestors[z][j])) {
+                        new_h.add(term2Ancestors[z][j]);
                         //these are definitely in B
                         //the ones in A - the duplicates are the ones exclusive to just A
                     } else //previous hashset and this one both contain the term
                     {
-                        h.remove(term2Ancestors[i + 1][j]);
+                        h.remove(term2Ancestors[z][j]);
                         //now at this point, h will only have items which are exclusive ot itself
                         //then:
                     }
@@ -582,7 +580,7 @@ public class ReducedBoqa {
     //(i.e. the way it is written, it is difficult to encapsulate/decouple)
 
 
-    private WeightedConfigurationList actuateDiseaseDifferentials( int item, Observations o,
+    private void actuateDiseaseDifferentials( int item, Observations o,
                                              boolean takeFrequenciesIntoAccount, boolean[] previousHidden, ReducedConfiguration previousStats)
     {
 
@@ -695,11 +693,6 @@ public class ReducedBoqa {
             o.recordObs((int) pOn[pOn.length-1].iterator().next(), true);
 
         }
-
-
-
-
-        statsList.add(stats.clone(), 0); //we add the stas configuration to a list. Later, we will compute this.
     }
 
     private WeightedConfigurationList determineCasesForItem(int item, Observations o,
@@ -991,7 +984,7 @@ public class ReducedBoqa {
 
     //Returns an array of Result objects
     //will now be quite an expensive operation
-    public Result[] assignMultiShotMarginals( Observations observations, final boolean takeFrequenciesIntoAccount,
+    public void assignMultiShotMarginals( Observations observations, final boolean takeFrequenciesIntoAccount,
                                    final int numThreads)
     {
         computePhenoDifferentials();
@@ -1051,80 +1044,8 @@ public class ReducedBoqa {
                 public void run() //since this is an inner, class, we need final int item
                 //we cannot change it inside this scope!
                 {
-                    WeightedConfigurationList stats =
                             actuateDiseaseDifferentials(item, observations, takeFrequenciesIntoAccount,
                                     numThreads > 1 ? null : previousHidden, numThreads > 1 ? null : previousStat);
-
-
-                    //Compute for the different phenotypes in turn, looking into the o.observatiosn array to see
-                    //what should be checked and what shouldn't. Note that it might be better to move this outsidet
-                    //the multithreading scope.
-
-
-                    //stats only has 1 element
-                    //moreover, we can get a new element each time using the iterator
-                    //System.out.print("aaa");
-//                    for (WeightedConfiguration wc : stats) //this is a list of weighted configs, which itself is simply a list of
-//                    {
-//                        System.out.println("Itme " + item);
-//                        System.out.println(wc.stat);
-//
-//
-//
-//                    }
-                    //since multithreading with the differentials would be too difficult,
-                    //we only sequentially set flags in the stats, (when we only have one process)
-
-                    //PERHAPS: we should assign stats to some of the res.
-                    //In general, res.stats is not updated again, sadly
-
-                    //System.out.println(stats.toString());
-                    //if numthreads > 1 then null, else previousHidden
-
-                    //J: the scoring function is critical; also this seems to be finding the best
-                    //rate for alpha and beta.at a particular alpha, beta value
-                    //this puts the score in for an item;
-
-                    //int temp_terms [] = new int[] ; // since this is inside a void run inside an interface
-                    //might be tricky...
-
-                    for (int a = 0; a < ReducedBoqa.this.ALPHA_GRID.length; a++) {
-                        for (int b = 0; b < ReducedBoqa.this.BETA_GRID.length; b++) {
-                            //This scor is a weighted sum!
-                            scores[item][a][b] = stats.score(ReducedBoqa.this.ALPHA_GRID[a],
-                                    experimental_beta,initial_beta);
-
-                            //normally we maximize this
-                            res.scores[item] = Util.logAdd(res.scores[item], scores[item][a][b]);
-                        }
-                    }
-
-                    //System.out.println(observations.observationStats != null);
-                    if (observations.observationStats != null) {
-                        double fpr = observations.observationStats.falsePositiveRate();
-                        if (fpr == 0) {
-                            fpr = 0.0000001; //get the false positive rate, which for some reason
-                            //cannot be exactly 0 or 1 (this is so that we do not get a 0 term in the
-                            //product which will just wipe our probabilities
-
-                        } else if (fpr == 1.0) {
-                            fpr = 0.999999;
-                        } else if (Double.isNaN(fpr)) {
-                            fpr = 0.5;
-                        }
-
-                        double fnr = observations.observationStats.falseNegativeRate();
-                        if (fnr == 0) {
-                            fnr = 0.0000001;
-                        } else if (fnr == 1) {
-                            fnr = 0.999999;
-                        } else if (Double.isNaN(fnr)) {
-                            fnr = 0.5;
-                        }
-
-                        idealScores[item] = stats.score(fpr, experimental_beta,initial_beta);
-                        //run it again with the **actual** scores
-                    }
                 }
             };
 
@@ -1155,32 +1076,8 @@ public class ReducedBoqa {
             }
         }
 
-        double normalization = Math.log(0);
-        double idealNormalization = Math.log(0);
-        //already at this point, why are all the scores the same?
-        for (i = 0; i < this.allItemList.size(); i++) {
-            normalization = Util.logAdd(normalization, res.scores[i]);
-            idealNormalization = Util.logAdd(idealNormalization, idealScores[i]);
-        }
-
-        for (i = 0; i < this.allItemList.size(); i++) {
-            res.marginals[i] = Math.min(Math.exp(res.scores[i] - normalization), 1); //no, also the scores are same
-            res.marginalsIdeal[i] = Math.min(Math.exp(idealScores[i] - idealNormalization), 1);
-
-            // System.out.println(i + ": " + idealScores[i] + " (" + res.getMarginalIdeal(i) + ") " + res.scores[i] +
-            // " (" + res.getMarginal(i) + ")");
-            // System.out.println(res.marginals[i] + " " + res.marginalsIdeal[i]);
-        }
-
-        if (res.marginalsIdeal[observations.item] < res.marginals[observations.item]) {
-            for (i = 0; i < this.allItemList.size(); i++) {
-                res.marginalsIdeal[i] = res.marginals[i];
-            }
-        }
-
         // System.out.println(idealNormalization + " " + normalization);
         // if (exitNow)
         // System.exit(10);
-        return res;
     }
 }

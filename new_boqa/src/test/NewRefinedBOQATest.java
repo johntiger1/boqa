@@ -197,13 +197,38 @@ public class NewRefinedBOQATest {
                 //undoes the setting action
                 rb.o.removeObs(i);
                 rollback(rb, turnedOn);
-
-
-                //SUM OF SQUARES FORMULA HERE
             }
 
         }
         //rb.getOntology().getSlimGraphView().getVertex()//this can recover the Term if need be
+        return best_phenotype_index;
+    }
+
+    public double scoringFunctionOnArray(double [] freqs) {
+        double score = 0;
+
+        for (double marg : freqs) {
+            score += marg * marg;
+        }
+
+        return score;
+    }
+
+    //pheno rows, disease cols
+    public int multiGetBestPhenotype(double [][] phenoDiseaseDist)
+    {
+        int best_phenotype_index = 0;
+        double best_phenotype_value = Double.NEGATIVE_INFINITY;
+        double temp;
+        for (int i = 0; i<phenoDiseaseDist.length; i++)
+        {
+            if (best_phenotype_value < (temp=scoringFunctionOnArray(phenoDiseaseDist[i])))
+                {
+                    best_phenotype_index = i;
+                    best_phenotype_value = temp;
+                }
+
+        }
         return best_phenotype_index;
     }
 
@@ -452,7 +477,7 @@ public class NewRefinedBOQATest {
 
         boqa.setup(ontology, assocs);
         boqa.setO(o);
-        
+
         int steps = 0;
         double increment = 0.01;
         boolean discovered = false;
@@ -471,6 +496,13 @@ public class NewRefinedBOQATest {
 
             //assign marginals with the new o.
             res = boqa.assignMarginals(o, false, 1);
+
+            System.out.println("starting multishot");
+            long start = System.nanoTime();
+            boqa.assignMultiShotMarginals(o,false,1);
+            System.out.println("done multishot. Took" + (System.nanoTime()-start));
+
+
             disease_frequencies = res.marginals; //TODO doesn't need to be called on every loop
 
             //this returns an int array[], where each elt is the prob of item with that index
@@ -482,9 +514,10 @@ public class NewRefinedBOQATest {
 //
 //        itemEnumerator.getTermsAnnotatedToTheItem(item);
 
-            System.out.println(java.util.Arrays.toString(res.marginals)); //doesn't res store ONE thing tho?
+            System.out.println(java.util.Arrays.toString(res.marginals));
             System.out.println(java.util.Arrays.toString(res.scores));
 
+            //Computes max element and the index it occurs at
             double max = -Double.MAX_VALUE;
             int max_ind = 0;
             for (int i = 0; i < res.marginals.length; i++) {
@@ -507,7 +540,7 @@ public class NewRefinedBOQATest {
 
             //update with the results of the new boqa run
             System.out.println("starting pheno check");
-            long start = System.nanoTime();
+            start = System.nanoTime();
             int phenotype_to_check = getBestPhenotype(boqa, phi_phenotype_frequencies); //in here we do all the phenotype checks
 
             System.out.println("done pheno check. Took" + (System.nanoTime()-start));
