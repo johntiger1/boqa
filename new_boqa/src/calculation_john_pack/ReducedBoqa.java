@@ -222,7 +222,8 @@ public class ReducedBoqa {
 
         //
         multiDiseaseDistributions = new double[this.slimGraph.getNumberOfVertices()][this.allItemList.size()];
-
+        System.out.println("num rows" + this.slimGraph.getNumberOfVertices());
+        System.out.println("num cols" + this.allItemList.size());
     }
 
     //Returns the difference between the observed phenotypes, and the unobserved ones.
@@ -1016,7 +1017,7 @@ public class ReducedBoqa {
     {
         System.out.println("starting compute pheno diff");
         long start = System.nanoTime();
-        computePhenoDifferentials();
+        computePhenoDifferentials();//must be recomputed on every call
         System.out.println("done compute pheno diff. Took" + (System.nanoTime()-start));
 
         int i;

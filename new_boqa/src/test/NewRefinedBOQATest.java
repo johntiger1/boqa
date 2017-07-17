@@ -510,7 +510,7 @@ public class NewRefinedBOQATest {
             boqa.assignMultiShotMarginals(o,false,1);
             System.out.println("done multishot. Took" + (System.nanoTime()-start));
 
-
+            System.exit(0);
             disease_frequencies = res.marginals; //TODO doesn't need to be called on every loop
 
             //this returns an int array[], where each elt is the prob of item with that index

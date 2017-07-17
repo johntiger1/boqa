@@ -45,7 +45,7 @@
         <checksumPolicy>fail</checksumPolicy>
       </snapshots>
     </repository>
-    <repository>
+    <repositorygma>
       <id>phenotips-snapshots</id>
       <name>PhenoTips Snapshots repository</name>
       <url>https://nexus.phenotips.org/nexus/content/repositories/snapshots/</url>
@@ -57,7 +57,7 @@
         <enabled>true</enabled>
         <checksumPolicy>fail</checksumPolicy>
       </snapshots>
-    </repository>
+    </repositorygma>
     <repository>
       <id>phenotips-externals</id>
       <name>PhenoTips external repositories mirror</name>
