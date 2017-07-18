@@ -145,6 +145,12 @@ public class NewRefinedBOQATest {
         return results;
     }
 
+    /***
+     * Postcondition: we expect obs[getBestPhenotype] to be set to true later
+     * @param rb
+     * @param phenotype_frequencies
+     * @return
+     */
     public int getBestPhenotype(ReducedBoqa rb, double[] phenotype_frequencies) {
         //why not just maintain the observed array from before?
         //int [] top_phenotypes; //TODO keep the n largest phenotypes
@@ -162,7 +168,10 @@ public class NewRefinedBOQATest {
             if (!rb.o.observations[i]) {
 
                 //actually, we must set ALL the above nodes to true too!
-                rb.o.recordObs(i, true); //actually this is almost NEVER true (since negatives don't tell us anything more)
+                //actually this is almost NEVER true (since negatives don't tell us anything more)
+                rb.o.real_observations[i] = true;
+                //we need this next line so that assignMarginals makes sense
+                rb.o.observations[i] = true;
                 turnedOn = setAncestors(rb, i);
                 System.out.println("starting assignmarginals");
                 long start = System.nanoTime();
@@ -195,7 +204,8 @@ public class NewRefinedBOQATest {
                 System.out.println("done assignmarginals. Took" + (System.nanoTime()-start));
 
                 //undoes the setting action
-                rb.o.removeObs(i);
+                rb.o.real_observations[i] = false;
+                rb.o.observations[i] = false;
                 rollback(rb, turnedOn);
             }
 
@@ -341,21 +351,30 @@ public class NewRefinedBOQATest {
         //list of terms that were turned on by setting the index to 1 (or true)
         ArrayList<Integer> turnedOnTerms = new ArrayList<>();
         for (int anc : rb.term2Ancestors[index]) {
-            if (!rb.o.observations[anc]) {
-                rb.o.observations[anc] = true;
-                rb.o.recordObs(anc, true); //only do this if we propagate positives up too
+            //essentially, return the set that WAS changed by the setting of the nodes.
+            //only set unobs false ancestors
+            if (!rb.o.observations[anc] && !rb.o.real_observations[anc]) {
+
+
+                rb.o.observations[anc] = true; //understated line tbh. -- this means we treat propagated obs as TRUE obs
+                rb.o.real_observations[anc] = true;
+                //only do this if we propagate positives up too
                 //do NOT propagate negatives up (since this is not how the true path rule works)
+
+
+                //there is no way to do the following now
+
 
                 //if its not observed, is there any chance that it was already set to true?
                 //Yes, if it was inferred. Note that, the wya our code works is that it will still be added as a real obs even
                 //if it was jsut the kid that was checked
                 //hence only add it if it was also false, which will be the case msotly
-                if (rb.o.real_observations.get(anc) != null && !rb.o.real_observations.get(anc))
+
                     //the only way it could be true is if it is observed, or one of its children was observed
                     //hence the first if condition (checking that it wasn't observed) is good enough
                     //Hence we guarantee the state was off to start off with
                     //essentially, if if it is observed, there is only one case, where it is true
-                    turnedOnTerms.add(anc);//otherwise this would add index a lot!
+                turnedOnTerms.add(anc);//otherwise this would add index a lot!
 
             }
 
@@ -369,7 +388,8 @@ public class NewRefinedBOQATest {
     public void rollback(ReducedBoqa rb, ArrayList<Integer> turntOn) {
         for (Integer i : turntOn) {
             rb.o.observations[i] = false;
-            rb.o.removeObs(i);
+            rb.o.real_observations[i] = false;
+            //this is valid since condition for entry to turntOn is false in BOTH
 
         }
 
@@ -480,6 +500,7 @@ public class NewRefinedBOQATest {
 
         Observations o = new Observations();
         o.observations = new boolean[ontology.getNumberOfTerms()];
+        o.real_observations = new boolean[ontology.getNumberOfTerms()];
         //Run BOQA once to get the initial guesses.
         ArrayList<String> initial_guesses = null;
 
@@ -497,7 +518,7 @@ public class NewRefinedBOQATest {
         while (!discovered) {
             System.out.println("this is step" + steps);
             System.out.println("These are the new observations");
-            System.out.println(boqa.o.real_observations.toString());
+            System.out.println(boqa.o.real_observations);
             //boqa.setInitial_beta(boqa.getInitial_beta()-boqa.getInitial_beta()/30);
             //Alternatively, we could jsut have the difference too (inital beta-experimental beta)
             boqa.setInitial_beta(increment * steps);
@@ -565,14 +586,16 @@ public class NewRefinedBOQATest {
             if (present_or_not){
                 for (int anc : boqa.term2Ancestors[index]) {
                     o.observations[anc] = true; //@TODO we assume observing hte child is the same as observing the parent
-                    o.recordObs(anc, present_or_not); //only do this if we propagate positives up too
+                    o.real_observations[anc] = true; //only do this if we propagate positives up too
                     //do NOT propagate negatives up (since this is not how the true path rule works)
+
 
                     //if its negative, should we
 
                 }}
             //this should all be abstracted to another function!
-            o.recordObs(index, present_or_not);
+            o.real_observations[index] = present_or_not;
+
 
 
             o.observations[index] = true; //recall the new meanings: observations means whether it was

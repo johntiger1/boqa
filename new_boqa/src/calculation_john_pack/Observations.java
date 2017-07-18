@@ -64,11 +64,10 @@ public class Observations
     //public boolean [] RegisteredObservaitons; // records whether the observation was true or false
     public Observations()
     {
-        this.real_observations = new HashMap<>();
         //observations should be set when necessary (fixed size)
     }
     //public ArrayList<obs_value> real_observations= new ArrayList<>();
-    public HashMap<Integer, Boolean> real_observations;
+    public boolean[] real_observations;
     public ReducedConfiguration observationStats; //this is our familiar 4 term!
 
 //    //TODO UNSAFE METHOD
@@ -78,16 +77,4 @@ public class Observations
 //        RegisteredObservaitons[index] = value;
 //
 //    }
-    public void recordObs(int index, boolean value)
-    {
-        real_observations.put(index, value);
-        //real_observations.add(new obs_value(index, value));
-    }
-
-    public void removeObs(int index)
-    {
-        real_observations.remove(index);
-        //real_observations.put(index, value);
-        //real_observations.add(new obs_value(index, value));
-    }
 }

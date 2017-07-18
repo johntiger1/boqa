@@ -94,13 +94,17 @@ public class ReducedBoqa {
 
     public int getNumberOfUnobservedPhenotypes()
     {
-        int count;
+        int count=0;
 
         //go thru the arraylist
         //
         //for (int i = 0; i < )
         //actually, this may be maintained in o
-        count = this.o.observations.length - this.o.real_observations.size();
+        //count = this.o.observations.length - this.o.real_observations.size();
+        for (boolean b : this.o.observations)
+        {
+            count += b ? 0: 1;
+        }
 
         return count;
 
@@ -253,7 +257,7 @@ public class ReducedBoqa {
                 int chld = this.term2Children[node][i]; //TODO use a lambda here, or some python syn
                 //one reeason the following line works is because containsKey is a necessary condition for real_observations.get(chld)
                 //the opposite case is if o.real_observations.get() is false, which is not handled anyways--this is not a False Positive!
-                if (o.real_observations.containsKey(chld) && o.real_observations.get(chld)) { //this explains false positive propagation
+                if (o.observations[chld] && o.real_observations[chld]) { //this explains false positive propagation
                     //translation: if both are observed has no real analogue anymore
                     //actually, if we actually do do true propagation, then
                     //we can just check that both are in
@@ -264,7 +268,7 @@ public class ReducedBoqa {
                     //if both are unobserved, it DOES have an analogue though! Both are not in
                     //the registered observations
 
-                    if (o.real_observations.containsKey(node) && (o.real_observations.get(node))) { //in the observed layer, parent points to child, so
+                    if (o.observations[node] && (o.real_observations[node])) { //in the observed layer, parent points to child, so
                         //if child is on, then parenbt is on [contrary to how BN semantrics normally
                         //work, where really only parent affects child]
                         return ReducedConfiguration.NodeCase.INHERIT_TRUE; //the causality seems backwards
@@ -273,7 +277,7 @@ public class ReducedBoqa {
                         //preprocessing step
 
                         //we assume that it became true via inheritance
-                    } else if (o.real_observations.containsKey(node) && (!o.real_observations.get(node))) {
+                    } else if (o.observations[node]  && (!o.real_observations[node])) {
                         /* NaN */
                         return ReducedConfiguration.NodeCase.FAULT;
                     }
@@ -286,8 +290,15 @@ public class ReducedBoqa {
             for (int i = 0; i < this.term2Parents[node].length; i++) {
                 int parent = this.term2Parents[node][i];
                 //handle both false and null case
-                if (o.real_observations.get(parent) == null || !o.real_observations.get(parent))  {
-                    if (o.real_observations.get(node) == null || !o.real_observations.get(node)) {
+
+                //note that before in the real_obs case, null represents FUN, while false represents FON
+                //but consider a 1 0 (observed false) paired with a unobserved true...
+                //is just checking that real_obs is false enough--yes, because it is default state...
+                //unobs neg state leading to obs neg state though?
+                //esnure matching on states...
+                //i.e. nobs to unobs or obs to obs
+                if (!o.observations[parent] || !o.real_observations[parent])  {
+                    if (!o.observations[node] || !o.real_observations[node]) {
                         return ReducedConfiguration.NodeCase.INHERIT_FALSE; //wasn't actually false but inherited it..
                     } else {
                         /* NaN (the only other case is where it isnt null and it WAS observed!)*/
@@ -309,7 +320,7 @@ public class ReducedBoqa {
             //when they are NOT inherited, what happens? a node CANNOT be made into a false
             //by another node--hence it IS conclusively false positve/negative
             //observed just means whether it was actually looked at or not
-            if (o.real_observations.containsKey(node) && o.real_observations.get(node)) {
+            if (o.observations[node] && o.real_observations[node]) {
                 return ReducedConfiguration.NodeCase.TRUE_OBSERVED_POSITIVE;
                 //ensure this is based on the correct beta being used (when being scored)
                 //however, it depends. Say we go with annotation propagation. Then, there is a
@@ -325,7 +336,7 @@ public class ReducedBoqa {
             } else {
 
                 //really, this should just be false
-                if (o.real_observations.containsKey(node))
+                if (!o.observations[node])
                 {
                     return ReducedConfiguration.NodeCase.FALSE_OBSERVED_NEGATIVE;
 
@@ -340,7 +351,7 @@ public class ReducedBoqa {
             //Note this will cause errors!: !o.real_observations.get(node)
             /* Term is truly off */
 
-            if (o.real_observations.get(node) == null|| !o.real_observations.get(node)) {
+            if (!o.observations[node] || !o.real_observations[node]) {
 
                 return ReducedConfiguration.NodeCase.TRUE_NEGATIVE;
             } else {
@@ -674,7 +685,7 @@ public class ReducedBoqa {
             //ojbects that implement the iterator can sue the for each
             for (Object val : pOff[j])
             {
-                o.removeObs((int) val);
+                o.real_observations[((int) val)] = false;
             }
 
             for (Object val : pOn[j])
@@ -683,7 +694,8 @@ public class ReducedBoqa {
                 //(since the record obs already stores the stae of the previous observation)
                 //we do not actually need the indexing terms2ancestors[i][j], since that is already completely
                 //reflected in the state of the o
-                o.recordObs((int) val,true);
+                o.real_observations[((int) val)] = true;
+
             }
 
             //Note that while the function expects an item (hidden node) to change, here we are actually changing
@@ -712,12 +724,12 @@ public class ReducedBoqa {
 
         for (Object val : pOff[pOff.length-1])
         {
-            o.removeObs((int) val);
+            o.real_observations[((int) val)] = false;
         }
 
         for (Object val : pOn[pOn.length-1])
         {
-            o.recordObs((int) val, true);
+            o.real_observations[((int) val)] = true;
         }
 
         //System.out.println("done looping through all the phenos. Took" + (System.nanoTime()-start));
