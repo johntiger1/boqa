@@ -646,14 +646,11 @@ public class ReducedBoqa {
             //dangerous dependency: now we have a monotone list of numbers, but we cannot retrieve their original indices
             //System.out.println("done");
             //start = System.nanoTime();
-            k= j;
 
+            for(k=j; o.observations[k];k++);
             //this finds the first index past j where observations is NOT true
             //ensure that the array is not all observed!
-            while (o.observations[k])
-            {
-                k++;
-            }
+
 
             //array op--this is very rapid.
             //System.out.println("done looping through the 'find' op took " + (System.nanoTime()-start));

@@ -84,11 +84,24 @@ final public class ReducedConfiguration implements Cloneable
                 Math.log(1 - experimental_beta) * getCases(NodeCase.TRUE_OBSERVED_POSITIVE) + //True positives can only occur via being observed
                 //note that adding to one is satisfied: 1-experimental beta+e_beta =1
                 //the misleading thing is that there is NO case where an obs can be true without having been examined via beta (e_beta)
-                Math.log(1 - alpha) * getCases(NodeCase.TRUE_NEGATIVE) +
+                Math.log(1 - alpha) * getCases(NodeCase.TRUE_NEGATIVE);
 
-                Math.log(1) * getCases(NodeCase.INHERIT_FALSE) + /* 0 */
-                Math.log(1) * getCases(NodeCase.INHERIT_TRUE); /* 0 */
+//                +
+//                Math.log(1) * getCases(NodeCase.INHERIT_FALSE) + /* 0 */
+//                Math.log(1) * getCases(NodeCase.INHERIT_TRUE); /* 0 */
     }
+
+    //Takes very little time ~395ns
+    public void testSpeed(double alpha, double naive_beta, double experimental_beta)
+    {
+        long start = System.nanoTime();
+        double sum = Math.log(1) * getCases(NodeCase.INHERIT_FALSE) + /* 0 */
+                Math.log(1) * getCases(NodeCase.INHERIT_TRUE);
+        //System.out.println("done looping through the 'find' op took " + (System.nanoTime()-start));
+        System.out.println("done calculating two log0s, took" + (System.nanoTime()-start));
+
+    }
+
 
     public void decrement(ReducedConfiguration.NodeCase c)
     {
