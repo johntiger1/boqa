@@ -225,14 +225,18 @@ public class NewRefinedBOQATest {
     }
 
     //pheno rows, disease cols
-    public int multiGetBestPhenotype(double [][] phenoDiseaseDist)
+    public int multiGetBestPhenotype(double [][] phenoDiseaseDist, ReducedBoqa rb)
     {
         int best_phenotype_index = 0;
         double best_phenotype_value = Double.NEGATIVE_INFINITY;
         double temp;
+        double val;
+        ///pheno_disease_freq.get(graph.getVertex(i)).get()
+        SlimDirectedGraphView graph = rb.getOntology().getSlimGraphView();
         for (int i = 0; i<phenoDiseaseDist.length; i++)
         {
-            if (best_phenotype_value < (temp=scoringFunctionOnArray(phenoDiseaseDist[i])))
+
+            if (best_phenotype_value < (temp=phenotype_frequencies[i]*scoringFunctionOnArray(phenoDiseaseDist[i])))
                 {
                     best_phenotype_index = i;
                     best_phenotype_value = temp;
@@ -529,6 +533,10 @@ public class NewRefinedBOQATest {
             System.out.println("starting multishot");
             long start = System.nanoTime();
             boqa.assignMultiShotMarginals(o,false,1);
+
+            //now that we have the matrix of probabiltiies, we can look up the pheno-freqs and weight it accordingly
+            //this process will probably take some time as well (+20s)
+
             System.out.println("done multishot. Took" + (System.nanoTime()-start));
 
             System.exit(0);

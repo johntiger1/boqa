@@ -58,7 +58,6 @@ public class Observations
 
     //it makes most sense just to have an arraylist of <item: observation_value> pairings
     //In general, we can make these checks by asserting abscenjnece in real_observations
-    @Deprecated
     public boolean[] observations;
 
     //public boolean [] RegisteredObservaitons; // records whether the observation was true or false

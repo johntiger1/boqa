@@ -9,7 +9,6 @@ import ontologizer.go.TermID;
 import ontologizer.set.PopulationSet;
 import ontologizer.types.ByteString;
 import sonumina.math.graph.SlimDirectedGraphView;
-import test.NewRefinedBOQATest;
 
 import java.util.*;
 import java.util.concurrent.ExecutorService;
@@ -520,7 +519,7 @@ public class ReducedBoqa {
         pOn = new HashSet[getNumberOfUnobservedPhenotypes()];
         pOff = new HashSet[getNumberOfUnobservedPhenotypes()];
 
-
+        //each hashset only stores the delta from one pheno to the next->10k at the most
         HashSet h = new HashSet();
         HashSet new_h = new HashSet();
 
@@ -632,6 +631,119 @@ public class ReducedBoqa {
         int[] diffOn = this.diffOnTerms[item];
         int[] diffOff = this.diffOffTerms[item];
 
+        useDeltaToSetToCurrentDisease(o, hidden, stats, diffOn, diffOff);
+
+        //assert: pOff and pOn should have the same length (they represent the # of transitions between unobserved phenotypes)
+
+
+        int k;
+        //the last one specifies how to get back to n-1
+        //System.out.println("starting looping thru all phens");
+        long start = System.nanoTime();
+
+
+        for (int j =0; j<pOn.length-1; j++) {
+            //dangerous dependency: now we have a monotone list of numbers, but we cannot retrieve their original indices
+            //System.out.println("done");
+            //start = System.nanoTime();
+            k= j;
+
+            //this finds the first index past j where observations is NOT true
+            //ensure that the array is not all observed!
+            while (o.observations[k])
+            {
+                k++;
+            }
+
+            //array op--this is very rapid.
+            //System.out.println("done looping through the 'find' op took " + (System.nanoTime()-start));
+
+
+            decrementStaleNodes(o, hidden, stats, j);
+            updateObservationsBasedOnPhenotype(o, j);
+
+
+            //Note that while the function expects an item (hidden node) to change, here we are actually changing
+            //the observed node!
+
+            //true: we should be able to pass this off to a function, specifying the action occurring.
+            //pass in the iterator, and the action to take n stats, and so forth
+
+            incrementUpdatedNodes(o, hidden, stats, j);
+
+            //fill in the COLUMN of the matrix!
+            multiDiseaseDistributions[k][item] = stats.getScore(this.ALPHA_GRID[0],initial_beta, experimental_beta);
+        }
+
+        //reset to the original/baseline phenotype
+
+
+        resetToConsistentStateForDiseaseDiff(o);
+
+        //System.out.println("done looping through all the phenos. Took" + (System.nanoTime()-start));
+    }
+
+    private void incrementUpdatedNodes(Observations o, boolean[] hidden, ReducedConfiguration stats, int j) {
+        for (Object val : pOn[j])
+        {
+            stats.increment(getNodeCase((int) val, hidden, o));
+        }
+
+        //re-evalaute the ones that were changed
+        for (Object val : pOff[j])
+        {
+            stats.increment(getNodeCase((int) val, hidden, o));
+        }
+    }
+
+    private void updateObservationsBasedOnPhenotype(Observations o, int j) {
+        //ojbects that implement the iterator can sue the for each
+        for (Object val : pOff[j])
+        {
+            o.real_observations[((int) val)] = false;
+        }
+
+        for (Object val : pOn[j])
+        {
+            //TODO think about how we can infer duplicates/etc. using this system
+            //(since the record obs already stores the stae of the previous observation)
+            //we do not actually need the indexing terms2ancestors[i][j], since that is already completely
+            //reflected in the state of the o
+            o.real_observations[((int) val)] = true;
+
+        }
+    }
+
+
+    //Decrement the nodes that are "stale" from the previous to our current
+    //essentially, changes everything except the nodes which remain exactly the same
+    private void decrementStaleNodes(Observations o, boolean[] hidden, ReducedConfiguration stats, int j) {
+        Iterator i = pOn[j].iterator();
+        while (i.hasNext()) {
+            stats.decrement(getNodeCase((int) (i.next()), hidden, o));
+        }
+
+        for (i = pOff[j].iterator(); i.hasNext();)
+        {
+            stats.decrement(getNodeCase((int) i.next(), hidden, o));
+        }
+    }
+
+    //Resets the d-p combo into a "consistent" state, such that the NEXT diffON
+    //can be applied.
+    private void resetToConsistentStateForDiseaseDiff(Observations o) {
+        for (Object val : pOff[pOff.length-1])
+        {
+            o.real_observations[((int) val)] = false;
+        }
+
+        for (Object val : pOn[pOn.length-1])
+        {
+            o.real_observations[((int) val)] = true;
+        }
+    }
+
+    private void useDeltaToSetToCurrentDisease(Observations o, boolean[] hidden, ReducedConfiguration stats, int[] diffOn, int[] diffOff) {
         for (int element : diffOn) {
             stats.decrement(getNodeCase(element, hidden, o));
         }
@@ -647,92 +759,6 @@ public class ReducedBoqa {
         for (int i = 0; i < diffOff.length; i++) {
             hidden[diffOff[i]] = false; //what we need to switch off to get to disease i
         }
-
-        //assert: pOff and pOn should have the same length (they represent the # of transitions between unobserved phenotypes)
-
-
-        int k;
-        //the last one specifies how to get back to n-1
-        //System.out.println("starting looping thru all phens");
-        long start = System.nanoTime();
-
-
-        for (int j =0; j<pOn.length-1; j++) {
-            //dangerous dependency: now we have a monotone list of numbers, but we cannot retrieve their original indices
-            //System.out.println("done");
-            k= j;
-
-            //this finds the first index past j where observations is NOT true
-            //ensure that the array is not all observed!
-            while (o.observations[k])
-            {
-                k++;
-            }
-            Iterator i = pOn[j].iterator();
-            //this is asking for a new iterator each time?!
-            while (i.hasNext()) {
-                stats.decrement(getNodeCase((int) (i.next()), hidden, o));
-
-            }
-            //System.out.println(pOn[j].iterator().next());
-            //System.out.println("got thru");
-
-            for (i = pOff[j].iterator(); i.hasNext();)
-            {
-                stats.decrement(getNodeCase((int) i.next(), hidden, o));
-            }
-
-            //ojbects that implement the iterator can sue the for each
-            for (Object val : pOff[j])
-            {
-                o.real_observations[((int) val)] = false;
-            }
-
-            for (Object val : pOn[j])
-            {
-                //TODO think about how we can infer duplicates/etc. using this system
-                //(since the record obs already stores the stae of the previous observation)
-                //we do not actually need the indexing terms2ancestors[i][j], since that is already completely
-                //reflected in the state of the o
-                o.real_observations[((int) val)] = true;
-
-            }
-
-            //Note that while the function expects an item (hidden node) to change, here we are actually changing
-            //the observed node!
-
-            //true: we should be able to pass this off to a function, specifying the action occurring.
-            //pass in the iterator, and the action to take n stats, and so forth
-
-            for (Object val : pOn[j])
-            {
-                stats.increment(getNodeCase((int) val, hidden, o));
-            }
-
-
-            for (Object val : pOff[j])
-            {
-                stats.increment(getNodeCase((int) val, hidden, o));
-            }
-
-            //fill in the COLUMN of the matrix!
-            multiDiseaseDistributions[k][item] = stats.getScore(this.ALPHA_GRID[0],initial_beta, experimental_beta);
-        }
-
-        //reset to the original/baseline phenotype
-
-
-        for (Object val : pOff[pOff.length-1])
-        {
-            o.real_observations[((int) val)] = false;
-        }
-
-        for (Object val : pOn[pOn.length-1])
-        {
-            o.real_observations[((int) val)] = true;
-        }
-
-        //System.out.println("done looping through all the phenos. Took" + (System.nanoTime()-start));
     }
 
     private WeightedConfigurationList determineCasesForItem(int item, Observations o,
