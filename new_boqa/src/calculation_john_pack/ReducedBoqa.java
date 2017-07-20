@@ -469,6 +469,36 @@ public class ReducedBoqa {
         return nc;
     }
 
+    private void createPhenoVectors() {
+
+        System.out.println("starting createDiffVecs");
+        long start = System.nanoTime();
+        int numberOfUnobservedPhenotypes = getNumberOfUnobservedPhenotypes();
+        phenoOn = new int[numberOfUnobservedPhenotypes][];
+        phenoOff = new int[numberOfUnobservedPhenotypes][];
+
+
+        this.phenoOn[0] = this.term2Ancestors[0]; /* For the first step, all terms must be activated */
+        //this makes sense, since the one "behind" it is the empty set; hence all must be taken!
+
+
+        //all terms annotated to the first item are diffOnTerms for that item as well
+        int i;
+        //
+        this.phenoOff[0] = new int[0];   //this is an empty array
+        for (i = 1; i < numberOfUnobservedPhenotypes; i++) {
+            int prevOnTerms[] = this.term2Ancestors[i - 1];      //items2terms[0] on first iteration
+            int newOnTerms[] = this.term2Ancestors[i];
+
+            this.phenoOn[i] = setDiff(newOnTerms, prevOnTerms);
+            this.phenoOff[i] = setDiff(prevOnTerms, newOnTerms);
+        }
+
+        System.out.println("done createDiffVecs. Took" + (System.nanoTime()-start));
+
+    }
+
+
     private void createDiffVectors()
     {
 
@@ -520,8 +550,8 @@ public class ReducedBoqa {
         pOff = new HashSet[getNumberOfUnobservedPhenotypes()];
 
         //each hashset only stores the delta from one pheno to the next->10k at the most
-        HashSet h = new HashSet();
-        HashSet new_h = new HashSet();
+        HashSet hOn = new HashSet();
+        HashSet hOff = new HashSet();
 
         //since we must compute n different duplicates, we do in fact need
         //double for loop
@@ -537,8 +567,13 @@ public class ReducedBoqa {
         for (int i =0; i < this.slimGraph.getNumberOfVertices(); i++) {
 
             if (!this.o.observations[i]) {
+
+                //Add in all the ancestors of the pheno (includes itself)
+                //Since we only store the differentials between them, we cannot use
+                //phenoOn and phenoOff directly
+                //(without applying it many times)
                 for (int k = 0; k < term2Ancestors[i].length; k++) {
-                    h.add(term2Ancestors[i][k]);
+                    hOn.add(term2Ancestors[i][k]);
                 }
 
                 //goes over the term2ancestors of the next term
@@ -546,13 +581,15 @@ public class ReducedBoqa {
                 //essentially, i+1%x describes a function that everywhere is i, except at the very boundary, in the range [0, n-1]
 
                 for (int j = 0; j < term2Ancestors[z=(i + 1) % pOn.length].length; j++) {
-                    if (!h.contains(term2Ancestors[z][j])) {
-                        new_h.add(term2Ancestors[z][j]);
+
+
+                    if (!hOn.contains(term2Ancestors[z][j])) {
+                        hOff.add(term2Ancestors[z][j]);
                         //these are definitely in B
                         //the ones in A - the duplicates are the ones exclusive to just A
                     } else //previous hashset and this one both contain the term
                     {
-                        h.remove(term2Ancestors[z][j]);
+                        hOn.remove(term2Ancestors[z][j]);
                         //now at this point, h will only have items which are exclusive ot itself
                         //then:
                     }
@@ -563,12 +600,12 @@ public class ReducedBoqa {
                 }
 
                 //what must be turned on from i to i+1
-                pOn[i] = (HashSet) new_h.clone();
+                pOn[i] = (HashSet) hOff.clone();
                 //what must be turned off from i to i+1
-                pOff[i] = (HashSet) h.clone();
+                pOff[i] = (HashSet) hOn.clone();
 
-                h.clear();
-                new_h.clear();
+                hOn.clear();
+                hOff.clear();
 
 
             }
