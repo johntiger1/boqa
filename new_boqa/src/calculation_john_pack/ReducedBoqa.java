@@ -466,13 +466,15 @@ public class ReducedBoqa {
         for (int i = 0; i < cc; i++) {
             nc[i] = c[i];
         }
+
+        //retruns a newly allocated array
         return nc;
     }
 
     private void createPhenoVectors() {
 
-        System.out.println("starting createDiffVecs");
-        long start = System.nanoTime();
+        //System.out.println("starting createPhenoVecs");
+        //long start = System.nanoTime();
         int numberOfUnobservedPhenotypes = getNumberOfUnobservedPhenotypes();
         phenoOn = new int[numberOfUnobservedPhenotypes][];
         phenoOff = new int[numberOfUnobservedPhenotypes][];
@@ -494,7 +496,7 @@ public class ReducedBoqa {
             this.phenoOff[i] = setDiff(prevOnTerms, newOnTerms);
         }
 
-        System.out.println("done createDiffVecs. Took" + (System.nanoTime()-start));
+       // System.out.println("done createPhenoVecs. Took" + (System.nanoTime()-start));
 
     }
 
@@ -679,7 +681,7 @@ public class ReducedBoqa {
         long start = System.nanoTime();
 
 
-        for (int j =0; j<pOn.length-1; j++) {
+        for (int j =0; j<phenoOn.length-1; j++) {
             //dangerous dependency: now we have a monotone list of numbers, but we cannot retrieve their original indices
             //System.out.println("done");
             //start = System.nanoTime();
@@ -718,33 +720,57 @@ public class ReducedBoqa {
     }
 
     private void incrementUpdatedNodes(Observations o, boolean[] hidden, ReducedConfiguration stats, int j) {
-        for (Object val : pOn[j])
+        for (int x : phenoOn[j])
         {
-            stats.increment(getNodeCase((int) val, hidden, o));
+            stats.increment(getNodeCase(x, hidden, o)); //decrements an arbitrary one of the same class!
         }
 
-        //re-evalaute the ones that were changed
-        for (Object val : pOff[j])
+        for (int x : phenoOff[j])
         {
-            stats.increment(getNodeCase((int) val, hidden, o));
+            stats.increment(getNodeCase(x, hidden, o)); //decrements an arbitrary one of the same class!
         }
+
+
+
+//        for (Object val : pOn[j])
+//        {
+//            stats.increment(getNodeCase((int) val, hidden, o));
+//        }
+//
+//        //re-evalaute the ones that were changed
+//        for (Object val : pOff[j])
+//        {
+//            stats.increment(getNodeCase((int) val, hidden, o));
+//        }
     }
 
     private void updateObservationsBasedOnPhenotype(Observations o, int j) {
         //ojbects that implement the iterator can sue the for each
-        for (Object val : pOff[j])
+//        for (Object val : pOff[j])
+//        {
+//            o.real_observations[((int) val)] = false;
+//        }
+//
+//        for (Object val : pOn[j])
+//        {
+//            //TODO think about how we can infer duplicates/etc. using this system
+//            //(since the record obs already stores the stae of the previous observation)
+//            //we do not actually need the indexing terms2ancestors[i][j], since that is already completely
+//            //reflected in the state of the o
+//            o.real_observations[((int) val)] = true;
+//
+//        }
+
+        for (int x : phenoOff[j])
         {
-            o.real_observations[((int) val)] = false;
+            o.real_observations[x] = false; //decrements an arbitrary one of the same class!
         }
 
-        for (Object val : pOn[j])
-        {
-            //TODO think about how we can infer duplicates/etc. using this system
-            //(since the record obs already stores the stae of the previous observation)
-            //we do not actually need the indexing terms2ancestors[i][j], since that is already completely
-            //reflected in the state of the o
-            o.real_observations[((int) val)] = true;
 
+
+        for (int x : phenoOn[j])
+        {
+            o.real_observations[x] = true; //decrements an arbitrary one of the same class!
         }
     }
 
@@ -752,29 +778,51 @@ public class ReducedBoqa {
     //Decrement the nodes that are "stale" from the previous to our current
     //essentially, changes everything except the nodes which remain exactly the same
     private void decrementStaleNodes(Observations o, boolean[] hidden, ReducedConfiguration stats, int j) {
-        Iterator i = pOn[j].iterator();
-        while (i.hasNext()) {
-            stats.decrement(getNodeCase((int) (i.next()), hidden, o));
+//        Iterator i = pOn[j].iterator();
+//        while (i.hasNext()) {
+//            stats.decrement(getNodeCase((int) (i.next()), hidden, o));
+//        }
+
+        //        for (i = pOff[j].iterator(); i.hasNext();)
+//        {
+//            stats.decrement(getNodeCase((int) i.next(), hidden, o));
+//        }
+        for (int x : phenoOn[j])
+        {
+            stats.decrement(getNodeCase(x, hidden, o)); //decrements an arbitrary one of the same class!
         }
 
-        for (i = pOff[j].iterator(); i.hasNext();)
+        for (int x : phenoOff[j])
         {
-            stats.decrement(getNodeCase((int) i.next(), hidden, o));
+            stats.decrement(getNodeCase(x, hidden, o));
         }
+
+
     }
 
     //Resets the d-p combo into a "consistent" state, such that the NEXT diffON
     //can be applied.
     private void resetToConsistentStateForDiseaseDiff(Observations o) {
-        for (Object val : pOff[pOff.length-1])
+
+        for (int x: phenoOff[phenoOff.length-1])
         {
-            o.real_observations[((int) val)] = false;
+            o.real_observations[x] = false;
         }
 
-        for (Object val : pOn[pOn.length-1])
+        for (int x: phenoOn[phenoOn.length-1])
         {
-            o.real_observations[((int) val)] = true;
+            o.real_observations[x] = true;
         }
+
+//        for (Object val : pOff[pOff.length-1])
+//        {
+//            o.real_observations[((int) val)] = false;
+//        }
+//
+//        for (Object val : pOn[pOn.length-1])
+//        {
+//            o.real_observations[((int) val)] = true;
+//        }
     }
 
     private void useDeltaToSetToCurrentDisease(Observations o, boolean[] hidden, ReducedConfiguration stats, int[] diffOn, int[] diffOff) {
@@ -1089,7 +1137,8 @@ public class ReducedBoqa {
     {
         System.out.println("starting compute pheno diff");
         long start = System.nanoTime();
-        computePhenoDifferentials();//must be recomputed on every call
+        //computePhenoDifferentials();
+        createPhenoVectors();//must be recomputed on every call
         System.out.println("done compute pheno diff. Took" + (System.nanoTime()-start));
 
         int i;
