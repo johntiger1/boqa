@@ -175,6 +175,7 @@ public class ReducedBoqa {
         this.assoc = assocs;
         this.graph = ontology;
 
+
         SlimDirectedGraphView<Term> slimGraphView = this.graph.getSlimGraphView();
         this.term2Parents = slimGraphView.vertexParents; //recall this was an array of arrays
         this.term2Children = slimGraphView.vertexChildren;
@@ -228,6 +229,7 @@ public class ReducedBoqa {
         multiDiseaseDistributions = new double[this.slimGraph.getNumberOfVertices()][this.allItemList.size()];
         System.out.println("num rows" + this.slimGraph.getNumberOfVertices());
         System.out.println("num cols" + this.allItemList.size());
+        dfs();
     }
 
     //Returns the difference between the observed phenotypes, and the unobserved ones.
@@ -481,7 +483,7 @@ public class ReducedBoqa {
         phenoOff = new int[numberOfUnobservedPhenotypes][];
 
 
-        this.phenoOn[0] = this.term2Ancestors[0]; /* For the first step, all terms must be activated */
+        this.phenoOn[0] = this.term2Ancestors[topo_sorted[0]]; /* For the first step, all terms must be activated */
         //this makes sense, since the one "behind" it is the empty set; hence all must be taken!
 
 
@@ -491,8 +493,8 @@ public class ReducedBoqa {
         //
         this.phenoOff[0] = new int[0];   //this is an empty array
         for (i = 1; i < numberOfUnobservedPhenotypes; i++) {
-            int prevOnTerms[] = this.term2Ancestors[i - 1];      //items2terms[0] on first iteration
-            int newOnTerms[] = this.term2Ancestors[i];
+            int prevOnTerms[] = this.term2Ancestors[topo_sorted[i-1]];      //items2terms[0] on first iteration
+            int newOnTerms[] = this.term2Ancestors[topo_sorted[i]];
 
             this.phenoOn[i] = setDiff(newOnTerms, prevOnTerms);
             this.phenoOff[i] = setDiff(prevOnTerms, newOnTerms);
@@ -692,6 +694,7 @@ public class ReducedBoqa {
             //System.out.println("done");
             //start = System.nanoTime();
 
+            //This will be problematic if we are no longer sequential..
             for(k=j; o.observations[k];k++);
             //this finds the first index past j where observations is NOT true
             //ensure that the array is not all observed!
@@ -713,7 +716,9 @@ public class ReducedBoqa {
 
             incrementUpdatedNodes(o, hidden, stats, j);
 
+
             //fill in the COLUMN of the matrix!
+            //this will need to be topo_sorted[k] now...
             multiDiseaseDistributions[k][item] = stats.getScore(this.ALPHA_GRID[0],initial_beta, experimental_beta);
         }
 
@@ -723,6 +728,60 @@ public class ReducedBoqa {
         resetToConsistentStateForDiseaseDiff(o);
 
         //System.out.println("done looping through all the phenos. Took" + (System.nanoTime()-start));
+    }
+
+    int [] topo_sorted;
+    /*
+      Performs an after-the-fact dfs of a "graph"
+     for each of the descendants of the root term, get their descendants and so forth
+    this produces a DFS
+     */
+    public void dfs()
+    {
+
+//        System.out.println("This is the root term" + graph.getRootTerm());
+//        System.out.println("These are the children");
+//        long start = System.nanoTime();
+        ArrayList<Term> topo_sort = graph.getTermsInTopologicalOrder();
+//        System.out.println("took " + (start-System.nanoTime()));
+//        System.out.println(topo_sort);
+        /*
+        let us assume that the above is in fact the |optimal| order. Also
+
+        note that the above is sort of like a DFS. Or rather a topological sort has
+        some not insignifcant properties in common with a DFS. In particular, DFS
+        in a tree DOES satisfy the property that we reach a parent before we reach its child
+        also note that topo sort is just dfs, except reverse the result you get
+        One key difficulty is this: In our tree that supports multiple inheritance
+        , it is possible we reach one node via one parent before we reach it via
+        ALL the parents!
+         */
+//        System.out.println(topo_sort.size());
+//        System.out.println(topo_sort.get(1));
+//        System.out.println(slimGraph.getParents(topo_sort.get(1)));
+        //System.out.println(graph.get)
+
+        //now: we need the topo sort
+        //convert it to the indices.
+        topo_sorted = new int[topo_sort.size()];
+
+        int i = 0;
+        //start = System.nanoTime();
+        for (Term t: topo_sort)
+        {
+            //assume this is the same as a[i], then i++
+            //topo_sorted[i++] = slimGraph.getVertexIndex(t);
+            //use i, then increment it
+
+            topo_sorted[i] = slimGraph.getVertexIndex(t);
+            i++;
+        }
+        //System.out.println("filling new array took " + (start-System.nanoTime()));
+
+        //if we compute via this array, then we will have GOOD things!
+
+
+
     }
 
     private void incrementUpdatedNodes(Observations o, boolean[] hidden, ReducedConfiguration stats, int j) {
