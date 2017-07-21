@@ -1150,10 +1150,11 @@ public class ReducedBoqa {
         int i;
 
         final Result res = new Result();
-        res.scores = new double[this.allItemList.size()]; //its an array size of the entire BN
-        res.marginals = new double[this.allItemList.size()];
-        res.marginalsIdeal = new double[this.allItemList.size()];
-        res.stats = new ReducedConfiguration[this.allItemList.size()]; // an ARRAY of ReducedConfigurations..
+        int num_diseases = this.allItemList.size();
+        res.scores = new double[num_diseases]; //its an array size of the entire BN
+        res.marginals = new double[num_diseases];
+        res.marginalsIdeal = new double[num_diseases];
+        res.stats = new ReducedConfiguration[num_diseases]; // an ARRAY of ReducedConfigurations..
         //perhaps they are saying how for each node in THE BN, there is a cofig?
 
 
@@ -1168,8 +1169,8 @@ public class ReducedBoqa {
         //J for all of this
         //n^3 matrix, one dimension each for parameters (alpha and beta) and one dimension for all the scores
         //i.e. at this alpha, beta, what are all the scores for all the nodes?
-        final double[][][] scores = new double[this.allItemList.size()][this.ALPHA_GRID.length][this.BETA_GRID.length];
-        final double[] idealScores = new double[this.allItemList.size()]; //this is likely a "target" whom we wish to approximate
+        final double[][][] scores = new double[num_diseases][this.ALPHA_GRID.length][this.BETA_GRID.length];
+        final double[] idealScores = new double[num_diseases]; //this is likely a "target" whom we wish to approximate
         //as much as possible
         //interestingly we also have ideal marginals, which I am not sure how the two differ by
 
@@ -1191,7 +1192,7 @@ public class ReducedBoqa {
 
         ArrayList<Future<?>> futureList = new ArrayList<Future<?>>();
 
-        for (i = 0; i < this.allItemList.size(); i++) {
+        for (i = 0; i < num_diseases; i++) {
             final int item = i;
 
             Runnable run = new Runnable()
