@@ -175,10 +175,11 @@ public class ReducedBoqa {
         this.assoc = assocs;
         this.graph = ontology;
 
-        this.term2Parents = this.graph.getSlimGraphView().vertexParents; //recall this was an array of arrays
-        this.term2Children = this.graph.getSlimGraphView().vertexChildren;
-        this.term2Ancestors = this.graph.getSlimGraphView().vertexAncestors;
-        this.term2Descendants = this.graph.getSlimGraphView().vertexDescendants; //presumably, this is a vertex induced subgraph
+        SlimDirectedGraphView<Term> slimGraphView = this.graph.getSlimGraphView();
+        this.term2Parents = slimGraphView.vertexParents; //recall this was an array of arrays
+        this.term2Children = slimGraphView.vertexChildren;
+        this.term2Ancestors = slimGraphView.vertexAncestors;
+        this.term2Descendants = slimGraphView.vertexDescendants; //presumably, this is a vertex induced subgraph
 
         this.slimGraph = graph.getSlimGraphView();
 
@@ -486,6 +487,7 @@ public class ReducedBoqa {
 
         //all terms annotated to the first item are diffOnTerms for that item as well
         int i;
+        int sum =0;
         //
         this.phenoOff[0] = new int[0];   //this is an empty array
         for (i = 1; i < numberOfUnobservedPhenotypes; i++) {
@@ -494,9 +496,13 @@ public class ReducedBoqa {
 
             this.phenoOn[i] = setDiff(newOnTerms, prevOnTerms);
             this.phenoOff[i] = setDiff(prevOnTerms, newOnTerms);
+            sum += this.phenoOn[i].length + this.phenoOff[i].length;
         }
 
-       // System.out.println("done createPhenoVecs. Took" + (System.nanoTime()-start));
+        System.out.println("number of deltas is " + sum);
+
+
+        // System.out.println("done createPhenoVecs. Took" + (System.nanoTime()-start));
 
     }
 
@@ -525,7 +531,7 @@ public class ReducedBoqa {
         for (i = 1; i < this.allItemList.size(); i++) {
             int prevOnTerms[] = this.items2Terms[i - 1];      //items2terms[0] on first iteration
             int newOnTerms[] = this.items2Terms[i];
-
+            //jagged arrays autodone!
             this.diffOnTerms[i] = setDiff(newOnTerms, prevOnTerms);
             this.diffOffTerms[i] = setDiff(prevOnTerms, newOnTerms);
 
