@@ -691,13 +691,41 @@ public class ReducedBoqa {
         long start = System.nanoTime();
 
 
-        for (int j =0; j<phenoOn.length-1; j++) {
+        //iterate up to the last one (take special action on the VERY last)
+        //its ok since it depends only on the # of unobserved phenotpes, which is phenoOn.length
+        for (int j =0; j<phenoOn.length; j++) {
             //dangerous dependency: now we have a monotone list of numbers, but we cannot retrieve their original indices
             //System.out.println("done");
             //start = System.nanoTime();
 
             //This will be problematic if we are no longer sequential..
-            for(k=j; o.observations[k];k++);
+            //k refers to the current. Note that it is possible we cannot find it!
+            //in this case, we should TERMINATE
+
+            //POTENTIALLY quite slow--due to various array "fetch" operations!
+            //This is dangeroulsy coupled to phenoOn (especially the length)
+            //Essentially, we are asserting the following invariant:
+            //the number of unobserved phenotypes is equal to the number of observations false in the array
+            //however, consider whaat happens if k >j
+            //this seems to be overloaded, somewhat...
+            //it all boils down to the fact that phenOn [-1] and pOn[-1 ] was never convincingly defined
+            //also: we must iterate over ALL phenotypes, i.e. we must search thru the ENTIRE topo_sorted array
+            //since we may observe at any point and or time
+            //at the same time we must keep it synchronized with phenoOn.length as well
+            //it would make a lot of sense to maintain an sorted arraylist of unobserved phenotypes somewhere..
+            for(k=j;k < o.observations.length && o.observations[topo_sorted[k]];k++);
+            //also inefficient
+            //there are a couple of problems here
+            //we skip when necessary and so forth...
+
+
+            //go thru all the phenotypes to search for an unobserved one
+//            while (k < phenoOn.length && o.observations[topo_sorted[k]])
+//            {
+//
+//
+//
+//            }
             //this finds the first index past j where observations is NOT true
             //ensure that the array is not all observed!
 
