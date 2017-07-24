@@ -528,10 +528,11 @@ public class ReducedBoqa {
 
 
             //j must be from the previous incidence...
-            prev_j = j; //move this after
+
             int prevOnTerms[] = this.term2Ancestors[topo_sorted[prev_j]];      //items2terms[0] on first iteration
             int newOnTerms[] = this.term2Ancestors[topo_sorted[j]];
-
+            prev_j = j;
+            j++;
             this.phenoOn[i] = setDiff(newOnTerms, prevOnTerms);
             this.phenoOff[i] = setDiff(prevOnTerms, newOnTerms);
             sum += this.phenoOn[i].length + this.phenoOff[i].length;
