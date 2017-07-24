@@ -751,7 +751,6 @@ public class ReducedBoqa {
             //since we may observe at any point and or time
             //at the same time we must keep it synchronized with phenoOn.length as well
             //it would make a lot of sense to maintain an sorted arraylist of unobserved phenotypes somewhere..
-
             /*
             We look through the topo_sorted array for uncheck phenotypes.
             In HIGH theory: we should have no transitions computed for phenotypes that are already oberved
@@ -768,8 +767,6 @@ public class ReducedBoqa {
 
             //this line works if
             //for(k=j;k < o.observations[topo_sorted[k]];k++);
-
-            for(k=j;k < o.observations.length && o.observations[topo_sorted[k]];k++);
             //also inefficient
             //there are a couple of problems here
             //we skip when necessary and so forth...
@@ -789,7 +786,7 @@ public class ReducedBoqa {
             //array op--this is very rapid.
             //System.out.println("done looping through the 'find' op took " + (System.nanoTime()-start));
 
-
+            //these js will be used in pOn
             decrementStaleNodes(o, hidden, stats, j);
             updateObservationsBasedOnPhenotype(o, j);
 
@@ -805,7 +802,7 @@ public class ReducedBoqa {
 
             //fill in the COLUMN of the matrix!
             //this will need to be topo_sorted[k] now...
-            multiDiseaseDistributions[topo_sorted[k]][item] = stats.getScore(this.ALPHA_GRID[0],initial_beta, experimental_beta);
+            multiDiseaseDistributions[topo_sorted[j]][item] = stats.getScore(this.ALPHA_GRID[0],initial_beta, experimental_beta);
         }
 
         //reset to the original/baseline phenotype
