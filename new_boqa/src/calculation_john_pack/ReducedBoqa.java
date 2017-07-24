@@ -482,7 +482,7 @@ public class ReducedBoqa {
         phenoOn = new int[numberOfUnobservedPhenotypes][];
         phenoOff = new int[numberOfUnobservedPhenotypes][];
 
-
+        //this MEANS: we MUST turn off all of the phenotypes at the start!
         this.phenoOn[0] = this.term2Ancestors[topo_sorted[0]]; /* For the first step, all terms must be activated */
         //this makes sense, since the one "behind" it is the empty set; hence all must be taken!
 
@@ -590,6 +590,8 @@ public class ReducedBoqa {
                 //this should compute the delta between n and 0
                 //essentially, i+1%x describes a function that everywhere is i, except at the very boundary, in the range [0, n-1]
 
+                //LOOKS AT THE NEXT (wrapping around if necessary) term's things
+                //j iterates over the terms of the next phenotype
                 for (int j = 0; j < term2Ancestors[z=(i + 1) % pOn.length].length; j++) {
 
 
@@ -678,7 +680,7 @@ public class ReducedBoqa {
         int[] diffOn = this.diffOnTerms[item];
         int[] diffOff = this.diffOffTerms[item];
 
-        useDeltaToSetToCurrentDisease(o, hidden, stats, diffOn, diffOff);
+        useDeltaToSetToCurrentDisease(hidden, diffOn, diffOff);
 
         //assert: pOff and pOn should have the same length (they represent the # of transitions between unobserved phenotypes)
 
@@ -725,7 +727,7 @@ public class ReducedBoqa {
         //reset to the original/baseline phenotype
 
 
-        resetToConsistentStateForDiseaseDiff(o);
+        resetToConsistentStateForDiseaseDiff(o, stats, diffOn, diffOff, hidden);
 
         //System.out.println("done looping through all the phenos. Took" + (System.nanoTime()-start));
     }
@@ -828,6 +830,7 @@ public class ReducedBoqa {
 
         for (int x : phenoOff[j])
         {
+            //this is the same as the array[array[2]] = true semantics
             o.real_observations[x] = false; //decrements an arbitrary one of the same class!
         }
 
@@ -867,17 +870,39 @@ public class ReducedBoqa {
 
     //Resets the d-p combo into a "consistent" state, such that the NEXT diffON
     //can be applied.
-    private void resetToConsistentStateForDiseaseDiff(Observations o) {
+    private void resetToConsistentStateForDiseaseDiff(Observations o, ReducedConfiguration stats, int[] diffOn, int[] diffOff
+    , boolean []hidden) {
 
-        for (int x: phenoOff[phenoOff.length-1])
+
+        //undo all the changes we have done via phenoOn and phenoOff
+        for (int i = 0; i < o.observations.length; i++)
         {
-            o.real_observations[x] = false;
+            if (!o.observations[i])
+            {
+                o.real_observations[i] = false;
+            }
+
         }
 
-        for (int x: phenoOn[phenoOn.length-1])
-        {
-            o.real_observations[x] = true;
+        for (int element : diffOn) {
+            stats.decrement(getNodeCase(element, hidden, o));
         }
+        for (int element : diffOff) {
+            stats.decrement(getNodeCase(element, hidden, o)); //lookup the hidden and observed too
+        }
+
+        //TODO it would make more sense to do the decrements here (since it reoresents things that have changed)
+
+
+//        for (int x: phenoOff[phenoOff.length-1])
+//        {
+//            o.real_observations[x] = false;
+//        }
+//
+//        for (int x: phenoOn[phenoOn.length-1])
+//        {
+//            o.real_observations[x] = true;
+//        }
 
 //        for (Object val : pOff[pOff.length-1])
 //        {
@@ -890,13 +915,8 @@ public class ReducedBoqa {
 //        }
     }
 
-    private void useDeltaToSetToCurrentDisease(Observations o, boolean[] hidden, ReducedConfiguration stats, int[] diffOn, int[] diffOff) {
-        for (int element : diffOn) {
-            stats.decrement(getNodeCase(element, hidden, o));
-        }
-        for (int element : diffOff) {
-            stats.decrement(getNodeCase(element, hidden, o)); //lookup the hidden and observed too
-        }
+    private void useDeltaToSetToCurrentDisease( boolean[] hidden,  int[] diffOn, int[] diffOff) {
+
 
             /* Change nodes states */ //why is hidden[0] always on, esp. when we set observed to be on only
         for (int i = 0; i < diffOn.length; i++) {
@@ -911,6 +931,7 @@ public class ReducedBoqa {
     private WeightedConfigurationList determineCasesForItem(int item, Observations o,
                                                             boolean takeFrequenciesIntoAccount, boolean[] previousHidden, ReducedConfiguration previousStats)
     {
+        //TODO just pass in this field instead of computing it each time
         int numTerms = this.slimGraph.getNumberOfVertices();
 
         if (previousHidden == null && previousStats != null) {
