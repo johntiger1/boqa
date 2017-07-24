@@ -483,22 +483,59 @@ public class ReducedBoqa {
         phenoOff = new int[numberOfUnobservedPhenotypes][];
 
         //this MEANS: we MUST turn off all of the phenotypes at the start!
-        this.phenoOn[0] = this.term2Ancestors[topo_sorted[0]]; /* For the first step, all terms must be activated */
-        //this makes sense, since the one "behind" it is the empty set; hence all must be taken!
+                //this makes sense, since the one "behind" it is the empty set; hence all must be taken!
 
 
         //all terms annotated to the first item are diffOnTerms for that item as well
-        int i;
+        int i ;
+        int j = 0;
+        int prev_j = 0;
         int sum =0;
-        //
+        int starting = 0;
+
+        //potentially skip many phenotypes
+        while (o.observations[topo_sorted[j]])
+        {
+            j++;
+            //TODO unlikely edge case: what if we observe everything?!
+        }
+
+        //assert j is total#-unobserved or something (not necessarily)
+        //j is not really a descriptive statisitc, rather it only refers to the first, or the min
+        prev_j = j;
+        this.phenoOn[0] = this.term2Ancestors[topo_sorted[j++]]; /* For the first step, all terms must be activated */
         this.phenoOff[0] = new int[0];   //this is an empty array
         for (i = 1; i < numberOfUnobservedPhenotypes; i++) {
-            int prevOnTerms[] = this.term2Ancestors[topo_sorted[i-1]];      //items2terms[0] on first iteration
-            int newOnTerms[] = this.term2Ancestors[topo_sorted[i]];
+            //if unobserved ONLY
+
+            //find the next unobserved phenotype, in the order given by topo_osrt
+
+
+            while (o.observations[topo_sorted[j]] )
+            {
+                /*
+                when would it ever fail:
+                    if we run the outer loop too many times for example (note that j cannot decrement)
+                 */
+                if (j>=topo_sorted.length)
+                {
+                    //uhoh
+                }
+                j++;
+
+
+            }
+
+
+            //j must be from the previous incidence...
+            prev_j = j; //move this after
+            int prevOnTerms[] = this.term2Ancestors[topo_sorted[prev_j]];      //items2terms[0] on first iteration
+            int newOnTerms[] = this.term2Ancestors[topo_sorted[j]];
 
             this.phenoOn[i] = setDiff(newOnTerms, prevOnTerms);
             this.phenoOff[i] = setDiff(prevOnTerms, newOnTerms);
             sum += this.phenoOn[i].length + this.phenoOff[i].length;
+
         }
 
         System.out.println("number of deltas is " + sum);
@@ -713,6 +750,24 @@ public class ReducedBoqa {
             //since we may observe at any point and or time
             //at the same time we must keep it synchronized with phenoOn.length as well
             //it would make a lot of sense to maintain an sorted arraylist of unobserved phenotypes somewhere..
+
+            /*
+            We look through the topo_sorted array for uncheck phenotypes.
+            In HIGH theory: we should have no transitions computed for phenotypes that are already oberved
+            This preserves the correctness of the decrementing and so forth
+
+            K< topo_sorted.length!! is the key thing
+            new reduction: we only need topo_sorted, and just ensure that it is truncated appropriately
+            what the below is trying to do is to scan over all phenotyes again!
+             */
+
+            //we DONT need this line at all, if everything is ACTUALLY set up correctly
+            //however, the lnegth depends on the
+            //i.e. we will always ensure that k=j, since obs[topo_sorted[j]] is not true
+
+            //this line works if
+            //for(k=j;k < o.observations[topo_sorted[k]];k++);
+
             for(k=j;k < o.observations.length && o.observations[topo_sorted[k]];k++);
             //also inefficient
             //there are a couple of problems here
@@ -749,7 +804,7 @@ public class ReducedBoqa {
 
             //fill in the COLUMN of the matrix!
             //this will need to be topo_sorted[k] now...
-            multiDiseaseDistributions[k][item] = stats.getScore(this.ALPHA_GRID[0],initial_beta, experimental_beta);
+            multiDiseaseDistributions[topo_sorted[k]][item] = stats.getScore(this.ALPHA_GRID[0],initial_beta, experimental_beta);
         }
 
         //reset to the original/baseline phenotype
