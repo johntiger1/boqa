@@ -59,7 +59,7 @@ final public class ReducedConfiguration implements Cloneable
 
     public int getCases(ReducedConfiguration.NodeCase c)
     {
-        return this.stats[c.ordinal()];
+        return this.stats[c.ordinal()]; //what if we used an array?!
     }
 
     /**
