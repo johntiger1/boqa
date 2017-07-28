@@ -496,7 +496,7 @@ public class NewRefinedBOQATest {
 
             if (t.isObsolete())
             {
-                System.out.println(t);
+                //System.out.println(t);
                 iter.remove();
             }
         }
@@ -510,13 +510,6 @@ public class NewRefinedBOQATest {
 
         Ontology ontology = new Ontology(tc);
         SlimDirectedGraphView<Term> slim = ontology.getSlimGraphView();
-        System.out.println("WAT");
-        Term tt = ontology.getTerm("HP:0000284");
-        System.out.println("redundant relat");
-        System.out.println("redundant relat" + Arrays.toString(tt.getEquivalents()));
-        //slim
-
-        ontology.findRedundantISARelations();
 
 
         assocs = generateAnnotations(num, slim);
