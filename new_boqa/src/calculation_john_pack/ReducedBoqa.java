@@ -544,6 +544,134 @@ public class ReducedBoqa {
 
         // System.out.println("done createPhenoVecs. Took" + (System.nanoTime()-start));
 
+
+
+    }
+
+    int [][][] phenoOnMT;
+    int [][][] phenoOffMt;
+    //Creates the phenovectors, partitioning them using the "linear" method.
+    //
+    private void createPhenoVectors_multithread(int num_threads) {
+
+//        System.out.println("starting createPhenoVecs");
+//        long start = System.nanoTime();
+        int numberOfUnobservedPhenotypes = getNumberOfUnobservedPhenotypes();
+        int i ;
+        int j = 0;
+        int prev_j = 0;
+        int sum =0;
+        int starting = 0;
+        prev_j = j;
+        phenoOnMT = new int[num_threads][][];
+        phenoOffMt = new int[num_threads][][];
+
+        //assign inner sizes (task delegations) to each thread
+        //z is the thread number
+
+        int tasks_per_thread = numberOfUnobservedPhenotypes/num_threads;
+        int remainder = numberOfUnobservedPhenotypes % num_threads;
+        for (int z = 1; z < num_threads; z++)
+        {
+            phenoOnMT[z] = new int [tasks_per_thread][];
+            phenoOffMt[z] = new int [tasks_per_thread][];
+        }
+
+        //assign any extra left over work to the main thread
+        phenoOnMT[0] = new int [tasks_per_thread + remainder][];
+        phenoOffMt[0] = new int[tasks_per_thread+ remainder][];
+
+
+        int thread_num;
+        /*
+                #threads ,#unobserved phenotypes/#threads, deltas between then
+        alternatively: we can do one of them, and then just pass the indices to different threads
+        the only thing to care for is that every #phen/#threads, we set everything on specially
+        --dangerous coupling and OBO possible
+
+        the other obvious thing is to: delegate it to the calling thread
+        Given that it is getting a slice of them, wipe it, then
+        set all of the correct phenotypes ON--how long this will take?
+
+        poor since reducing all the nodes is fine, but recomputing it for WHAT disease you are on
+        and so forth is a little tricky
+
+
+
+        dunkirk phantom of the opera similarity!
+
+         */
+
+
+        for ( thread_num =0; thread_num<num_threads;thread_num++ )
+        {
+            while (o.observations[topo_sorted[j]])
+            {
+                j++;
+                //TODO unlikely edge case: what if we observe everything?!
+            }
+
+            //assert j is total#-unobserved or something (not necessarily)
+            //j is not really a descriptive statisitc, rather it only refers to the first, or the min
+
+            this.phenoOnMT[thread_num][0] = this.term2Ancestors[topo_sorted[j++]]; /* For the first step, all terms must be activated */
+            //assert it gets a fresh copy (no phenotypes set) each time
+            this.phenoOffMt[thread_num][0] = new int[0];
+
+            for (i = 1; i < this.phenoOnMT[thread_num].length; i++) {
+                //if unobserved ONLY
+
+                //find the next unobserved phenotype, in the order given by topo_osrt
+
+
+                while (o.observations[topo_sorted[j]] )
+                {
+                /*
+                when would it ever fail:
+                    if we run the outer loop too many times for example (note that j cannot decrement)
+                 */
+                    if (j>=topo_sorted.length)
+                    {
+                        //uhoh
+                        System.out.println("wwoos");
+                    }
+                    j++;
+
+
+
+
+                }
+
+
+                //j must be from the previous incidence...
+
+                int prevOnTerms[] = this.term2Ancestors[topo_sorted[prev_j]];      //items2terms[0] on first iteration
+                int newOnTerms[] = this.term2Ancestors[topo_sorted[j]];
+                prev_j = j;
+                j++;
+                phenoOnMT[thread_num][i] = setDiff(newOnTerms, prevOnTerms);
+                phenoOffMt[thread_num][i] = setDiff(prevOnTerms, newOnTerms);
+                sum += phenoOnMT[thread_num][i].length + phenoOffMt[thread_num][i].length;
+
+            }
+
+        }
+
+        //this MEANS: we MUST turn off all of the phenotypes at the start!
+        //this makes sense, since the one "behind" it is the empty set; hence all must be taken!
+
+
+        //all terms annotated to the first item are diffOnTerms for that item as well
+
+
+        //potentially skip many phenotypes
+
+
+
+        System.out.println("number of deltas is " + sum);
+
+
+//         System.out.println("done createPhenoVecs (MT). Took" + (System.nanoTime()-start));
     }
 
 
@@ -1296,16 +1424,22 @@ public class ReducedBoqa {
         return res;
     }
 
+    int num_threads = 1;
 
+    //ideally it should be always an array, with it being size 1 * n for a single thing
+    int [][]phenoOff_array=null;
     //Returns an array of Result objects
     //will now be quite an expensive operation
     public void assignMultiShotMarginals( Observations observations, final boolean takeFrequenciesIntoAccount,
                                    final int numThreads)
     {
+        this.num_threads = numThreads;
+
         System.out.println("starting compute pheno diff");
         long start = System.nanoTime();
         //computePhenoDifferentials();
-        createPhenoVectors();//must be recomputed on every call
+        //createPhenoVectors();//must be recomputed on every call
+        createPhenoVectors_multithread(8);
         System.out.println("done compute pheno diff. Took" + (System.nanoTime()-start));
 
         int i;
