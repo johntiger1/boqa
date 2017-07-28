@@ -1006,43 +1006,12 @@ public class ReducedBoqa {
 //        long start = System.nanoTime();
 
         ArrayList<Term> topo_sort = graph.getTermsInTopologicalOrder();
-        Term tt = graph.getTerm("HP:0000118");
-        System.out.println("this is the name of 118"+tt.getName() + "the id is" +
-                tt.getID());
-
-        //tt.getID()
-        System.out.println("Imma get this" + graph.getTerm("HP:0000118"));
-        System.out.println("Imma get this parent" + graph.getTerm("HP:0000271"));
-
-        System.out.println("Imma get this parent" + graph.getTerm("HP:0000271"));
-//        System.out.println("took " + (start-System.nanoTime()));
-//        System.out.println(topo_sort);
-        /*
-        let us assume that the above is in fact the |optimal| order. Also
-
-        note that the above is sort of like a DFS. Or rather a topological sort has
-        some not insignifcant properties in common with a DFS. In particular, DFS
-        in a tree DOES satisfy the property that we reach a parent before we reach its child
-        also note that topo sort is just dfs, except reverse the result you get
-        One key difficulty is this: In our tree that supports multiple inheritance
-        , it is possible we reach one node via one parent before we reach it via
-        ALL the parents!
-         */
-        System.out.println(topo_sort.size());
-        System.out.println("this is ocular" + topo_sort.get(1)); //284
-        System.out.println("Imma get this guy" + graph.getSlimGraphView().getDescendants(graph.getTerm("HP:0000284")));
-        System.out.println("this is orbital" + topo_sort.get(1)); //284
-        System.out.println("Imma get this guy" + graph.getTerm("HP:0000315"));
-        System.out.println("these are parents of orbital"+ graph.getSlimGraphView().getAncestors(graph.getTerm("HP:0000315")));
-        //works correctly for nonobsolete terms
+        System.out.println(topo_sort.get(0));
+        System.out.println(topo_sort.get(1));
         System.out.println(topo_sort.get(2));
         System.out.println(topo_sort.get(3));
         System.out.println(topo_sort.get(6));
         graph.findRedundantISARelations();
-        //obsolete is why...
-//        System.out.println(slimGraph.getAncestors(topo_sort.get(1)));
-//        System.out.println(slimGraph.getParents(topo_sort.get(1)));
-        //System.out.println(graph.get)
 
         //now: we need the topo sort
         //convert it to the indices.

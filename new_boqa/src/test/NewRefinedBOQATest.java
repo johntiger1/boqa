@@ -501,8 +501,6 @@ public class NewRefinedBOQATest {
             }
         }
 
-        //possible they weren't actually removed from the ACTUALY termmaps
-
         //blackbox: it gets all the terms (in the HPO)
         //getTermMap returns a list of all terms!
         TermContainer tc = new TermContainer(hpoParser.getTermMap(), hpoParser.getFormatVersion(), hpoParser.getDate());
