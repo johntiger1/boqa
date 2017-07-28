@@ -1010,7 +1010,13 @@ public class ReducedBoqa {
         System.out.println(topo_sort.get(1));
         System.out.println(topo_sort.get(2));
         System.out.println(topo_sort.get(3));
+        System.out.println(topo_sort.get(4));
+        System.out.println(topo_sort.get(5));
         System.out.println(topo_sort.get(6));
+        for (int i = 7; i < 100;i++)
+        {
+            System.out.println(topo_sort.get(i));
+        }
         graph.findRedundantISARelations();
 
         //now: we need the topo sort
