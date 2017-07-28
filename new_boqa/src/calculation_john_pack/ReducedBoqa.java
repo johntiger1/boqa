@@ -552,6 +552,8 @@ public class ReducedBoqa {
     int [][][] phenoOffMt;
     //Creates the phenovectors, partitioning them using the "linear" method.
     //
+
+    //should use this.num_threads
     private void createPhenoVectors_multithread(int num_threads) {
 
 //        System.out.println("starting createPhenoVecs");
@@ -981,9 +983,9 @@ public class ReducedBoqa {
 
 
         for (int j =0; j<phenoOnMT[thread_id].length; j++) {
-            decrementStaleNodes(o, hidden, stats, j);
-            updateObservationsBasedOnPhenotype(o, j);
-            incrementUpdatedNodes(o, hidden, stats, j);
+            decrementStaleNodes_MT(o, hidden, stats, phenoOnMT[thread_id][j],phenoOffMt[thread_id][j]);
+            updateObservationsBasedOnPhenotype_MT(o, phenoOnMT[thread_id][j], phenoOffMt[thread_id][j]);
+            incrementUpdatedNodes_MT(o, hidden, stats, phenoOnMT[thread_id][j], phenoOffMt[thread_id][j]);
             multiDiseaseDistributions[topo_sorted[j]][item] = stats.getScore(this.ALPHA_GRID[0],initial_beta, experimental_beta);
         }
         resetToConsistentStateForDiseaseDiff(o, stats, diffOn, diffOff, hidden);
@@ -1002,7 +1004,17 @@ public class ReducedBoqa {
 //        System.out.println("This is the root term" + graph.getRootTerm());
 //        System.out.println("These are the children");
 //        long start = System.nanoTime();
+
         ArrayList<Term> topo_sort = graph.getTermsInTopologicalOrder();
+        Term tt = graph.getTerm("HP:0000118");
+        System.out.println("this is the name of 118"+tt.getName() + "the id is" +
+                tt.getID());
+
+        //tt.getID()
+        System.out.println("Imma get this" + graph.getTerm("HP:0000118"));
+        System.out.println("Imma get this parent" + graph.getTerm("HP:0000271"));
+
+        System.out.println("Imma get this parent" + graph.getTerm("HP:0000271"));
 //        System.out.println("took " + (start-System.nanoTime()));
 //        System.out.println(topo_sort);
         /*
@@ -1016,8 +1028,19 @@ public class ReducedBoqa {
         , it is possible we reach one node via one parent before we reach it via
         ALL the parents!
          */
-//        System.out.println(topo_sort.size());
-//        System.out.println(topo_sort.get(1));
+        System.out.println(topo_sort.size());
+        System.out.println("this is ocular" + topo_sort.get(1)); //284
+        System.out.println("Imma get this guy" + graph.getSlimGraphView().getDescendants(graph.getTerm("HP:0000284")));
+        System.out.println("this is orbital" + topo_sort.get(1)); //284
+        System.out.println("Imma get this guy" + graph.getTerm("HP:0000315"));
+        System.out.println("these are parents of orbital"+ graph.getSlimGraphView().getAncestors(graph.getTerm("HP:0000315")));
+        //works correctly for nonobsolete terms
+        System.out.println(topo_sort.get(2));
+        System.out.println(topo_sort.get(3));
+        System.out.println(topo_sort.get(6));
+        graph.findRedundantISARelations();
+        //obsolete is why...
+//        System.out.println(slimGraph.getAncestors(topo_sort.get(1)));
 //        System.out.println(slimGraph.getParents(topo_sort.get(1)));
         //System.out.println(graph.get)
 
@@ -1042,6 +1065,19 @@ public class ReducedBoqa {
 
 
 
+    }
+    private void incrementUpdatedNodes_MT(Observations o, boolean[] hidden, ReducedConfiguration stats,
+                                       int[]phenoOnSlice,int[]phenoOffSlice) {
+
+        for (int x : phenoOnSlice)
+        {
+            stats.increment(getNodeCase(x, hidden, o)); //decrements an arbitrary one of the same class!
+        }
+
+        for (int x : phenoOffSlice)
+        {
+            stats.increment(getNodeCase(x, hidden, o)); //decrements an arbitrary one of the same class!
+        }
     }
 
     private void incrementUpdatedNodes(Observations o, boolean[] hidden, ReducedConfiguration stats, int j) {
@@ -1100,6 +1136,19 @@ public class ReducedBoqa {
         }
     }
 
+    private void updateObservationsBasedOnPhenotype_MT(Observations o,int [] phenoOnSlice, int [] phenoOffSlice
+                                                    ) {
+        for (int x : phenoOffSlice)
+        {
+            //this is the same as the array[array[2]] = true semantics
+            o.real_observations[x] = false; //decrements an arbitrary one of the same class!
+        }
+        for (int x : phenoOnSlice)
+        {
+            o.real_observations[x] = true; //decrements an arbitrary one of the same class!
+        }
+    }
+
 
     //Decrement the nodes that are "stale" from the previous to our current
     //essentially, changes everything except the nodes which remain exactly the same
@@ -1124,6 +1173,19 @@ public class ReducedBoqa {
         }
 
 
+    }
+
+    private void decrementStaleNodes_MT(Observations o, boolean[] hidden, ReducedConfiguration stats,
+                                        int [] phenoOnSlice, int [] phenoOffSlice) {
+        for (int x : phenoOnSlice)
+        {
+            stats.decrement(getNodeCase(x, hidden, o)); //decrements an arbitrary one of the same class!
+        }
+
+        for (int x : phenoOffSlice)
+        {
+            stats.decrement(getNodeCase(x, hidden, o));
+        }
     }
 
     //Resets the d-p combo into a "consistent" state, such that the NEXT diffON
@@ -1172,6 +1234,7 @@ public class ReducedBoqa {
 //            o.real_observations[((int) val)] = true;
 //        }
     }
+
 
     private void useDeltaToSetToCurrentDisease( boolean[] hidden,  int[] diffOn, int[] diffOff) {
 
@@ -1488,7 +1551,7 @@ public class ReducedBoqa {
         long start = System.nanoTime();
         //computePhenoDifferentials();
         //createPhenoVectors();//must be recomputed on every call
-        createPhenoVectors_multithread(8);
+        createPhenoVectors_multithread(numThreads);
         System.out.println("done compute pheno diff. Took" + (System.nanoTime()-start));
 
         int i;
@@ -1521,13 +1584,11 @@ public class ReducedBoqa {
 
 
         final ExecutorService es;
-        if (numThreads > 1) {
-            es = Executors.newCachedThreadPool();
-            es = Executors.newWorkStealingPo
+        es = Executors.newFixedThreadPool(num_threads);
             //use newCached for performance
-        } else {
-            es = null;
-        }
+            /*
+            actually i claim that fixed is better, since we broke it up into that way
+             */
 
         final boolean[] previousHidden = new boolean[this.slimGraph.getNumberOfVertices()];
         final ReducedConfiguration previousStat = new ReducedConfiguration();
@@ -1536,24 +1597,12 @@ public class ReducedBoqa {
         // This step is necessary for the createDiffVectors to make sense.
         determineCases(observations, previousHidden, previousStat);
 
-        ArrayList<Future<?>> futureList = new ArrayList<Future<?>>();
-
         for (i = 0; i < num_diseases; i++) {
             final int item = i;
             //later an es.execute() call
-
-            //let 8 processes do the job of actuateDiseaseDiff
-            //using an executor service would probably be best here (thread destruction/creation)
-
-            //just submit the tasks for running here
-            //
-            //es.execute
-            RBWorker rbWorker = new RBWorker();
-
-
-            class matrixWorker implements Runnable{
+            class MatrixWorker implements Runnable{
                 public int id;
-                public matrixWorker(int id)
+                public MatrixWorker(int id)
                 {
                     this.id = id;
                 }
@@ -1565,41 +1614,26 @@ public class ReducedBoqa {
                 }
 
             }
-            Runnable run = new Runnable()
+            //let 8 processes do the job of actuateDiseaseDiff
+            //using an executor service would probably be best here (thread destruction/creation)
+
+            //just submit the tasks for running here
+            //
+            //es.execute
+
+            for (int thread_spinner =0 ; thread_spinner<num_threads; thread_spinner++)
             {
-
-                //we have a filled in matrix by the time this is over, so we can just op on that
-                @Override
-                public void run() //since this is an inner, class, we need final int item
-                //we cannot change it inside this scope!
-                {
-                            actuateDiseaseDifferentials(item, observations, takeFrequenciesIntoAccount,
-                                    numThreads > 1 ? null : previousHidden, numThreads > 1 ? null : previousStat);
-                }
-            };
-
-            if (es != null) {
-                futureList.add(es.submit(run));
-            } else {
-                run.run();
+                MatrixWorker m = new MatrixWorker(thread_spinner);
+                es.execute(m);
             }
+
+
         }
 
-        if (es != null) {
+
             es.shutdown();
-
-            for (Future<?> f : futureList) {
-                try {
-                    f.get();
-                } catch (Exception e) {
-                    throw new RuntimeException(e);
-                }
-            }
-
             try {
-                while (!es.awaitTermination(10, TimeUnit.SECONDS)) {
-                    ;
-                }
+                while (!es.awaitTermination(10, TimeUnit.SECONDS));
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -1609,4 +1643,5 @@ public class ReducedBoqa {
         // if (exitNow)
         // System.exit(10);
     }
-}
+
+

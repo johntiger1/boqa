@@ -484,7 +484,17 @@ public class NewRefinedBOQATest {
         OBOParser hpoParser = new OBOParser(
                 final_path);
         hpoParser.doParse();
+        //this line illustrates the 301 lesson: getting an object, then being able to modify it
+        //we should return a copy of it or something
 
+        Set<Term> terms = hpoParser.getTermMap();
+        for (Term t: terms)
+        {
+            if (t.isObsolete())
+            {
+                terms.remove(t);
+            }
+        }
         //blackbox: it gets all the terms (in the HPO)
         //getTermMap returns a list of all terms!
         TermContainer tc = new TermContainer(hpoParser.getTermMap(), hpoParser.getFormatVersion(), hpoParser.getDate());
@@ -492,6 +502,13 @@ public class NewRefinedBOQATest {
 
         Ontology ontology = new Ontology(tc);
         SlimDirectedGraphView<Term> slim = ontology.getSlimGraphView();
+        Term tt = ontology.getTerm("HP:0000284");
+        System.out.println("redundant relat");
+        System.out.println("redundant relat" + Arrays.toString(tt.getEquivalents()));
+        //slim
+
+        ontology.findRedundantISARelations();
+
 
         assocs = generateAnnotations(num, slim);
 
@@ -532,13 +549,12 @@ public class NewRefinedBOQATest {
 
             System.out.println("starting multishot");
             long start = System.nanoTime();
-            boqa.assignMultiShotMarginals(o,false,1);
+            boqa.assignMultiShotMarginals(o,false,8);
 
             //now that we have the matrix of probabiltiies, we can look up the pheno-freqs and weight it accordingly
             //this process will probably take some time as well (+20s)
 
             System.out.println("done multishot. Took" + (System.nanoTime()-start));
-
             System.exit(0);
             disease_frequencies = res.marginals; //TODO doesn't need to be called on every loop
 
