@@ -100,9 +100,26 @@ public class MultiThreadEx {
        // MySummmer m1 = new MySummmer()
         //Runnable r = new MySummmer(3,3,3);
         //MultiThreadEx asd= new MultiThreadEx();
+        class abc implements Runnable
+        {
+            int id;
+            public abc(int id)
+            {
+                this.id=id;
+            }
+            public void run()
+            {
+                System.out.printf("sda,");
+            }
 
+        }
         ExecutorService executorService = Executors.newFixedThreadPool(NUM_THREADS );
+        for (int i =0 ; i < 8; i++) {
+            executorService.execute(new abc(i) //this is still not passing a class in
 
+
+            );
+        }
         //we can either add them to a ist and run them all at once
         //or we can do the online running (for loop)
         //how is that different from just a thread thing though...
@@ -111,7 +128,7 @@ public class MultiThreadEx {
         executorService.execute(new MySummmer(3,3,3));
 
         executorService.shutdown();
-    }
+
 
 }
 

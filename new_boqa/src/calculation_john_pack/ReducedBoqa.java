@@ -941,6 +941,55 @@ public class ReducedBoqa {
         //System.out.println("done looping through all the phenos. Took" + (System.nanoTime()-start));
     }
 
+    private void actuateDiseaseDifferentials_MT( int item, Observations o,
+                                              boolean takeFrequenciesIntoAccount,
+                                                 boolean[] previousHidden,
+                                                 ReducedConfiguration previousStats,
+                                                 int thread_id)
+    {
+
+        int numTerms = this.slimGraph.getNumberOfVertices();
+
+        if (previousHidden == null && previousStats != null) {
+            throw new IllegalArgumentException();
+        }
+        if (previousHidden != null && previousStats == null) {
+            throw new IllegalArgumentException();
+        }
+
+        WeightedConfigurationList statsList = new WeightedConfigurationList();
+
+        boolean[] hidden;
+        ReducedConfiguration stats;
+
+        if (previousHidden == null) {
+            hidden = new boolean[numTerms];
+        } else {
+            hidden = previousHidden;
+        }
+
+        if (previousStats == null) {
+            stats = new ReducedConfiguration();
+        } else {
+            stats = previousStats;
+        }
+        int[] diffOn = this.diffOnTerms[item];
+        int[] diffOff = this.diffOffTerms[item];
+        useDeltaToSetToCurrentDisease(hidden, diffOn, diffOff);
+        int k;
+        long start = System.nanoTime();
+
+
+        for (int j =0; j<phenoOnMT[thread_id].length; j++) {
+            decrementStaleNodes(o, hidden, stats, j);
+            updateObservationsBasedOnPhenotype(o, j);
+            incrementUpdatedNodes(o, hidden, stats, j);
+            multiDiseaseDistributions[topo_sorted[j]][item] = stats.getScore(this.ALPHA_GRID[0],initial_beta, experimental_beta);
+        }
+        resetToConsistentStateForDiseaseDiff(o, stats, diffOn, diffOff, hidden);
+
+    }
+
     int [] topo_sorted;
     /*
       Performs an after-the-fact dfs of a "graph"
@@ -1473,7 +1522,9 @@ public class ReducedBoqa {
 
         final ExecutorService es;
         if (numThreads > 1) {
-            es = Executors.newFixedThreadPool(numThreads);
+            es = Executors.newCachedThreadPool();
+            es = Executors.newWorkStealingPo
+            //use newCached for performance
         } else {
             es = null;
         }
@@ -1489,7 +1540,31 @@ public class ReducedBoqa {
 
         for (i = 0; i < num_diseases; i++) {
             final int item = i;
+            //later an es.execute() call
 
+            //let 8 processes do the job of actuateDiseaseDiff
+            //using an executor service would probably be best here (thread destruction/creation)
+
+            //just submit the tasks for running here
+            //
+            //es.execute
+            RBWorker rbWorker = new RBWorker();
+
+
+            class matrixWorker implements Runnable{
+                public int id;
+                public matrixWorker(int id)
+                {
+                    this.id = id;
+                }
+                public void run()
+                {
+                    actuateDiseaseDifferentials_MT(item, observations, takeFrequenciesIntoAccount,
+                            numThreads > 1 ? null : previousHidden, numThreads > 1 ? null : previousStat, id);
+
+                }
+
+            }
             Runnable run = new Runnable()
             {
 
