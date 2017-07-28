@@ -1006,19 +1006,6 @@ public class ReducedBoqa {
 //        long start = System.nanoTime();
 
         ArrayList<Term> topo_sort = graph.getTermsInTopologicalOrder();
-        System.out.println(topo_sort.get(0));
-        System.out.println(topo_sort.get(1));
-        System.out.println(topo_sort.get(2));
-        System.out.println(topo_sort.get(3));
-        System.out.println(topo_sort.get(4));
-        System.out.println(topo_sort.get(5));
-        System.out.println(topo_sort.get(6));
-        for (int i = 7; i < 100;i++)
-        {
-            System.out.println(topo_sort.get(i));
-        }
-        graph.findRedundantISARelations();
-
         //now: we need the topo sort
         //convert it to the indices.
         topo_sorted = new int[topo_sort.size()];
