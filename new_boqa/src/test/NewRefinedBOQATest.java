@@ -488,13 +488,21 @@ public class NewRefinedBOQATest {
         //we should return a copy of it or something
 
         Set<Term> terms = hpoParser.getTermMap();
-        for (Term t: terms)
+        Iterator <Term> iter= terms.iterator();
+
+        while (iter.hasNext())
         {
+            Term t = iter.next();
+
             if (t.isObsolete())
             {
-                terms.remove(t);
+                System.out.println(t);
+                iter.remove();
             }
         }
+
+        //possible they weren't actually removed from the ACTUALY termmaps
+
         //blackbox: it gets all the terms (in the HPO)
         //getTermMap returns a list of all terms!
         TermContainer tc = new TermContainer(hpoParser.getTermMap(), hpoParser.getFormatVersion(), hpoParser.getDate());
@@ -502,6 +510,7 @@ public class NewRefinedBOQATest {
 
         Ontology ontology = new Ontology(tc);
         SlimDirectedGraphView<Term> slim = ontology.getSlimGraphView();
+        System.out.println("WAT");
         Term tt = ontology.getTerm("HP:0000284");
         System.out.println("redundant relat");
         System.out.println("redundant relat" + Arrays.toString(tt.getEquivalents()));
