@@ -236,12 +236,14 @@ public class NewRefinedBOQATest {
         SlimDirectedGraphView graph = rb.getOntology().getSlimGraphView();
         for (int i = 0; i<phenoDiseaseDist.length; i++)
         {
-
-            if (best_phenotype_value < (temp=phenotype_frequencies[i]*scoringFunctionOnArray(phenoDiseaseDist[i])))
-                {
+            //assert rb.o.observations.length =phenoDiseaseDist.length
+            //We cannot return pick a phenotype twice
+            if (!rb.o.observations[i]) {
+                if (best_phenotype_value < (temp = phenotype_frequencies[i] * scoringFunctionOnArray(phenoDiseaseDist[i]))) {
                     best_phenotype_index = i;
                     best_phenotype_value = temp;
                 }
+            }
 
         }
         return best_phenotype_index;
@@ -588,7 +590,7 @@ public class NewRefinedBOQATest {
             //update with the results of the new boqa run
             System.out.println("starting pheno check");
             start = System.nanoTime();
-            int phenotype_to_check = getBestPhenotype(boqa, phi_phenotype_frequencies); //in here we do all the phenotype checks
+            int phenotype_to_check = multiGetBestPhenotype(boqa.multiDiseaseDistributions,boqa); //in here we do all the phenotype checks
 
             System.out.println("done pheno check. Took" + (System.nanoTime()-start));
             //This allows us to go from TermID->index, but what about the other way>
@@ -619,10 +621,7 @@ public class NewRefinedBOQATest {
             o.observations[index] = true; //recall the new meanings: observations means whether it was
             //checked, while the arraylist determines whether it was true or not
             //this has been deprecated
-
-
-            //assign marginals again based on things
-            boqa.assignMarginals(o, false, 1);
+            
             //repeating this process should segregate everything
             //however, this can and SHOULD happen normally (probability of seeing something false
             //repeatedly is low. this is not a healing love, this is a wicked fantasy
