@@ -56,6 +56,7 @@ public class NewRefinedBOQATest {
 
         }
         Random r = new Random(21);
+        //this heavily rewards those with long parental chains. however we assume that 
         return r.nextDouble() <= probs;
     }
 
@@ -274,7 +275,7 @@ public class NewRefinedBOQATest {
         double temp;
         double counter = 0;
         int pheno;
-        System.out.println("size is" + pheno_disease_freq.size());
+//        System.out.println("size is" + pheno_disease_freq.size());
 
         SlimDirectedGraphView<Term> graph = rb.getOntology().getSlimGraphView();
 
@@ -301,15 +302,15 @@ public class NewRefinedBOQATest {
             phi_phenotype_frequencies[pheno] = temp;
 
         }
-        System.out.println("finish compute of Phi");
-        System.out.println("done, took " + (System.nanoTime()-start));
+//        System.out.println("finish compute of Phi");
+//        System.out.println("done, took " + (System.nanoTime()-start));
 
     }
     //computes it from the REST of the array.
     public void computePhenotypeFrequencies(ReducedBoqa rb)
     {
-        long start = System.nanoTime();
-        System.out.println("starting compute of phen-freq");
+//        long start = System.nanoTime();
+//        System.out.println("starting compute of phen-freq");
         double temp;
         int pheno;
         SlimDirectedGraphView<Term> graph = rb.getOntology().getSlimGraphView();
@@ -332,8 +333,8 @@ public class NewRefinedBOQATest {
 
             phenotype_frequencies[pheno] =temp;
         }
-        System.out.println("finish compute of phen-freq");
-        System.out.println("done, took " + (System.nanoTime()-start));
+//        System.out.println("finish compute of phen-freq");
+//        System.out.println("done, took " + (System.nanoTime()-start));
 
 
 
@@ -414,7 +415,7 @@ public class NewRefinedBOQATest {
 
     public void generateTrueDisease(SlimDirectedGraphView<Term> slim, AssociationContainer assocs)
     {
-        Random rnd = new Random(3); //this is our true disease
+        Random rnd = new Random(41); //this is our true disease
         for (int j = 0; j < rnd.nextInt(16) + 2; j++) {
             Term t;
             do {
@@ -600,6 +601,14 @@ public class NewRefinedBOQATest {
             //int index =boqa.slimGraph.getVertexIndex(boqa.getOntology().getTerm(phenotype_to_check));
 
             int index = phenotype_to_check; //much simpler
+            System.out.println("this is the one im checking" + index);
+
+            if (steps>=24){
+                Term tempt = boqa.slimGraph.getVertex(index);
+                boqa.slimGraph.getAncestors(tempt);
+                System.out.println(boqa.slimGraph.getAncestors(tempt));
+                System.out.println(boqa.slimGraph.getDescendants(tempt));
+            }
 
             boolean present_or_not = getObservation(index,boqa);
 
