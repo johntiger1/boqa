@@ -38,14 +38,15 @@ public class NewRefinedBOQATest {
         Term t;
         Term target_pheno_to_check = rb.slimGraph.getVertex(index);
         double probs = 0;
-        for (Association assoc: trueDiseaseMapping)
+        for (TermID tt: trueDiseaseMapping.getAssociations())
         {
 
-            t = rb.getOntology().getTerm(assoc.getTermID());
+            t = rb.getOntology().getTerm(tt);
             //check if the term is a descendant of the input index term
             //Because you are your own ancestor, we do not need to deal with the self case specially.
-            if (rb.getOntology().getSlimGraphView().isAncestor(target_pheno_to_check,t ))
+            if (rb.slimGraph.isAncestor(target_pheno_to_check,t ))
             {
+                //DO NOT use this nakedly! (it will sum to > 1!)
                 probs+= pheno_disease_freq.get(t).get(trueDiseaseMapping.name()) ;
             }
             ///This just has the frequency class (1-5)
@@ -455,6 +456,7 @@ public class NewRefinedBOQATest {
 
         System.out.println(trueDiseaseMapping.getAssociations());
 
+
     }
 
     //approximateArrayList by printing the indices of where it is true only
@@ -469,6 +471,16 @@ public class NewRefinedBOQATest {
         }
 
         return  l;
+    }
+
+    public void print_find_ancestors_of_trueDisease(ReducedBoqa rb, TermContainer tc)
+    {
+        for (TermID ti :trueDiseaseMapping.getAssociations())
+        {
+            System.out.println("the ancestors of " + ti + " are "
+                    + rb.slimGraph.getAncestors(tc.get(ti)));
+
+        }
     }
 
     @Test
@@ -522,8 +534,6 @@ public class NewRefinedBOQATest {
         trueDisease = new ByteString("item" + num);
         trueDiseaseMapping = new Gene2Associations(trueDisease);
 
-
-
         generateTrueDisease(slim, assocs);
 
 
@@ -552,6 +562,7 @@ public class NewRefinedBOQATest {
         res = boqa.assignMarginals(o, false, 1);
         disease_frequencies = res.marginals;
         long total = System.nanoTime();
+        print_find_ancestors_of_trueDisease(boqa, tc);
         while (!discovered) {
             total = System.nanoTime();
             System.out.println("this is step" + steps);
