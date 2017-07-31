@@ -1159,6 +1159,7 @@ public class ReducedBoqa {
         //undo all the changes we have done via phenoOn and phenoOff
         for (int i = 0; i < o.observations.length; i++)
         {
+            //it cn be
             if (!o.observations[i])
             {
                 o.real_observations[i] = false;

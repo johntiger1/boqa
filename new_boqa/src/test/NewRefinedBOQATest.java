@@ -56,8 +56,9 @@ public class NewRefinedBOQATest {
 
         }
         Random r = new Random(21);
-        //this heavily rewards those with long parental chains. however we assume that 
-        return r.nextDouble() <= probs;
+        //this heavily rewards those with long parental chains. however we assume that
+        //we only have the most specific. however, that is not justified!
+        return r.nextDouble() < probs;
     }
 
     public boolean trueDiseaseInTopNDiseases(String target, List<String> top) {
