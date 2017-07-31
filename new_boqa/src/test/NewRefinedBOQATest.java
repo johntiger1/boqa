@@ -486,20 +486,8 @@ public class NewRefinedBOQATest {
         hpoParser.doParse();
         //this line illustrates the 301 lesson: getting an object, then being able to modify it
         //we should return a copy of it or something
-
-        Set<Term> terms = hpoParser.getTermMap();
-        Iterator <Term> iter= terms.iterator();
-
-        while (iter.hasNext())
-        {
-            Term t = iter.next();
-
-            if (t.isObsolete())
-            {
-                //System.out.println(t);
-                iter.remove();
-            }
-        }
+        long start = System.nanoTime();
+        removeObsoleteTerms(hpoParser, start);
 
         //blackbox: it gets all the terms (in the HPO)
         //getTermMap returns a list of all terms!
@@ -548,7 +536,7 @@ public class NewRefinedBOQATest {
             res = boqa.assignMarginals(o, false, 1);
 
             System.out.println("starting multishot");
-            long start = System.nanoTime();
+            start = System.nanoTime();
             boqa.assignMultiShotMarginals(o,false,8);
 
             //now that we have the matrix of probabiltiies, we can look up the pheno-freqs and weight it accordingly
@@ -645,5 +633,22 @@ public class NewRefinedBOQATest {
             System.out.println("got to this point");
 
         }
+    }
+
+    private void removeObsoleteTerms(OBOParser hpoParser, long start) {
+        Set<Term> terms = hpoParser.getTermMap();
+        Iterator<Term> iter= terms.iterator();
+
+        while (iter.hasNext())
+        {
+            Term t = iter.next();
+
+            if (t.isObsolete())
+            {
+                //System.out.println(t);
+                iter.remove();
+            }
+        }
+        System.out.println("Removal of obsolete took" + (System.nanoTime()-start));
     }
 }
