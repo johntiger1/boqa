@@ -1,5 +1,6 @@
 package test;
 
+import com.sun.javafx.image.IntPixelGetter;
 import ontologizer.association.Association;
 import ontologizer.association.AssociationContainer;
 import ontologizer.association.Gene2Associations;
@@ -451,6 +452,20 @@ public class NewRefinedBOQATest {
 
     }
 
+    //approximateArrayList by printing the indices of where it is true only
+    public List<Integer> getIndicesOfTrue(boolean [] arr)
+    {
+        List<Integer> l = new ArrayList<>();
+        for (int i = 0; i < arr.length; i++){
+
+            if (arr[i]){
+                l.add(i);
+            }
+        }
+
+        return  l;
+    }
+
     @Test
     public void testConvergence() throws IOException, OBOParserException, URISyntaxException {
         int num = 10000;
@@ -508,8 +523,9 @@ public class NewRefinedBOQATest {
         generateTrueDisease(slim, assocs);
 
         Observations o = new Observations();
-        o.observations = new boolean[ontology.getNumberOfTerms()];
-        o.real_observations = new boolean[ontology.getNumberOfTerms()];
+        int numberOfTerms = ontology.getNumberOfTerms();
+        o.observations = new boolean[numberOfTerms];
+        o.real_observations = new boolean[numberOfTerms];
         //Run BOQA once to get the initial guesses.
         ArrayList<String> initial_guesses = null;
 
@@ -519,15 +535,15 @@ public class NewRefinedBOQATest {
         int steps = 0;
         double increment = 0.01;
         boolean discovered = false;
-        phenotype_frequencies = new double[boqa.getOntology().getNumberOfTerms()]; //alternatively, just copy over the
+        phenotype_frequencies = new double[numberOfTerms]; //alternatively, just copy over the
         //array length from the item2ancestors for example
-        phi_phenotype_frequencies = new double[boqa.getOntology().getNumberOfTerms()];
+        phi_phenotype_frequencies = new double[numberOfTerms];
         ReducedBoqa.Result res=new ReducedBoqa.Result();
          //null for now, but will later be updated
         while (!discovered) {
             System.out.println("this is step" + steps);
             System.out.println("These are the new observations");
-            System.out.println(boqa.o.real_observations);
+            System.out.println(getIndicesOfTrue(boqa.o.real_observations));
             //boqa.setInitial_beta(boqa.getInitial_beta()-boqa.getInitial_beta()/30);
             //Alternatively, we could jsut have the difference too (inital beta-experimental beta)
             boqa.setInitial_beta(increment * steps);
