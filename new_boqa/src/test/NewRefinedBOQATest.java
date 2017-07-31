@@ -290,6 +290,7 @@ public class NewRefinedBOQATest {
             //if we are just doing phenotype to disease, then we can directly use these elements
             for (Map.Entry annotation : pheno_disease_freq.get(pheno_term).entrySet()) {
 
+                //does P(D)*P(I|D)
                 temp += disease_frequencies[rb.item2Index.get( annotation.getKey())] * freq_categories[(Integer) annotation.getValue()];
                 //now, we need to use the index of the Bytestring now!
 
@@ -304,7 +305,7 @@ public class NewRefinedBOQATest {
         //System.out.println("done, took " + (System.nanoTime()-start));
 
     }
-
+    //computes it from the REST of the array.
     public void computePhenotypeFrequencies(ReducedBoqa rb)
     {
         long start = System.nanoTime();
@@ -573,20 +574,9 @@ public class NewRefinedBOQATest {
 
             System.out.println(java.util.Arrays.toString(res.marginals));
             System.out.println(java.util.Arrays.toString(res.scores));
+            printTopDisease(res);
 
-            //Computes max element and the index it occurs at
-            double max = -Double.MAX_VALUE;
-            int max_ind = 0;
-            for (int i = 0; i < res.marginals.length; i++) {
-                if (res.marginals[i] > max) {
-
-                    max = res.marginals[i];
-                    max_ind = i;
-                }
-
-            }
-
-            System.out.println("max_ind is " + max_ind + " max is " + max);
+            //sorts the array, by getScore and takes the top N
             System.out.println(getTopDiseasesAsStrings(res));
             initial_guesses = getTopDiseasesAsStrings(res); //we have essentially the top ids now
             //from the ids, we can get the mappings they have
@@ -649,6 +639,22 @@ public class NewRefinedBOQATest {
             System.out.println("got to this point");
 
         }
+    }
+
+    private void printTopDisease(ReducedBoqa.Result res) {
+        //Computes max element and the index it occurs at
+        double max = -Double.MAX_VALUE;
+        int max_ind = 0;
+        for (int i = 0; i < res.marginals.length; i++) {
+            if (res.marginals[i] > max) {
+
+                max = res.marginals[i];
+                max_ind = i;
+            }
+
+        }
+
+        System.out.println("max_ind is " + max_ind + " max is " + max);
     }
 
     private void removeObsoleteTerms(OBOParser hpoParser, long start) {
