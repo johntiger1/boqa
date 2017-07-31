@@ -613,7 +613,7 @@ public class NewRefinedBOQATest {
             //int index =boqa.slimGraph.getVertexIndex(boqa.getOntology().getTerm(phenotype_to_check));
 
             int index = phenotype_to_check; //much simpler
-            System.out.println("this is the one im checking" + index);
+            System.out.println("this is the one im checking" + index); System.out.println("this is the HPO im checking" + boqa.slimGraph.getVertex(index));
 
             if (steps>=24){
                 Term tempt = boqa.slimGraph.getVertex(index);

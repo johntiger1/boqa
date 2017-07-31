@@ -110,7 +110,7 @@ public class ReducedBoqa {
     }
 
 
-    Ontology graph;
+    public Ontology graph;
     AssociationContainer assoc;
     public ArrayList<ByteString> allItemList;
 
@@ -445,6 +445,7 @@ public class ReducedBoqa {
         return this.graph;
     }
 
+    //returns the set difference of A and B
     private static int[] setDiff(int[] a, int[] b)
     {
         int[] c = new int[a.length];
@@ -462,9 +463,42 @@ public class ReducedBoqa {
             }
 
             if (!inB) {
-                c[cc++] = element;
+                c[cc++] = element; //if not in B, put the element in c and increment the c counter
             }
+        } //copy everything over
+        int[] nc = new int[cc];
+        for (int i = 0; i < cc; i++) {
+            nc[i] = c[i];
         }
+
+        //retruns a newly allocated array
+        return nc;
+    }
+
+    private static int[] setDiffSpecial(int[] a, int[] b, boolean [] skip)
+    {
+        int[] c = new int[a.length];
+        int cc = 0; /* current c */
+
+        /* Obviously, this could be optimized to linear time if a and b would be assumed to be sorted */
+        for (int element : a) {
+            boolean inB = false;
+
+            for (int element2 : b) {
+
+                if (element == element2) {
+                    inB = true;
+                    break;
+                }
+            }
+
+            //only put it in if we are NOT skipping
+            if (!skip[element]) {
+                if (!inB) {
+                    c[cc++] = element; //if not in B, put the element in c and increment the c counter
+                }
+            }
+        } //copy everything over
         int[] nc = new int[cc];
         for (int i = 0; i < cc; i++) {
             nc[i] = c[i];
@@ -651,8 +685,14 @@ public class ReducedBoqa {
                 int newOnTerms[] = this.term2Ancestors[topo_sorted[j]];
                 prev_j = j;
                 j++;
-                phenoOnMT[thread_num][i] = setDiff(newOnTerms, prevOnTerms);
-                phenoOffMt[thread_num][i] = setDiff(prevOnTerms, newOnTerms);
+
+                //either need a special setdiff OR we can remove (prune) phenotypes that
+                //are already observed
+
+                //or we could just use more set differences!
+                //subtract the set of phenotypes that already have been observed
+                phenoOnMT[thread_num][i] = setDiffSpecial(newOnTerms, prevOnTerms,this.o.observations);
+                phenoOffMt[thread_num][i] = setDiffSpecial(prevOnTerms, newOnTerms,this.o.observations);
                 sum += phenoOnMT[thread_num][i].length + phenoOffMt[thread_num][i].length;
 
             }
