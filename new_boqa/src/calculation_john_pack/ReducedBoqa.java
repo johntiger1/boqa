@@ -1622,12 +1622,14 @@ public class ReducedBoqa {
         // This step is necessary for the createDiffVectors to make sense.
         determineCases(observations, previousHidden, previousStat);
 
-        for (i = 0; i < num_diseases; i++) {
+        for (i = 0; i < num_threads; i++) {
+
+        observations.
             final int item = i;
             //later an es.execute() call
             class MatrixWorker implements Runnable{
                 public int id;
-                public MatrixWorker(int id)
+                public MatrixWorker(int id, Observations o)
                 {
                     this.id = id;
                 }
@@ -1648,7 +1650,7 @@ public class ReducedBoqa {
             //es.execute
 
 
-                MatrixWorker m = new MatrixWorker(i%num_threads);
+                MatrixWorker m = new MatrixWorker(i, o);
                 es.execute(m);
 
 

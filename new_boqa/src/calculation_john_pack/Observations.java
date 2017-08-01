@@ -35,6 +35,7 @@
 
 package calculation_john_pack;
 
+import java.util.Arrays;
 import java.util.HashMap;
 
 /**
@@ -61,13 +62,17 @@ public class Observations
     public boolean[] observations;
 
     //public boolean [] RegisteredObservaitons; // records whether the observation was true or false
-    public Observations()
+    public Observations(Observations o)
     {
+        this.observations = Arrays.copyOf(o.observations, o.observations.length);
+        this.real_observations= Arrays.copyOf(o.real_observations, o.real_observations.length);
+        this.observationStats = o.observationStats.clone();
         //observations should be set when necessary (fixed size)
     }
     //public ArrayList<obs_value> real_observations= new ArrayList<>();
     public boolean[] real_observations;
     public ReducedConfiguration observationStats; //this is our familiar 4 term!
+
 
 //    //TODO UNSAFE METHOD
 //    public void recordObservation(int index, boolean value)
