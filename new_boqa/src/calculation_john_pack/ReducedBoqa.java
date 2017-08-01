@@ -584,6 +584,7 @@ public class ReducedBoqa {
 
     int [][][] phenoOnMT;
     int [][][] phenoOffMt;
+
     //Creates the phenovectors, partitioning them using the "linear" method.
     //
 
@@ -691,8 +692,10 @@ public class ReducedBoqa {
 
                 //or we could just use more set differences!
                 //subtract the set of phenotypes that already have been observed
-                phenoOnMT[thread_num][i] = setDiffSpecial(newOnTerms, prevOnTerms,this.o.observations);
-                phenoOffMt[thread_num][i] = setDiffSpecial(prevOnTerms, newOnTerms,this.o.observations);
+                phenoOnMT[thread_num][i] = setDiff(newOnTerms, prevOnTerms);
+                phenoOffMt[thread_num][i] = setDiff(prevOnTerms, newOnTerms);
+//                phenoOnMT[thread_num][i] = setDiffSpecial(newOnTerms, prevOnTerms,this.o.observations);
+//                phenoOffMt[thread_num][i] = setDiffSpecial(prevOnTerms, newOnTerms,this.o.observations);
                 sum += phenoOnMT[thread_num][i].length + phenoOffMt[thread_num][i].length;
 
             }
@@ -983,12 +986,14 @@ public class ReducedBoqa {
         //System.out.println("done looping through all the phenos. Took" + (System.nanoTime()-start));
     }
 
+
     private void actuateDiseaseDifferentials_MT( int item, Observations o,
                                               boolean takeFrequenciesIntoAccount,
                                                  boolean[] previousHidden,
                                                  ReducedConfiguration previousStats,
                                                  int thread_id)
     {
+
 
         int numTerms = this.slimGraph.getNumberOfVertices();
 
@@ -1021,12 +1026,28 @@ public class ReducedBoqa {
         int k;
         long start = System.nanoTime();
 
-
+        //for some, j should be multiplied by thread_id+1 *j
+        //it's the solution to the modulus quesiton
+        //thread_id*j + j
+        //first thread does follow this, but all other threads: OFFSET + thread_id*j
         for (int j =0; j<phenoOnMT[thread_id].length; j++) {
             decrementStaleNodes_MT(o, hidden, stats, phenoOnMT[thread_id][j],phenoOffMt[thread_id][j]);
             updateObservationsBasedOnPhenotype_MT(o, phenoOnMT[thread_id][j], phenoOffMt[thread_id][j]);
             incrementUpdatedNodes_MT(o, hidden, stats, phenoOnMT[thread_id][j], phenoOffMt[thread_id][j]);
-            multiDiseaseDistributions[topo_sorted[j]][item] = stats.getScore(this.ALPHA_GRID[0],initial_beta, experimental_beta);
+
+            if (thread_id == 0)
+            {
+                multiDiseaseDistributions[topo_sorted[phenoOnMT[thread_id].length +
+                        j]][item] = stats.getScore(this.ALPHA_GRID[0],initial_beta, experimental_beta);
+            }
+
+            else
+            {
+                //start on the last one
+                multiDiseaseDistributions[topo_sorted[topo_sorted.length-phenoOnMT[thread_id].length*thread_id+
+                        j]][item] = stats.getScore(this.ALPHA_GRID[0],initial_beta, experimental_beta);
+            }
+
         }
         resetToConsistentStateForDiseaseDiff(o, stats, diffOn, diffOff, hidden);
 
