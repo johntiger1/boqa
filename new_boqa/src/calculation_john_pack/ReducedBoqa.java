@@ -110,7 +110,7 @@ public class ReducedBoqa {
     }
 
 
-    Ontology graph;
+    public Ontology graph;
     AssociationContainer assoc;
     public ArrayList<ByteString> allItemList;
 
@@ -445,6 +445,7 @@ public class ReducedBoqa {
         return this.graph;
     }
 
+    //returns the set difference of A and B
     private static int[] setDiff(int[] a, int[] b)
     {
         int[] c = new int[a.length];
@@ -462,9 +463,42 @@ public class ReducedBoqa {
             }
 
             if (!inB) {
-                c[cc++] = element;
+                c[cc++] = element; //if not in B, put the element in c and increment the c counter
             }
+        } //copy everything over
+        int[] nc = new int[cc];
+        for (int i = 0; i < cc; i++) {
+            nc[i] = c[i];
         }
+
+        //retruns a newly allocated array
+        return nc;
+    }
+
+    private static int[] setDiffSpecial(int[] a, int[] b, boolean [] skip)
+    {
+        int[] c = new int[a.length];
+        int cc = 0; /* current c */
+
+        /* Obviously, this could be optimized to linear time if a and b would be assumed to be sorted */
+        for (int element : a) {
+            boolean inB = false;
+
+            for (int element2 : b) {
+
+                if (element == element2) {
+                    inB = true;
+                    break;
+                }
+            }
+
+            //only put it in if we are NOT skipping
+            if (!skip[element]) {
+                if (!inB) {
+                    c[cc++] = element; //if not in B, put the element in c and increment the c counter
+                }
+            }
+        } //copy everything over
         int[] nc = new int[cc];
         for (int i = 0; i < cc; i++) {
             nc[i] = c[i];
@@ -544,6 +578,145 @@ public class ReducedBoqa {
 
         // System.out.println("done createPhenoVecs. Took" + (System.nanoTime()-start));
 
+
+
+    }
+
+    int [][][] phenoOnMT;
+    int [][][] phenoOffMt;
+
+    //Creates the phenovectors, partitioning them using the "linear" method.
+    //
+
+    //should use this.num_threads
+    private void createPhenoVectors_multithread(int num_threads) {
+
+//        System.out.println("starting createPhenoVecs");
+//        long start = System.nanoTime();
+        int numberOfUnobservedPhenotypes = getNumberOfUnobservedPhenotypes();
+        int i ;
+        int j = 0;
+        int prev_j = 0;
+        int sum =0;
+        int starting = 0;
+        prev_j = j;
+        phenoOnMT = new int[num_threads][][];
+        phenoOffMt = new int[num_threads][][];
+
+        //assign inner sizes (task delegations) to each thread
+        //z is the thread number
+
+        int tasks_per_thread = numberOfUnobservedPhenotypes/num_threads;
+        int remainder = numberOfUnobservedPhenotypes % num_threads;
+        for (int z = 1; z < num_threads; z++)
+        {
+            phenoOnMT[z] = new int [tasks_per_thread][];
+            phenoOffMt[z] = new int [tasks_per_thread][];
+        }
+
+        //assign any extra left over work to the main thread
+        phenoOnMT[0] = new int [tasks_per_thread + remainder][];
+        phenoOffMt[0] = new int[tasks_per_thread+ remainder][];
+
+
+        int thread_num;
+        /*
+                #threads ,#unobserved phenotypes/#threads, deltas between then
+        alternatively: we can do one of them, and then just pass the indices to different threads
+        the only thing to care for is that every #phen/#threads, we set everything on specially
+        --dangerous coupling and OBO possible
+
+        the other obvious thing is to: delegate it to the calling thread
+        Given that it is getting a slice of them, wipe it, then
+        set all of the correct phenotypes ON--how long this will take?
+
+        poor since reducing all the nodes is fine, but recomputing it for WHAT disease you are on
+        and so forth is a little tricky
+
+
+
+        dunkirk phantom of the opera similarity!
+
+         */
+
+
+        for ( thread_num =0; thread_num<num_threads;thread_num++ )
+        {
+            while (o.observations[topo_sorted[j]])
+            {
+                j++;
+                //TODO unlikely edge case: what if we observe everything?!
+            }
+
+            //assert j is total#-unobserved or something (not necessarily)
+            //j is not really a descriptive statisitc, rather it only refers to the first, or the min
+
+            this.phenoOnMT[thread_num][0] = this.term2Ancestors[topo_sorted[j++]]; /* For the first step, all terms must be activated */
+            //assert it gets a fresh copy (no phenotypes set) each time
+            this.phenoOffMt[thread_num][0] = new int[0];
+
+            for (i = 1; i < this.phenoOnMT[thread_num].length; i++) {
+                //if unobserved ONLY
+
+                //find the next unobserved phenotype, in the order given by topo_osrt
+
+
+                while (o.observations[topo_sorted[j]] )
+                {
+                /*
+                when would it ever fail:
+                    if we run the outer loop too many times for example (note that j cannot decrement)
+                 */
+                    if (j>=topo_sorted.length)
+                    {
+                        //uhoh
+                        System.out.println("wwoos");
+                    }
+                    j++;
+
+
+
+
+                }
+
+
+                //j must be from the previous incidence...
+
+                int prevOnTerms[] = this.term2Ancestors[topo_sorted[prev_j]];      //items2terms[0] on first iteration
+                int newOnTerms[] = this.term2Ancestors[topo_sorted[j]];
+                prev_j = j;
+                j++;
+
+                //either need a special setdiff OR we can remove (prune) phenotypes that
+                //are already observed
+
+                //or we could just use more set differences!
+                //subtract the set of phenotypes that already have been observed
+                phenoOnMT[thread_num][i] = setDiff(newOnTerms, prevOnTerms);
+                phenoOffMt[thread_num][i] = setDiff(prevOnTerms, newOnTerms);
+//                phenoOnMT[thread_num][i] = setDiffSpecial(newOnTerms, prevOnTerms,this.o.observations);
+//                phenoOffMt[thread_num][i] = setDiffSpecial(prevOnTerms, newOnTerms,this.o.observations);
+                sum += phenoOnMT[thread_num][i].length + phenoOffMt[thread_num][i].length;
+
+            }
+
+        }
+
+        //this MEANS: we MUST turn off all of the phenotypes at the start!
+        //this makes sense, since the one "behind" it is the empty set; hence all must be taken!
+
+
+        //all terms annotated to the first item are diffOnTerms for that item as well
+
+
+        //potentially skip many phenotypes
+
+
+
+        System.out.println("number of deltas is " + sum);
+
+
+//         System.out.println("done createPhenoVecs (MT). Took" + (System.nanoTime()-start));
     }
 
 
@@ -751,7 +924,6 @@ public class ReducedBoqa {
             //since we may observe at any point and or time
             //at the same time we must keep it synchronized with phenoOn.length as well
             //it would make a lot of sense to maintain an sorted arraylist of unobserved phenotypes somewhere..
-
             /*
             We look through the topo_sorted array for uncheck phenotypes.
             In HIGH theory: we should have no transitions computed for phenotypes that are already oberved
@@ -768,8 +940,6 @@ public class ReducedBoqa {
 
             //this line works if
             //for(k=j;k < o.observations[topo_sorted[k]];k++);
-
-            for(k=j;k < o.observations.length && o.observations[topo_sorted[k]];k++);
             //also inefficient
             //there are a couple of problems here
             //we skip when necessary and so forth...
@@ -789,7 +959,7 @@ public class ReducedBoqa {
             //array op--this is very rapid.
             //System.out.println("done looping through the 'find' op took " + (System.nanoTime()-start));
 
-
+            //these js will be used in pOn
             decrementStaleNodes(o, hidden, stats, j);
             updateObservationsBasedOnPhenotype(o, j);
 
@@ -805,7 +975,7 @@ public class ReducedBoqa {
 
             //fill in the COLUMN of the matrix!
             //this will need to be topo_sorted[k] now...
-            multiDiseaseDistributions[topo_sorted[k]][item] = stats.getScore(this.ALPHA_GRID[0],initial_beta, experimental_beta);
+            multiDiseaseDistributions[topo_sorted[j]][item] = stats.getScore(this.ALPHA_GRID[0],initial_beta, experimental_beta);
         }
 
         //reset to the original/baseline phenotype
@@ -814,6 +984,74 @@ public class ReducedBoqa {
         resetToConsistentStateForDiseaseDiff(o, stats, diffOn, diffOff, hidden);
 
         //System.out.println("done looping through all the phenos. Took" + (System.nanoTime()-start));
+    }
+
+
+    private void actuateDiseaseDifferentials_MT( int item, Observations o,
+                                              boolean takeFrequenciesIntoAccount,
+                                                 boolean[] previousHidden,
+                                                 ReducedConfiguration previousStats,
+                                                 int thread_id)
+    {
+
+
+        int numTerms = this.slimGraph.getNumberOfVertices();
+
+        if (previousHidden == null && previousStats != null) {
+            throw new IllegalArgumentException();
+        }
+        if (previousHidden != null && previousStats == null) {
+            throw new IllegalArgumentException();
+        }
+
+        WeightedConfigurationList statsList = new WeightedConfigurationList();
+
+        boolean[] hidden;
+        ReducedConfiguration stats;
+
+        if (previousHidden == null) {
+            hidden = new boolean[numTerms];
+        } else {
+            hidden = previousHidden;
+        }
+
+        if (previousStats == null) {
+            stats = new ReducedConfiguration();
+        } else {
+            stats = previousStats;
+        }
+        int[] diffOn = this.diffOnTerms[item];
+        int[] diffOff = this.diffOffTerms[item];
+        useDeltaToSetToCurrentDisease(hidden, diffOn, diffOff);
+        int k;
+        long start = System.nanoTime();
+
+        //for some, j should be multiplied by thread_id+1 *j
+        //it's the solution to the modulus quesiton
+        //thread_id*j + j
+        //first thread does follow this, but all other threads: OFFSET + thread_id*j
+        for (int j =0; j<phenoOnMT[thread_id].length; j++) {
+            decrementStaleNodes_MT(o, hidden, stats, phenoOnMT[thread_id][j],phenoOffMt[thread_id][j]);
+            updateObservationsBasedOnPhenotype_MT(o, phenoOnMT[thread_id][j], phenoOffMt[thread_id][j]);
+            incrementUpdatedNodes_MT(o, hidden, stats, phenoOnMT[thread_id][j], phenoOffMt[thread_id][j]);
+
+            if (thread_id == 0)
+            {
+                multiDiseaseDistributions[topo_sorted[phenoOnMT[thread_id].length +
+                        j]][item] = stats.getScore(this.ALPHA_GRID[0],initial_beta, experimental_beta);
+            }
+
+            else
+            {
+                //start on the last one
+                multiDiseaseDistributions[topo_sorted[topo_sorted.length-phenoOnMT[thread_id].length*
+                        (num_threads- thread_id)+
+                        j]][item] = stats.getScore(this.ALPHA_GRID[0],initial_beta, experimental_beta);
+            }
+
+        }
+        resetToConsistentStateForDiseaseDiff(o, stats, diffOn, diffOff, hidden);
+
     }
 
     int [] topo_sorted;
@@ -828,25 +1066,8 @@ public class ReducedBoqa {
 //        System.out.println("This is the root term" + graph.getRootTerm());
 //        System.out.println("These are the children");
 //        long start = System.nanoTime();
+
         ArrayList<Term> topo_sort = graph.getTermsInTopologicalOrder();
-//        System.out.println("took " + (start-System.nanoTime()));
-//        System.out.println(topo_sort);
-        /*
-        let us assume that the above is in fact the |optimal| order. Also
-
-        note that the above is sort of like a DFS. Or rather a topological sort has
-        some not insignifcant properties in common with a DFS. In particular, DFS
-        in a tree DOES satisfy the property that we reach a parent before we reach its child
-        also note that topo sort is just dfs, except reverse the result you get
-        One key difficulty is this: In our tree that supports multiple inheritance
-        , it is possible we reach one node via one parent before we reach it via
-        ALL the parents!
-         */
-//        System.out.println(topo_sort.size());
-//        System.out.println(topo_sort.get(1));
-//        System.out.println(slimGraph.getParents(topo_sort.get(1)));
-        //System.out.println(graph.get)
-
         //now: we need the topo sort
         //convert it to the indices.
         topo_sorted = new int[topo_sort.size()];
@@ -868,6 +1089,19 @@ public class ReducedBoqa {
 
 
 
+    }
+    private void incrementUpdatedNodes_MT(Observations o, boolean[] hidden, ReducedConfiguration stats,
+                                       int[]phenoOnSlice,int[]phenoOffSlice) {
+
+        for (int x : phenoOnSlice)
+        {
+            stats.increment(getNodeCase(x, hidden, o)); //decrements an arbitrary one of the same class!
+        }
+
+        for (int x : phenoOffSlice)
+        {
+            stats.increment(getNodeCase(x, hidden, o)); //decrements an arbitrary one of the same class!
+        }
     }
 
     private void incrementUpdatedNodes(Observations o, boolean[] hidden, ReducedConfiguration stats, int j) {
@@ -926,6 +1160,19 @@ public class ReducedBoqa {
         }
     }
 
+    private void updateObservationsBasedOnPhenotype_MT(Observations o,int [] phenoOnSlice, int [] phenoOffSlice
+                                                    ) {
+        for (int x : phenoOffSlice)
+        {
+            //this is the same as the array[array[2]] = true semantics
+            o.real_observations[x] = false; //decrements an arbitrary one of the same class!
+        }
+        for (int x : phenoOnSlice)
+        {
+            o.real_observations[x] = true; //decrements an arbitrary one of the same class!
+        }
+    }
+
 
     //Decrement the nodes that are "stale" from the previous to our current
     //essentially, changes everything except the nodes which remain exactly the same
@@ -952,6 +1199,19 @@ public class ReducedBoqa {
 
     }
 
+    private void decrementStaleNodes_MT(Observations o, boolean[] hidden, ReducedConfiguration stats,
+                                        int [] phenoOnSlice, int [] phenoOffSlice) {
+        for (int x : phenoOnSlice)
+        {
+            stats.decrement(getNodeCase(x, hidden, o)); //decrements an arbitrary one of the same class!
+        }
+
+        for (int x : phenoOffSlice)
+        {
+            stats.decrement(getNodeCase(x, hidden, o));
+        }
+    }
+
     //Resets the d-p combo into a "consistent" state, such that the NEXT diffON
     //can be applied.
     private void resetToConsistentStateForDiseaseDiff(Observations o, ReducedConfiguration stats, int[] diffOn, int[] diffOff
@@ -961,6 +1221,7 @@ public class ReducedBoqa {
         //undo all the changes we have done via phenoOn and phenoOff
         for (int i = 0; i < o.observations.length; i++)
         {
+            //it cn be
             if (!o.observations[i])
             {
                 o.real_observations[i] = false;
@@ -998,6 +1259,7 @@ public class ReducedBoqa {
 //            o.real_observations[((int) val)] = true;
 //        }
     }
+
 
     private void useDeltaToSetToCurrentDisease( boolean[] hidden,  int[] diffOn, int[] diffOff) {
 
@@ -1299,16 +1561,22 @@ public class ReducedBoqa {
         return res;
     }
 
+    int num_threads = 1;
 
+    //ideally it should be always an array, with it being size 1 * n for a single thing
+    int [][]phenoOff_array=null;
     //Returns an array of Result objects
     //will now be quite an expensive operation
     public void assignMultiShotMarginals( Observations observations, final boolean takeFrequenciesIntoAccount,
                                    final int numThreads)
     {
+        this.num_threads = numThreads;
+
         System.out.println("starting compute pheno diff");
         long start = System.nanoTime();
         //computePhenoDifferentials();
-        createPhenoVectors();//must be recomputed on every call
+        //createPhenoVectors();//must be recomputed on every call
+        createPhenoVectors_multithread(numThreads);
         System.out.println("done compute pheno diff. Took" + (System.nanoTime()-start));
 
         int i;
@@ -1338,14 +1606,14 @@ public class ReducedBoqa {
         //as much as possible
         //interestingly we also have ideal marginals, which I am not sure how the two differ by
 
-
+        boolean [] all_completed = new boolean[num_diseases];
 
         final ExecutorService es;
-        if (numThreads > 1) {
-            es = Executors.newFixedThreadPool(numThreads);
-        } else {
-            es = null;
-        }
+        es = Executors.newFixedThreadPool(num_threads);
+            //use newCached for performance
+            /*
+            actually i claim that fixed is better, since we broke it up into that way
+             */
 
         final boolean[] previousHidden = new boolean[this.slimGraph.getNumberOfVertices()];
         final ReducedConfiguration previousStat = new ReducedConfiguration();
@@ -1354,45 +1622,53 @@ public class ReducedBoqa {
         // This step is necessary for the createDiffVectors to make sense.
         determineCases(observations, previousHidden, previousStat);
 
-        ArrayList<Future<?>> futureList = new ArrayList<Future<?>>();
-
         for (i = 0; i < num_diseases; i++) {
             final int item = i;
-
-            Runnable run = new Runnable()
-            {
-
-                //we have a filled in matrix by the time this is over, so we can just op on that
-                @Override
-                public void run() //since this is an inner, class, we need final int item
-                //we cannot change it inside this scope!
+            //later an es.execute() call
+            class MatrixWorker implements Runnable{
+                public int id;
+                public MatrixWorker(int id)
                 {
-                            actuateDiseaseDifferentials(item, observations, takeFrequenciesIntoAccount,
-                                    numThreads > 1 ? null : previousHidden, numThreads > 1 ? null : previousStat);
+                    this.id = id;
                 }
-            };
+                public void run()
+                {
+//                    System.out.println("item is " + item);
+                    actuateDiseaseDifferentials_MT(item, observations, takeFrequenciesIntoAccount,
+                            numThreads > 1 ? null : previousHidden, numThreads > 1 ? null : previousStat, id);
+                    all_completed[item] = true;
+                }
 
-            if (es != null) {
-                futureList.add(es.submit(run));
-            } else {
-                run.run();
             }
+            //let 8 processes do the job of actuateDiseaseDiff
+            //using an executor service would probably be best here (thread destruction/creation)
+
+            //just submit the tasks for running here
+            //
+            //es.execute
+
+
+                MatrixWorker m = new MatrixWorker(i%num_threads);
+                es.execute(m);
+
+
+
         }
 
-        if (es != null) {
+
+
+
             es.shutdown();
 
-            for (Future<?> f : futureList) {
-                try {
-                    f.get();
-                } catch (Exception e) {
-                    throw new RuntimeException(e);
-                }
-            }
-
             try {
-                while (!es.awaitTermination(10, TimeUnit.SECONDS)) {
-                    ;
+                es.awaitTermination(10, TimeUnit.SECONDS);
+
+                for (int a = 0; a < all_completed.length; a++)
+                {
+                    if (!all_completed[a])
+                    {
+                        System.out.println("OH NO!");
+                    }
                 }
             } catch (InterruptedException e) {
                 e.printStackTrace();
@@ -1403,4 +1679,5 @@ public class ReducedBoqa {
         // if (exitNow)
         // System.exit(10);
     }
-}
+
+

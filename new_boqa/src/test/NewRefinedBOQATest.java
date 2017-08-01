@@ -1,5 +1,6 @@
 package test;
 
+import com.sun.javafx.image.IntPixelGetter;
 import ontologizer.association.Association;
 import ontologizer.association.AssociationContainer;
 import ontologizer.association.Gene2Associations;
@@ -37,14 +38,15 @@ public class NewRefinedBOQATest {
         Term t;
         Term target_pheno_to_check = rb.slimGraph.getVertex(index);
         double probs = 0;
-        for (Association assoc: trueDiseaseMapping)
+        for (TermID tt: trueDiseaseMapping.getAssociations())
         {
 
-            t = rb.getOntology().getTerm(assoc.getTermID());
+            t = rb.getOntology().getTerm(tt);
             //check if the term is a descendant of the input index term
             //Because you are your own ancestor, we do not need to deal with the self case specially.
-            if (rb.getOntology().getSlimGraphView().isAncestor(target_pheno_to_check,t ))
+            if (rb.slimGraph.isAncestor(target_pheno_to_check,t ))
             {
+                //DO NOT use this nakedly! (it will sum to > 1!)
                 probs+= pheno_disease_freq.get(t).get(trueDiseaseMapping.name()) ;
             }
             ///This just has the frequency class (1-5)
@@ -55,7 +57,9 @@ public class NewRefinedBOQATest {
 
         }
         Random r = new Random(21);
-        return r.nextDouble() <= probs;
+        //this heavily rewards those with long parental chains. however we assume that
+        //we only have the most specific. however, that is not justified!
+        return r.nextDouble() < probs;
     }
 
     public boolean trueDiseaseInTopNDiseases(String target, List<String> top) {
@@ -231,16 +235,16 @@ public class NewRefinedBOQATest {
         double best_phenotype_value = Double.NEGATIVE_INFINITY;
         double temp;
         double val;
-        ///pheno_disease_freq.get(graph.getVertex(i)).get()
-        SlimDirectedGraphView graph = rb.getOntology().getSlimGraphView();
         for (int i = 0; i<phenoDiseaseDist.length; i++)
         {
-
-            if (best_phenotype_value < (temp=phenotype_frequencies[i]*scoringFunctionOnArray(phenoDiseaseDist[i])))
-                {
+            //assert rb.o.observations.length =phenoDiseaseDist.length
+            //We cannot return pick a phenotype twice
+            if (!rb.o.observations[i]) {
+                if (best_phenotype_value < (temp = phenotype_frequencies[i] * scoringFunctionOnArray(phenoDiseaseDist[i]))) {
                     best_phenotype_index = i;
                     best_phenotype_value = temp;
                 }
+            }
 
         }
         return best_phenotype_index;
@@ -268,12 +272,12 @@ public class NewRefinedBOQATest {
 
     public void computePhiPhenotypeFrequencies(ReducedBoqa rb) {
         long start = System.nanoTime();
-        System.out.println("starting compute of Phi");
+//        System.out.println("starting compute of Phi");
 
         double temp;
         double counter = 0;
         int pheno;
-        System.out.println("size is" + pheno_disease_freq.size());
+//        System.out.println("size is" + pheno_disease_freq.size());
 
         SlimDirectedGraphView<Term> graph = rb.getOntology().getSlimGraphView();
 
@@ -289,6 +293,7 @@ public class NewRefinedBOQATest {
             //if we are just doing phenotype to disease, then we can directly use these elements
             for (Map.Entry annotation : pheno_disease_freq.get(pheno_term).entrySet()) {
 
+                //does P(D)*P(I|D)
                 temp += disease_frequencies[rb.item2Index.get( annotation.getKey())] * freq_categories[(Integer) annotation.getValue()];
                 //now, we need to use the index of the Bytestring now!
 
@@ -299,15 +304,15 @@ public class NewRefinedBOQATest {
             phi_phenotype_frequencies[pheno] = temp;
 
         }
-        System.out.println("finish compute of Phi");
-        //System.out.println("done, took " + (System.nanoTime()-start));
+//        System.out.println("finish compute of Phi");
+//        System.out.println("done, took " + (System.nanoTime()-start));
 
     }
-
+    //computes it from the REST of the array.
     public void computePhenotypeFrequencies(ReducedBoqa rb)
     {
-        long start = System.nanoTime();
-        System.out.println("starting compute of phen-freq");
+//        long start = System.nanoTime();
+//        System.out.println("starting compute of phen-freq");
         double temp;
         int pheno;
         SlimDirectedGraphView<Term> graph = rb.getOntology().getSlimGraphView();
@@ -330,8 +335,8 @@ public class NewRefinedBOQATest {
 
             phenotype_frequencies[pheno] =temp;
         }
-        System.out.println("finish compute of phen-freq");
-        System.out.println("done, took " + (System.nanoTime()-start));
+//        System.out.println("finish compute of phen-freq");
+//        System.out.println("done, took " + (System.nanoTime()-start));
 
 
 
@@ -412,7 +417,7 @@ public class NewRefinedBOQATest {
 
     public void generateTrueDisease(SlimDirectedGraphView<Term> slim, AssociationContainer assocs)
     {
-        Random rnd = new Random(3); //this is our true disease
+        Random rnd = new Random(41); //this is our true disease
         for (int j = 0; j < rnd.nextInt(16) + 2; j++) {
             Term t;
             do {
@@ -449,6 +454,33 @@ public class NewRefinedBOQATest {
             assocs.addAssociation(trueDiseasePhenotype); //this seems to not hve any effect on BOQA... (nvm, it is used inb boqa.setup)
         }
 
+        System.out.println(trueDiseaseMapping.getAssociations());
+
+
+    }
+
+    //approximateArrayList by printing the indices of where it is true only
+    public List<Integer> getIndicesOfTrue(boolean [] arr)
+    {
+        List<Integer> l = new ArrayList<>();
+        for (int i = 0; i < arr.length; i++){
+
+            if (arr[i]){
+                l.add(i);
+            }
+        }
+
+        return  l;
+    }
+
+    public void print_find_ancestors_of_trueDisease(ReducedBoqa rb, TermContainer tc)
+    {
+        for (TermID ti :trueDiseaseMapping.getAssociations())
+        {
+            System.out.println("the ancestors of " + ti + " are "
+                    + rb.slimGraph.getAncestors(tc.get(ti)));
+
+        }
     }
 
     @Test
@@ -473,7 +505,6 @@ public class NewRefinedBOQATest {
             System.out.println(url.getFile());
         }
         if (resource == null) {
-            System.out.println(resource);
             throw new NullPointerException("Couldn't find it!");
         }
         URI resourceURI = resource.toURI();
@@ -484,6 +515,10 @@ public class NewRefinedBOQATest {
         OBOParser hpoParser = new OBOParser(
                 final_path);
         hpoParser.doParse();
+        //this line illustrates the 301 lesson: getting an object, then being able to modify it
+        //we should return a copy of it or something
+        long start = System.nanoTime();
+        removeObsoleteTerms(hpoParser, start);
 
         //blackbox: it gets all the terms (in the HPO)
         //getTermMap returns a list of all terms!
@@ -493,18 +528,19 @@ public class NewRefinedBOQATest {
         Ontology ontology = new Ontology(tc);
         SlimDirectedGraphView<Term> slim = ontology.getSlimGraphView();
 
+
         assocs = generateAnnotations(num, slim);
 
         trueDisease = new ByteString("item" + num);
         trueDiseaseMapping = new Gene2Associations(trueDisease);
 
-
-
         generateTrueDisease(slim, assocs);
 
+
         Observations o = new Observations();
-        o.observations = new boolean[ontology.getNumberOfTerms()];
-        o.real_observations = new boolean[ontology.getNumberOfTerms()];
+        int numberOfTerms = ontology.getNumberOfTerms();
+        o.observations = new boolean[numberOfTerms];
+        o.real_observations = new boolean[numberOfTerms];
         //Run BOQA once to get the initial guesses.
         ArrayList<String> initial_guesses = null;
 
@@ -514,33 +550,43 @@ public class NewRefinedBOQATest {
         int steps = 0;
         double increment = 0.01;
         boolean discovered = false;
-        phenotype_frequencies = new double[boqa.getOntology().getNumberOfTerms()]; //alternatively, just copy over the
+        phenotype_frequencies = new double[numberOfTerms]; //alternatively, just copy over the
         //array length from the item2ancestors for example
-        phi_phenotype_frequencies = new double[boqa.getOntology().getNumberOfTerms()];
+        phi_phenotype_frequencies = new double[numberOfTerms];
+
+
+        //initalization/first step stuff
         ReducedBoqa.Result res=new ReducedBoqa.Result();
-         //null for now, but will later be updated
+        steps++;
+        boqa.setInitial_beta(increment * steps);
+        res = boqa.assignMarginals(o, false, 1);
+        disease_frequencies = res.marginals;
+        long total = System.nanoTime();
+        print_find_ancestors_of_trueDisease(boqa, tc);
         while (!discovered) {
+            total = System.nanoTime();
             System.out.println("this is step" + steps);
-            System.out.println("These are the new observations");
-            System.out.println(boqa.o.real_observations);
+            System.out.println("These are the ones checked");
+            System.out.println(getIndicesOfTrue(boqa.o.observations));
+            System.out.println("These are the one present");
+            System.out.println(getIndicesOfTrue(boqa.o.real_observations));
             //boqa.setInitial_beta(boqa.getInitial_beta()-boqa.getInitial_beta()/30);
             //Alternatively, we could jsut have the difference too (inital beta-experimental beta)
-            boqa.setInitial_beta(increment * steps);
+
 
             //assign marginals with the new o.
-            res = boqa.assignMarginals(o, false, 1);
+
 
             System.out.println("starting multishot");
-            long start = System.nanoTime();
-            boqa.assignMultiShotMarginals(o,false,1);
+            start = System.nanoTime();
+            boqa.assignMultiShotMarginals(o,false,8);
 
             //now that we have the matrix of probabiltiies, we can look up the pheno-freqs and weight it accordingly
             //this process will probably take some time as well (+20s)
 
             System.out.println("done multishot. Took" + (System.nanoTime()-start));
-
-            System.exit(0);
-            disease_frequencies = res.marginals; //TODO doesn't need to be called on every loop
+//            System.exit(0);
+            //TODO doesn't need to be called on every loop
 
             //this returns an int array[], where each elt is the prob of item with that index
             //we can introconvert if we have the index2term for example
@@ -551,25 +597,7 @@ public class NewRefinedBOQATest {
 //
 //        itemEnumerator.getTermsAnnotatedToTheItem(item);
 
-            System.out.println(java.util.Arrays.toString(res.marginals));
-            System.out.println(java.util.Arrays.toString(res.scores));
 
-            //Computes max element and the index it occurs at
-            double max = -Double.MAX_VALUE;
-            int max_ind = 0;
-            for (int i = 0; i < res.marginals.length; i++) {
-                if (res.marginals[i] > max) {
-
-                    max = res.marginals[i];
-                    max_ind = i;
-                }
-
-            }
-
-            System.out.println("max_ind is " + max_ind + " max is " + max);
-            System.out.println(getTopDiseasesAsStrings(res));
-            initial_guesses = getTopDiseasesAsStrings(res); //we have essentially the top ids now
-            //from the ids, we can get the mappings they have
 
 
             computePhiPhenotypeFrequencies(boqa);
@@ -578,13 +606,22 @@ public class NewRefinedBOQATest {
             //update with the results of the new boqa run
             System.out.println("starting pheno check");
             start = System.nanoTime();
-            int phenotype_to_check = getBestPhenotype(boqa, phi_phenotype_frequencies); //in here we do all the phenotype checks
+            int phenotype_to_check = multiGetBestPhenotype(boqa.multiDiseaseDistributions,boqa); //in here we do all the phenotype checks
 
             System.out.println("done pheno check. Took" + (System.nanoTime()-start));
             //This allows us to go from TermID->index, but what about the other way>
             //int index =boqa.slimGraph.getVertexIndex(boqa.getOntology().getTerm(phenotype_to_check));
 
             int index = phenotype_to_check; //much simpler
+            System.out.println("this is the one im checking" + index);
+            System.out.println("this is the HPO im checking" + boqa.slimGraph.getVertex(index));
+
+            if (steps>=24){
+                Term tempt = boqa.slimGraph.getVertex(index);
+                boqa.slimGraph.getAncestors(tempt);
+                System.out.println(boqa.slimGraph.getAncestors(tempt));
+                System.out.println(boqa.slimGraph.getDescendants(tempt));
+            }
 
             boolean present_or_not = getObservation(index,boqa);
 
@@ -610,15 +647,27 @@ public class NewRefinedBOQATest {
             //checked, while the arraylist determines whether it was true or not
             //this has been deprecated
 
-
-            //assign marginals again based on things
-            boqa.assignMarginals(o, false, 1);
             //repeating this process should segregate everything
             //however, this can and SHOULD happen normally (probability of seeing something false
             //repeatedly is low. this is not a healing love, this is a wicked fantasy
             //test shoudl work:
 
+            //updating steps for the next one:
             steps++;
+            boqa.setInitial_beta(increment * steps);
+            res = boqa.assignMarginals(o, false, 1);
+            disease_frequencies = res.marginals;
+
+
+//            System.out.println(java.util.Arrays.toString(res.marginals));
+//            System.out.println(java.util.Arrays.toString(res.scores));
+            printTopDisease(res);
+
+            //sorts the array, by getScore and takes the top N
+            System.out.println(getTopDiseasesAsStrings(res));
+            initial_guesses = getTopDiseasesAsStrings(res); //we have essentially the top ids now
+            //from the ids, we can get the mappings they have
+
             //now, we recompute the marginals.
             //o.setValue()if ()
             if (trueDiseaseInTopNDiseases(trueDisease.toString(), initial_guesses)) {
@@ -626,8 +675,40 @@ public class NewRefinedBOQATest {
                 System.out.println("we are finishedd!");
             }
 
-            System.out.println("got to this point");
+            System.out.println("done loop iter. Took" + (System.nanoTime()-total));
+        }
+    }
+
+    private void printTopDisease(ReducedBoqa.Result res) {
+        //Computes max element and the index it occurs at
+        double max = -Double.MAX_VALUE;
+        int max_ind = 0;
+        for (int i = 0; i < res.marginals.length; i++) {
+            if (res.marginals[i] > max) {
+
+                max = res.marginals[i];
+                max_ind = i;
+            }
 
         }
+
+        System.out.println("max_ind is " + max_ind + " max is " + max);
+    }
+
+    private void removeObsoleteTerms(OBOParser hpoParser, long start) {
+        Set<Term> terms = hpoParser.getTermMap();
+        Iterator<Term> iter= terms.iterator();
+
+        while (iter.hasNext())
+        {
+            Term t = iter.next();
+
+            if (t.isObsolete())
+            {
+                //System.out.println(t);
+                iter.remove();
+            }
+        }
+        System.out.println("Removal of obsolete took" + (System.nanoTime()-start));
     }
 }
