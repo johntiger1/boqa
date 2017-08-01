@@ -1044,7 +1044,8 @@ public class ReducedBoqa {
             else
             {
                 //start on the last one
-                multiDiseaseDistributions[topo_sorted[topo_sorted.length-phenoOnMT[thread_id].length*thread_id+
+                multiDiseaseDistributions[topo_sorted[topo_sorted.length-phenoOnMT[thread_id].length*
+                        (num_threads- thread_id)+
                         j]][item] = stats.getScore(this.ALPHA_GRID[0],initial_beta, experimental_beta);
             }
 
