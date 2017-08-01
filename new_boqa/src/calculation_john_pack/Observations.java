@@ -66,8 +66,13 @@ public class Observations
     {
         this.observations = Arrays.copyOf(o.observations, o.observations.length);
         this.real_observations= Arrays.copyOf(o.real_observations, o.real_observations.length);
-        this.observationStats = o.observationStats.clone();
+//        this.observationStats = o.observationStats.clone();
         //observations should be set when necessary (fixed size)
+    }
+
+    public Observations()
+    {
+
     }
     //public ArrayList<obs_value> real_observations= new ArrayList<>();
     public boolean[] real_observations;
