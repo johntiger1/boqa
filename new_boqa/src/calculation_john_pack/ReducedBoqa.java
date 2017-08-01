@@ -1606,7 +1606,7 @@ public class ReducedBoqa {
         //as much as possible
         //interestingly we also have ideal marginals, which I am not sure how the two differ by
 
-
+        boolean [] all_completed = new boolean[num_diseases];
 
         final ExecutorService es;
         es = Executors.newFixedThreadPool(num_threads);
@@ -1633,9 +1633,10 @@ public class ReducedBoqa {
                 }
                 public void run()
                 {
+//                    System.out.println("item is " + item);
                     actuateDiseaseDifferentials_MT(item, observations, takeFrequenciesIntoAccount,
                             numThreads > 1 ? null : previousHidden, numThreads > 1 ? null : previousStat, id);
-
+                    all_completed[item] = true;
                 }
 
             }
@@ -1646,19 +1647,29 @@ public class ReducedBoqa {
             //
             //es.execute
 
-            for (int thread_spinner =0 ; thread_spinner<num_threads; thread_spinner++)
-            {
-                MatrixWorker m = new MatrixWorker(thread_spinner);
+
+                MatrixWorker m = new MatrixWorker(i%num_threads);
                 es.execute(m);
-            }
+
 
 
         }
 
 
+
+
             es.shutdown();
+
             try {
-                while (!es.awaitTermination(10, TimeUnit.SECONDS));
+                es.awaitTermination(10, TimeUnit.SECONDS);
+
+                for (int a = 0; a < all_completed.length; a++)
+                {
+                    if (!all_completed[a])
+                    {
+                        System.out.println("OH NO!");
+                    }
+                }
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
