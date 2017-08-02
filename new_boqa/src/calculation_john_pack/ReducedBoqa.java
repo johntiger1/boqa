@@ -1024,18 +1024,24 @@ public class ReducedBoqa {
         }
         int[] diffOn ;
         int[] diffOff ;
-        System.out.printf("Going from this disease %d to this: %d", start_disease, end_disease);
-        System.out.printf("Going from this pheno %d to this: %d", start_pheno, end_pheno);
+        int pheno_counter = start_pheno;
+
+
+
+//        System.out.println("predifferences" + (end_pheno-start_pheno) );
+//        System.out.printf("Going from this disease %d to this: %d", start_disease, end_disease);
+//        System.out.printf("Going from this pheno %d to this: %d", start_pheno, end_pheno);
         for (int item = start_disease; item < end_disease; item++)
         {
+
             diffOn = this.diffOnTerms[item];
             diffOff = this.diffOffTerms[item];
 
             useDeltaToSetToCurrentDisease(hidden, diffOn, diffOff);
             long start = System.nanoTime();
-            System.out.println(end_pheno-start_pheno );
-            System.out.println(phenoOnMT[thread_id].length);
-            assert end_pheno-start_pheno == phenoOnMT[thread_id].length;
+//            System.out.println("differences" + (end_pheno-start_pheno) );
+//            System.out.println("length" + phenoOnMT[thread_id].length);
+//            assert end_pheno-start_pheno == phenoOnMT[thread_id].length;
             //for some, j should be multiplied by thread_id+1 *j
             //it's the solution to the modulus quesiton
             //thread_id*j + j
@@ -1045,14 +1051,17 @@ public class ReducedBoqa {
                 updateObservationsBasedOnPhenotype_MT(o, phenoOnMT[thread_id][j], phenoOffMt[thread_id][j]);
                 incrementUpdatedNodes_MT(o, hidden, stats, phenoOnMT[thread_id][j], phenoOffMt[thread_id][j]);
 
-                    multiDiseaseDistributions[topo_sorted[start_pheno++]][item] = stats.getScore(this.ALPHA_GRID[0],initial_beta, experimental_beta);
+                    multiDiseaseDistributions[topo_sorted[pheno_counter++]][item] = stats.getScore(this.ALPHA_GRID[0],initial_beta, experimental_beta);
                     //assert start_pheno < end_pheno
                     //implicit dependence on phenoOnMT.length being right
 
 
             }
+            pheno_counter = start_pheno;
             resetToConsistentStateForDiseaseDiff(o, stats, diffOn, diffOff, hidden);
         }
+
+//        System.out.println("done my job" + thread_id);
 
 
 
@@ -1628,20 +1637,21 @@ public class ReducedBoqa {
 
         int curr_start_indexP = 0;
 
-        int curr_end_indexP= phenoOffMt[0].length;
+        int curr_end_indexP= 0;
         int num_diseases_per_thread = num_diseases/num_threads;
-        System.out.println("hey this is " + num_diseases_per_thread );
+//        System.out.println("hey this is " + num_diseases_per_thread );
         int remainder = num_diseases%num_threads;
         //actualy it can take both more diseases AND more pehnotypes
         //note that we cannot use the sme info from the phenoOn, as we may have different cardinality P and D
         int curr_start_indexD = 0;
-        int curr_end_indexD= num_diseases_per_thread+remainder;
+        int curr_end_indexD= remainder;
         for (i = 0; i < num_threads; i++) {
 
             curr_start_indexP = curr_end_indexP;
 //                System.out.println(curr_end_indexP);
             curr_end_indexP+=phenoOffMt[i].length; //uses the NEXT one
-            curr_start_indexD = curr_end_indexD;
+
+            if (i != 0) {curr_start_indexD = curr_end_indexD;}
             curr_end_indexD += num_diseases_per_thread;
             //this specifies how many phenotypes we are going over
 
@@ -1654,8 +1664,10 @@ public class ReducedBoqa {
                 public int pheno_start;
                 public int pheno_end;
                 public int num_elements;
+                public boolean []hidden;
+                public ReducedConfiguration rc;
                 public MatrixWorker(int id, Observations o, int start_item, int end_item, int pheno_start,
-                                    int pheno_end)
+                                    int pheno_end, boolean[]hidden, ReducedConfiguration rc)
                 {
                     this.id = id;
                     this.o=o;
@@ -1663,13 +1675,14 @@ public class ReducedBoqa {
                     this.end_item=end_item;
                     this.pheno_start=pheno_start;
                     this.pheno_end = pheno_end;
-
-
+                    this.hidden = Arrays.copyOf(hidden, hidden.length);
+                    //also need to copy previousStat and so forth
+                    this.rc=rc.clone(); //recall observations has a config inside it!
                 }
                 public void run()
                 {
-                    actuateDiseaseDifferentials_MT(start_item,end_item,pheno_start, pheno_end,observations, takeFrequenciesIntoAccount,
-                            numThreads > 1 ? null : previousHidden, numThreads > 1 ? null : previousStat, id);
+                    actuateDiseaseDifferentials_MT(start_item,end_item,pheno_start, pheno_end,o, takeFrequenciesIntoAccount,
+                            numThreads > 1 ? this.hidden : previousHidden, numThreads > 1 ? this.rc: previousStat, id);
 
 
 
@@ -1685,7 +1698,9 @@ public class ReducedBoqa {
 
 //                System.out.println(o.observationStats);
                 MatrixWorker m = new MatrixWorker(i, new Observations(o), curr_start_indexD,
-                        curr_end_indexD, curr_start_indexP, curr_end_indexP);
+                        curr_end_indexD, curr_start_indexP, curr_end_indexP, previousHidden, previousStat);
+//            System.out.println("pheno start is " + curr_start_indexP);
+//            System.out.println("pheno ebd is " + curr_end_indexP);
                 es.execute(m);
 
 
