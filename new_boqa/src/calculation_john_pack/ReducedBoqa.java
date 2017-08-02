@@ -1026,7 +1026,9 @@ public class ReducedBoqa {
         int[] diffOff ;
         int pheno_counter = start_pheno;
 
-
+        System.out.printf(" I am %d, i am responsibl" +
+                        "e for phenos %d to %d and diseases %d to %d\n",thread_id, start_pheno
+        , end_pheno, start_disease, end_disease);
 
 //        System.out.println("predifferences" + (end_pheno-start_pheno) );
 //        System.out.printf("Going from this disease %d to this: %d", start_disease, end_disease);
@@ -1706,9 +1708,6 @@ public class ReducedBoqa {
 
 
         }
-
-
-
 
             es.shutdown();
 
