@@ -589,7 +589,7 @@ public class ReducedBoqa {
     //
 
     //should use this.num_threads
-    private void createPhenoVectors_multithread(int num_threads) {
+    private void createPhenoVectors_multithread(int num_threads, boolean [] skip) {
 
 //        System.out.println("starting createPhenoVecs");
 //        long start = System.nanoTime();
@@ -692,10 +692,10 @@ public class ReducedBoqa {
 
                 //or we could just use more set differences!
                 //subtract the set of phenotypes that already have been observed
-                phenoOnMT[thread_num][i] = setDiff(newOnTerms, prevOnTerms);
-                phenoOffMt[thread_num][i] = setDiff(prevOnTerms, newOnTerms);
-//                phenoOnMT[thread_num][i] = setDiffSpecial(newOnTerms, prevOnTerms,this.o.observations);
-//                phenoOffMt[thread_num][i] = setDiffSpecial(prevOnTerms, newOnTerms,this.o.observations);
+//                phenoOnMT[thread_num][i] = setDiff(newOnTerms, prevOnTerms);
+//                phenoOffMt[thread_num][i] = setDiff(prevOnTerms, newOnTerms);
+                phenoOnMT[thread_num][i] = setDiffSpecial(newOnTerms, prevOnTerms,skip);
+                phenoOffMt[thread_num][i] = setDiffSpecial(prevOnTerms, newOnTerms,skip);
                 sum += phenoOnMT[thread_num][i].length + phenoOffMt[thread_num][i].length;
 
             }
@@ -1026,9 +1026,9 @@ public class ReducedBoqa {
         int[] diffOff ;
         int pheno_counter = start_pheno;
 
-        System.out.printf(" I am %d, i am responsibl" +
-                        "e for phenos %d to %d and diseases %d to %d\n",thread_id, start_pheno
-        , end_pheno, start_disease, end_disease);
+//        System.out.printf(" I am %d, i am responsibl" +
+//                        "e for phenos %d to %d and diseases %d to %d\n",thread_id, start_pheno
+//        , end_pheno, start_disease, end_disease);
 
 //        System.out.println("predifferences" + (end_pheno-start_pheno) );
 //        System.out.printf("Going from this disease %d to this: %d", start_disease, end_disease);
@@ -1048,10 +1048,10 @@ public class ReducedBoqa {
             //it's the solution to the modulus quesiton
             //thread_id*j + j
             //first thread does follow this, but all other threads: OFFSET + thread_id*j
-            for (int j =0; j<phenoOn.length; j++) {
-                decrementStaleNodes_MT(o, hidden, stats, phenoOn[j],phenoOff[j]);
-                updateObservationsBasedOnPhenotype_MT(o, phenoOn[j], phenoOff[j]);
-                incrementUpdatedNodes_MT(o, hidden, stats, phenoOn[j], phenoOff[j]);
+            for (int j =0; j<phenoOnMT[thread_id].length; j++) {
+                decrementStaleNodes_MT(o, hidden, stats, phenoOnMT[thread_id][j],phenoOffMt[thread_id][j]);
+                updateObservationsBasedOnPhenotype_MT(o, phenoOnMT[thread_id][j], phenoOffMt[thread_id][j]);
+                incrementUpdatedNodes_MT(o, hidden, stats, phenoOnMT[thread_id][j], phenoOffMt[thread_id][j]);
 
                     multiDiseaseDistributions[topo_sorted[pheno_counter++]][item] = stats.getScore(this.ALPHA_GRID[0],initial_beta, experimental_beta);
                     //assert start_pheno < end_pheno
@@ -1590,8 +1590,8 @@ public class ReducedBoqa {
         System.out.println("starting compute pheno diff");
         long start = System.nanoTime();
         //computePhenoDifferentials();
-        createPhenoVectors(observations.observations);//must be recomputed on every call
-        //createPhenoVectors_multithread(numThreads);
+//        createPhenoVectors(observations.observations);//must be recomputed on every call
+        createPhenoVectors_multithread(numThreads, observations.observations);
 
         System.out.println("done compute pheno diff. Took" + (System.nanoTime()-start));
 
@@ -1647,15 +1647,15 @@ public class ReducedBoqa {
         //actualy it can take both more diseases AND more pehnotypes
         //note that we cannot use the sme info from the phenoOn, as we may have different cardinality P and D
         int curr_start_indexD = 0;
-        int curr_end_indexD= remainder;
+        int curr_end_indexD= num_diseases;
         for (i = 0; i < num_threads; i++) {
 
             curr_start_indexP = curr_end_indexP;
 //                System.out.println(curr_end_indexP);
             curr_end_indexP+=phenoOffMt[i].length; //uses the NEXT one
 
-            if (i != 0) {curr_start_indexD = curr_end_indexD;}
-            curr_end_indexD += num_diseases_per_thread;
+//            if (i != 0) {curr_start_indexD = curr_end_indexD;}
+//            curr_end_indexD += num_diseases_per_thread;
             //this specifies how many phenotypes we are going over
 
             //later an es.execute() call
