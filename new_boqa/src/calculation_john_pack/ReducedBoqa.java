@@ -508,7 +508,7 @@ public class ReducedBoqa {
         return nc;
     }
 
-    private void createPhenoVectors() {
+    private void createPhenoVectors(boolean []skip) {
 
         //System.out.println("starting createPhenoVecs");
         //long start = System.nanoTime();
@@ -567,8 +567,8 @@ public class ReducedBoqa {
             int newOnTerms[] = this.term2Ancestors[topo_sorted[j]];
             prev_j = j;
             j++;
-            this.phenoOn[i] = setDiff(newOnTerms, prevOnTerms);
-            this.phenoOff[i] = setDiff(prevOnTerms, newOnTerms);
+            this.phenoOn[i] = setDiffSpecial(newOnTerms, prevOnTerms, skip);
+            this.phenoOff[i] = setDiffSpecial(prevOnTerms, newOnTerms, skip);
             sum += this.phenoOn[i].length + this.phenoOff[i].length;
 
         }
@@ -1048,10 +1048,10 @@ public class ReducedBoqa {
             //it's the solution to the modulus quesiton
             //thread_id*j + j
             //first thread does follow this, but all other threads: OFFSET + thread_id*j
-            for (int j =0; j<phenoOnMT[thread_id].length; j++) {
-                decrementStaleNodes_MT(o, hidden, stats, phenoOnMT[thread_id][j],phenoOffMt[thread_id][j]);
-                updateObservationsBasedOnPhenotype_MT(o, phenoOnMT[thread_id][j], phenoOffMt[thread_id][j]);
-                incrementUpdatedNodes_MT(o, hidden, stats, phenoOnMT[thread_id][j], phenoOffMt[thread_id][j]);
+            for (int j =0; j<phenoOn.length; j++) {
+                decrementStaleNodes_MT(o, hidden, stats, phenoOn[j],phenoOff[j]);
+                updateObservationsBasedOnPhenotype_MT(o, phenoOn[j], phenoOff[j]);
+                incrementUpdatedNodes_MT(o, hidden, stats, phenoOn[j], phenoOff[j]);
 
                     multiDiseaseDistributions[topo_sorted[pheno_counter++]][item] = stats.getScore(this.ALPHA_GRID[0],initial_beta, experimental_beta);
                     //assert start_pheno < end_pheno
@@ -1590,8 +1590,9 @@ public class ReducedBoqa {
         System.out.println("starting compute pheno diff");
         long start = System.nanoTime();
         //computePhenoDifferentials();
-        //createPhenoVectors();//must be recomputed on every call
-        createPhenoVectors_multithread(numThreads);
+        createPhenoVectors(observations.observations);//must be recomputed on every call
+        //createPhenoVectors_multithread(numThreads);
+
         System.out.println("done compute pheno diff. Took" + (System.nanoTime()-start));
 
         int i;
