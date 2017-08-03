@@ -26,7 +26,7 @@ public class ReducedBoqa {
     //hence the dimensions of the array should be: # of phenotypes * # of diseases
     public double [][] multiDiseaseDistributions;
 
-
+    public static int iteration = 0;
     //Most likely will be an array of all the frequencies for phenotype
     //Note that: this array should always sum to 1. (should it?)-- ask brudno about this
     public Object PhenotypeFrequencyDistributions;
@@ -46,6 +46,7 @@ public class ReducedBoqa {
         {
             sum+=elt;
         }
+
 
         return sum;
 //        for (int i = 0; i < phen_arr.length; i++)
@@ -1031,7 +1032,7 @@ public class ReducedBoqa {
 //        System.out.printf(" I am %d, i am responsibl" +
 //                        "e for phenos %d to %d and diseases %d to %d\n",thread_id, start_pheno
 //        , end_pheno, start_disease, end_disease);
-        System.out.println("i am " + thread_id + " i have stats at " + stats.toString());
+//        System.out.println("i am " + thread_id + " i have stats at " + stats.toString());
         //        System.out.println("predifferences" + (end_pheno-start_pheno) );
 //        System.out.printf("Going from this disease %d to this: %d", start_disease, end_disease);
 //        System.out.printf("Going from this pheno %d to this: %d", start_pheno, end_pheno);
@@ -1053,6 +1054,11 @@ public class ReducedBoqa {
             //first thread does follow this, but all other threads: OFFSET + thread_id*j
 
             for (int j =0; j<phenoOnMT[thread_id].length; j++) {
+
+                if (item==0)
+                System.out.println("I am thread" + thread_id + " on iteration " + iteration +
+                        "my pON[0] is"
+                + Arrays.toString(phenoOnMT[thread_id][0]));
 
                 if (item == 23 && j ==2)
                 {
@@ -1085,8 +1091,8 @@ public class ReducedBoqa {
             //should require an incrmeent though?!
         }
 
-        System.out.println("i am finishing " + thread_id + " i have stats at " + stats
-        + "also this is my decs" + counter);
+//        System.out.println("i am finishing " + thread_id + " i have stats at " + stats
+//        + "also this is my decs" + counter);
 
 //        System.out.println("done my job" + thread_id);
 

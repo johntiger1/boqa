@@ -564,6 +564,7 @@ public class NewRefinedBOQATest {
         long total = System.nanoTime();
         print_find_ancestors_of_trueDisease(boqa, tc);
         while (!discovered) {
+            ReducedBoqa.iteration++;
 
 
 
