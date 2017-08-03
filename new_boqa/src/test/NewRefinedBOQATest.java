@@ -564,6 +564,19 @@ public class NewRefinedBOQATest {
         long total = System.nanoTime();
         print_find_ancestors_of_trueDisease(boqa, tc);
         while (!discovered) {
+
+            if (steps == 5)
+            {
+                for (int i  = 0; i < boqa.multiDiseaseDistributions.length; i++)
+
+                {   if (i %1000== 0) {
+                    System.out.println("done 1000");
+                }
+                    for (int j = 0; j < boqa.multiDiseaseDistributions[i].length; j++){
+                        if (boqa.multiDiseaseDistributions[i][j]==0)
+                            System.out.println("This is not filled in" + i + " " + j);}}
+
+            }
             total = System.nanoTime();
             System.out.println("this is step" + steps);
             System.out.println("These are the ones checked");
