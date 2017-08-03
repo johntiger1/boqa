@@ -1033,6 +1033,7 @@ public class ReducedBoqa {
         //        System.out.println("predifferences" + (end_pheno-start_pheno) );
 //        System.out.printf("Going from this disease %d to this: %d", start_disease, end_disease);
 //        System.out.printf("Going from this pheno %d to this: %d", start_pheno, end_pheno);
+        int counter = 0;
         for (int item = start_disease; item < end_disease; item++)
         {
 
@@ -1050,12 +1051,13 @@ public class ReducedBoqa {
             //first thread does follow this, but all other threads: OFFSET + thread_id*j
 
             for (int j =0; j<phenoOnMT[thread_id].length; j++) {
-                decrementStaleNodes_MT(o, hidden, stats, phenoOnMT[thread_id][j],phenoOffMt[thread_id][j]);
+                counter+= decrementStaleNodes_MT(o, hidden, stats, phenoOnMT[thread_id][j],phenoOffMt[thread_id][j]);
                 updateObservationsBasedOnPhenotype_MT(o, phenoOnMT[thread_id][j], phenoOffMt[thread_id][j]);
                 incrementUpdatedNodes_MT(o, hidden, stats, phenoOnMT[thread_id][j], phenoOffMt[thread_id][j]);
                     //this means phenocounter is writing its value down the col to too many elements
-                    multiDiseaseDistributions[topo_sorted[pheno_counter++]][item] = stats.getScore(this.ALPHA_GRID[0],initial_beta, experimental_beta);
-                    //assert start_pheno < end_pheno
+                multiDiseaseDistributions[topo_sorted[pheno_counter++]][item] = stats.getScore(this.ALPHA_GRID[0],initial_beta, experimental_beta);
+
+                //assert start_pheno < end_pheno
                     //implicit dependence on phenoOnMT.length being right
 
 
@@ -1065,7 +1067,8 @@ public class ReducedBoqa {
             //should require an incrmeent though?!
         }
 
-        System.out.println("i am finishing " + thread_id + " i have stats at " + stats);
+        System.out.println("i am finishing " + thread_id + " i have stats at " + stats
+        + "also this is my decs" + counter);
 
 //        System.out.println("done my job" + thread_id);
 
@@ -1218,17 +1221,23 @@ public class ReducedBoqa {
 
     }
 
-    private void decrementStaleNodes_MT(Observations o, boolean[] hidden, ReducedConfiguration stats,
+    private int decrementStaleNodes_MT(Observations o, boolean[] hidden, ReducedConfiguration stats,
                                         int [] phenoOnSlice, int [] phenoOffSlice) {
+
+        int counter = 0;
         for (int x : phenoOnSlice)
         {
             stats.decrement(getNodeCase(x, hidden, o)); //decrements an arbitrary one of the same class!
+            counter++;
         }
 
         for (int x : phenoOffSlice)
         {
             stats.decrement(getNodeCase(x, hidden, o));
+            counter++;
         } ///should also incrment here??
+//        System.out.println("dec: " + counter);
+        return counter;
     }
 
     //Resets the d-p combo into a "consistent" state, such that the NEXT diffON
