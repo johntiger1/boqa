@@ -891,7 +891,7 @@ public class ReducedBoqa {
         int[] diffOn = this.diffOnTerms[item];
         int[] diffOff = this.diffOffTerms[item];
 
-        useDeltaToSetToCurrentDisease(hidden, diffOn, diffOff);
+        useDeltaToSetToCurrentDisease(hidden, diffOn, diffOff, stats, o);
 
         //assert: pOff and pOn should have the same length (they represent the # of transitions between unobserved phenotypes)
 
@@ -1029,8 +1029,8 @@ public class ReducedBoqa {
 //        System.out.printf(" I am %d, i am responsibl" +
 //                        "e for phenos %d to %d and diseases %d to %d\n",thread_id, start_pheno
 //        , end_pheno, start_disease, end_disease);
-
-//        System.out.println("predifferences" + (end_pheno-start_pheno) );
+        System.out.println("i am " + thread_id + " i have stats at " + stats.toString());
+        //        System.out.println("predifferences" + (end_pheno-start_pheno) );
 //        System.out.printf("Going from this disease %d to this: %d", start_disease, end_disease);
 //        System.out.printf("Going from this pheno %d to this: %d", start_pheno, end_pheno);
         for (int item = start_disease; item < end_disease; item++)
@@ -1039,7 +1039,7 @@ public class ReducedBoqa {
             diffOn = this.diffOnTerms[item];
             diffOff = this.diffOffTerms[item];
 
-            useDeltaToSetToCurrentDisease(hidden, diffOn, diffOff);
+            useDeltaToSetToCurrentDisease(hidden, diffOn, diffOff, stats, o);
             long start = System.nanoTime();
 //            System.out.println("differences" + (end_pheno-start_pheno) );
 //            System.out.println("length" + phenoOnMT[thread_id].length);
@@ -1048,11 +1048,14 @@ public class ReducedBoqa {
             //it's the solution to the modulus quesiton
             //thread_id*j + j
             //first thread does follow this, but all other threads: OFFSET + thread_id*j
+            if (item == 5000) {
+                item+=0;
+            }
             for (int j =0; j<phenoOnMT[thread_id].length; j++) {
                 decrementStaleNodes_MT(o, hidden, stats, phenoOnMT[thread_id][j],phenoOffMt[thread_id][j]);
                 updateObservationsBasedOnPhenotype_MT(o, phenoOnMT[thread_id][j], phenoOffMt[thread_id][j]);
                 incrementUpdatedNodes_MT(o, hidden, stats, phenoOnMT[thread_id][j], phenoOffMt[thread_id][j]);
-
+                    //this means phenocounter is writing its value down the col to too many elements
                     multiDiseaseDistributions[topo_sorted[pheno_counter++]][item] = stats.getScore(this.ALPHA_GRID[0],initial_beta, experimental_beta);
                     //assert start_pheno < end_pheno
                     //implicit dependence on phenoOnMT.length being right
@@ -1061,7 +1064,10 @@ public class ReducedBoqa {
             }
             pheno_counter = start_pheno;
             resetToConsistentStateForDiseaseDiff(o, stats, diffOn, diffOff, hidden);
+            //should require an incrmeent though?!
         }
+
+        System.out.println("i am finishing " + thread_id + " i have stats at " + stats);
 
 //        System.out.println("done my job" + thread_id);
 
@@ -1224,7 +1230,7 @@ public class ReducedBoqa {
         for (int x : phenoOffSlice)
         {
             stats.decrement(getNodeCase(x, hidden, o));
-        }
+        } ///should also incrment here??
     }
 
     //Resets the d-p combo into a "consistent" state, such that the NEXT diffON
@@ -1236,7 +1242,7 @@ public class ReducedBoqa {
         //undo all the changes we have done via phenoOn and phenoOff
         for (int i = 0; i < o.observations.length; i++)
         {
-            //it cn be
+            //unobserved must be false. this is OK since when we infer a node, we set it to True (observed) as well
             if (!o.observations[i])
             {
                 o.real_observations[i] = false;
@@ -1276,17 +1282,28 @@ public class ReducedBoqa {
     }
 
 
-    private void useDeltaToSetToCurrentDisease( boolean[] hidden,  int[] diffOn, int[] diffOff) {
+    private void useDeltaToSetToCurrentDisease( boolean[] hidden,  int[] diffOn, int[] diffOff,
+                                                ReducedConfiguration stats, Observations obs) {
 
 
             /* Change nodes states */ //why is hidden[0] always on, esp. when we set observed to be on only
         for (int i = 0; i < diffOn.length; i++) {
             hidden[diffOn[i]] = true; //each element in the diffOn array, will change
+            /*
+            //all the changes that will be made to i for the current context will already have been made
+            in particular, i cannot appear below in diffOff!
+             */
+            stats.increment(getNodeCase(diffOn[i], hidden, obs));
+
             //(regarde, diffon is fixed for the item)
         }
         for (int i = 0; i < diffOff.length; i++) {
             hidden[diffOff[i]] = false; //what we need to switch off to get to disease i
+            stats.increment(getNodeCase(diffOff[i], hidden, obs));
         }
+
+
+
     }
 
     private WeightedConfigurationList determineCasesForItem(int item, Observations o,
