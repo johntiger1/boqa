@@ -565,7 +565,7 @@ public class NewRefinedBOQATest {
         print_find_ancestors_of_trueDisease(boqa, tc);
         while (!discovered) {
 
-            if (steps == 5)
+            if (steps >0)
             {
                 for (int i  = 0; i < boqa.multiDiseaseDistributions.length; i++)
 
