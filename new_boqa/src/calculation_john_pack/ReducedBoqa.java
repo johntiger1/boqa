@@ -1048,9 +1048,9 @@ public class ReducedBoqa {
             //it's the solution to the modulus quesiton
             //thread_id*j + j
             //first thread does follow this, but all other threads: OFFSET + thread_id*j
-            if (item == 5000) {
-                item+=0;
-            }
+//            if (item == 5000) {
+//                item+=0;
+//            }
             for (int j =0; j<phenoOnMT[thread_id].length; j++) {
                 decrementStaleNodes_MT(o, hidden, stats, phenoOnMT[thread_id][j],phenoOffMt[thread_id][j]);
                 updateObservationsBasedOnPhenotype_MT(o, phenoOnMT[thread_id][j], phenoOffMt[thread_id][j]);
