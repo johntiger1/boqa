@@ -567,19 +567,31 @@ public class NewRefinedBOQATest {
 
             if (steps >1)
             {
+                start = System.nanoTime();
+                System.out.println("starting it now");
+                boolean flag = false;
                 for (int i  = 0; i < boqa.multiDiseaseDistributions.length-1; i++)
                 {
+                    if (i %1000 == 0){
+                        System.out.println("another 1000");
+                        System.out.println("Took" + (System.nanoTime()-start));
+                    }
                     for (int j = i+1; j < boqa.multiDiseaseDistributions.length; j++)
                     {
-                        if (Arrays.equals(boqa.multiDiseaseDistributions[i],
+                        if (!Arrays.equals(boqa.multiDiseaseDistributions[i],
                                 boqa.multiDiseaseDistributions[j]))
                         {
-                            System.out.println("These arrays are equal " + i + "  " + j);
+                            System.out.println("These arrays are not equal " + i + "  " + j);
+                            flag = true;
                         }
 
                     }
                 }
-
+                if (!flag)
+                {
+                    System.out.println("no arrays were not equal");
+                }
+                System.out.println("done multishot. Took" + (System.nanoTime()-start));
             }
             total = System.nanoTime();
             System.out.println("this is step" + steps);
