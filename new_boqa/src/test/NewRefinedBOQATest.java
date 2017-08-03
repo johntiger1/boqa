@@ -499,11 +499,11 @@ public class NewRefinedBOQATest {
         URL resource = ClassLoader.getSystemResource("hp.obo.gz");
         ClassLoader cl = ClassLoader.getSystemClassLoader();
 
-        URL[] urls = ((URLClassLoader)cl).getURLs();
-
-        for(URL url: urls){
-            System.out.println(url.getFile());
-        }
+//        URL[] urls = ((URLClassLoader)cl).getURLs();
+//
+//        for(URL url: urls){
+//            System.out.println(url.getFile());
+//        }
         if (resource == null) {
             throw new NullPointerException("Couldn't find it!");
         }
@@ -566,7 +566,7 @@ public class NewRefinedBOQATest {
         while (!discovered) {
 
 
-            
+
             total = System.nanoTime();
             System.out.println("this is step" + steps);
             System.out.println("These are the ones checked");

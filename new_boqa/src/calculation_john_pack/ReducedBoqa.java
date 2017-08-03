@@ -986,6 +986,8 @@ public class ReducedBoqa {
         //System.out.println("done looping through all the phenos. Took" + (System.nanoTime()-start));
     }
 
+    int curr_thread = 0;
+
     //move the for loop (other the indices) into here
     private void actuateDiseaseDifferentials_MT( int start_disease, int end_disease,
                                                  int start_pheno, int end_pheno,
@@ -1051,10 +1053,26 @@ public class ReducedBoqa {
             //first thread does follow this, but all other threads: OFFSET + thread_id*j
 
             for (int j =0; j<phenoOnMT[thread_id].length; j++) {
+
+                if (item == 23 && j ==2)
+                {
+                    System.out.println("Before decrement I am thread" + thread_id + "stats to be swcored is" + stats);
+                }
                 counter+= decrementStaleNodes_MT(o, hidden, stats, phenoOnMT[thread_id][j],phenoOffMt[thread_id][j]);
+                if (item == 23 && j ==2)
+                {
+                    System.out.println("After decrement I am thread" + thread_id + "stats to be swcored is" + stats);
+                }
                 updateObservationsBasedOnPhenotype_MT(o, phenoOnMT[thread_id][j], phenoOffMt[thread_id][j]);
+
                 incrementUpdatedNodes_MT(o, hidden, stats, phenoOnMT[thread_id][j], phenoOffMt[thread_id][j]);
                     //this means phenocounter is writing its value down the col to too many elements
+                if (item == 23 && j ==2)
+                {
+                    System.out.println("After increment" + thread_id + "stats to be swcored is" + stats);
+                }
+
+
                 multiDiseaseDistributions[topo_sorted[pheno_counter++]][item] = stats.getScore(this.ALPHA_GRID[0],initial_beta, experimental_beta);
 
                 //assert start_pheno < end_pheno
