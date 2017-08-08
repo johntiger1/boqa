@@ -1055,10 +1055,10 @@ public class ReducedBoqa {
 
             for (int j =0; j<phenoOnMT[thread_id].length; j++) {
 
-                if (item==0)
+                if (item==0 && j==0){
                 System.out.println("I am thread" + thread_id + " on iteration " + iteration +
                         "my pON[0] is"
-                + Arrays.toString(phenoOnMT[thread_id][0]));
+                + Arrays.toString(phenoOnMT[thread_id][0]));}
 
                 if (item == 23 && j ==2)
                 {
@@ -1281,6 +1281,7 @@ public class ReducedBoqa {
 
         }
 
+        //try doing it from the real obs that were reset
         for (int element : diffOn) {
             stats.decrement(getNodeCase(element, hidden, o));
         }
