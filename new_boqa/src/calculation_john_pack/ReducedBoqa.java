@@ -1060,12 +1060,14 @@ public class ReducedBoqa {
                         "my pON[0] is"
                 + Arrays.toString(phenoOnMT[thread_id][0]));}
 
-                if (item == 23 && j ==2)
+                int freeze_disease = 230;
+                int freeze_pheno = 203;
+                if (item == freeze_disease && j == freeze_pheno)
                 {
                     System.out.println("Before decrement I am thread" + thread_id + "stats to be swcored is" + stats);
                 }
                 counter+= decrementStaleNodes_MT(o, hidden, stats, phenoOnMT[thread_id][j],phenoOffMt[thread_id][j]);
-                if (item == 23 && j ==2)
+                if (item == freeze_disease && j == freeze_pheno)
                 {
                     System.out.println("After decrement I am thread" + thread_id + "stats to be swcored is" + stats);
                 }
@@ -1073,7 +1075,7 @@ public class ReducedBoqa {
 
                 incrementUpdatedNodes_MT(o, hidden, stats, phenoOnMT[thread_id][j], phenoOffMt[thread_id][j]);
                     //this means phenocounter is writing its value down the col to too many elements
-                if (item == 23 && j ==2)
+                if (item == freeze_disease && j == freeze_pheno)
                 {
                     System.out.println("After increment" + thread_id + "stats to be swcored is" + stats);
                 }
@@ -1269,24 +1271,32 @@ public class ReducedBoqa {
     private void resetToConsistentStateForDiseaseDiff(Observations o, ReducedConfiguration stats, int[] diffOn, int[] diffOff
     , boolean []hidden) {
 
-
+        List <Integer> temp = new ArrayList<>();
         //undo all the changes we have done via phenoOn and phenoOff
         for (int i = 0; i < o.observations.length; i++)
         {
             //unobserved must be false. this is OK since when we infer a node, we set it to True (observed) as well
-            if (!o.observations[i])
+            if (!o.observations[i] && o.real_observations[i])
             {
                 o.real_observations[i] = false;
+                temp.add(i);
             }
 
         }
-
+        //this is problematic
+        //it MIGHT be that this is : "resetting it to the same disease each time"
+        //else this is a semi-convoluted way of resetting
         //try doing it from the real obs that were reset
-        for (int element : diffOn) {
-            stats.decrement(getNodeCase(element, hidden, o));
-        }
-        for (int element : diffOff) {
-            stats.decrement(getNodeCase(element, hidden, o)); //lookup the hidden and observed too
+//        for (int element : diffOn) {
+//            stats.decrement(getNodeCase(element, hidden, o));
+//        }
+//        for (int element : diffOff) {
+//            stats.decrement(getNodeCase(element, hidden, o)); //lookup the hidden and observed too
+//        }
+
+        for (int x : temp)
+        {
+            stats.decrement(getNodeCase(x, hidden, o));
         }
 
         //TODO it would make more sense to do the decrements here (since it reoresents things that have changed)
