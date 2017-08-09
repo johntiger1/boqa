@@ -1050,7 +1050,7 @@ public class ReducedBoqa {
 
         for (int item = start_disease; item < end_disease; item++)
         {
-            if (item % 1000 == 0)
+            if (item % 10 == 0)
             {
                 System.out.println("done +" + item);
             }
