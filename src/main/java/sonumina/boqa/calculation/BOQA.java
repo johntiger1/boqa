@@ -763,7 +763,7 @@ public class BOQA
             //J: we will change them back (update) later!
             //presumably this is JUST like items2terms, except it takes into account some existing frequency stuff
 
-            for (int element : diffOn) {
+            for (int element : diffOn) { //on the 1st iteration: wont this literally decrement everything tho?
                 stats.decrement(getNodeCase(element, hidden, observed));
                 //these 3 uniquely can identify a state
             }

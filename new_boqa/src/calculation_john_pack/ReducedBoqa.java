@@ -1036,7 +1036,8 @@ public class ReducedBoqa {
         //        System.out.println("predifferences" + (end_pheno-start_pheno) );
 //        System.out.printf("Going from this disease %d to this: %d", start_disease, end_disease);
 //        System.out.printf("Going from this pheno %d to this: %d", start_pheno, end_pheno);
-        int counter = 0;
+        int dec_counter = 0;
+        int inc_counter = 0;
         for (int item = start_disease; item < end_disease; item++)
         {
 
@@ -1066,14 +1067,14 @@ public class ReducedBoqa {
                 {
                     System.out.println("Before decrement I am thread" + thread_id + "stats to be swcored is" + stats);
                 }
-                counter+= decrementStaleNodes_MT(o, hidden, stats, phenoOnMT[thread_id][j],phenoOffMt[thread_id][j]);
+                dec_counter+= decrementStaleNodes_MT(o, hidden, stats, phenoOnMT[thread_id][j],phenoOffMt[thread_id][j]);
                 if (item == freeze_disease && j == freeze_pheno)
                 {
                     System.out.println("After decrement I am thread" + thread_id + "stats to be swcored is" + stats);
                 }
                 updateObservationsBasedOnPhenotype_MT(o, phenoOnMT[thread_id][j], phenoOffMt[thread_id][j]);
 
-                incrementUpdatedNodes_MT(o, hidden, stats, phenoOnMT[thread_id][j], phenoOffMt[thread_id][j]);
+                inc_counter +=incrementUpdatedNodes_MT(o, hidden, stats, phenoOnMT[thread_id][j], phenoOffMt[thread_id][j]);
                     //this means phenocounter is writing its value down the col to too many elements
                 if (item == freeze_disease && j == freeze_pheno)
                 {
@@ -1088,11 +1089,15 @@ public class ReducedBoqa {
 
 
             }
+
+
             pheno_counter = start_pheno;
             resetToConsistentStateForDiseaseDiff(o, stats, diffOn, diffOff, hidden);
             //should require an incrmeent though?!
         }
-
+        System.out.println("i am finishing " + thread_id + "my inc is " + inc_counter +
+                "my decs is " + dec_counter
+        );
 //        System.out.println("i am finishing " + thread_id + " i have stats at " + stats
 //        + "also this is my decs" + counter);
 
@@ -1138,18 +1143,21 @@ public class ReducedBoqa {
 
 
     }
-    private void incrementUpdatedNodes_MT(Observations o, boolean[] hidden, ReducedConfiguration stats,
+    private int incrementUpdatedNodes_MT(Observations o, boolean[] hidden, ReducedConfiguration stats,
                                        int[]phenoOnSlice,int[]phenoOffSlice) {
-
+        int counter = 0;
         for (int x : phenoOnSlice)
         {
             stats.increment(getNodeCase(x, hidden, o)); //decrements an arbitrary one of the same class!
+            counter++;
         }
 
         for (int x : phenoOffSlice)
         {
             stats.increment(getNodeCase(x, hidden, o)); //decrements an arbitrary one of the same class!
+            counter++;
         }
+        return counter;
     }
 
     private void incrementUpdatedNodes(Observations o, boolean[] hidden, ReducedConfiguration stats, int j) {
@@ -1287,12 +1295,12 @@ public class ReducedBoqa {
         //it MIGHT be that this is : "resetting it to the same disease each time"
         //else this is a semi-convoluted way of resetting
         //try doing it from the real obs that were reset
-//        for (int element : diffOn) {
-//            stats.decrement(getNodeCase(element, hidden, o));
-//        }
-//        for (int element : diffOff) {
-//            stats.decrement(getNodeCase(element, hidden, o)); //lookup the hidden and observed too
-//        }
+        for (int element : diffOn) {
+            stats.decrement(getNodeCase(element, hidden, o));
+        }
+        for (int element : diffOff) {
+            stats.decrement(getNodeCase(element, hidden, o)); //lookup the hidden and observed too
+        }
 
         for (int x : temp)
         {
@@ -1772,7 +1780,7 @@ public class ReducedBoqa {
             es.shutdown();
 
             try {
-                es.awaitTermination(10, TimeUnit.SECONDS);
+                es.awaitTermination(Long.MAX_VALUE, TimeUnit.SECONDS);
 
 //                for (int a = 0; a < all_completed.length; a++)
 //                {

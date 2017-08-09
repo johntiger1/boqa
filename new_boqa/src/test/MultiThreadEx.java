@@ -84,6 +84,13 @@ public class MultiThreadEx {
         }
     }
 
+    public static void otherCall()
+    {
+
+        int sa = 23+312;
+        sa *=2;
+    }
+
     public static void main(String[] args) {
 
         final int NUM_THREADS = 8;
@@ -101,12 +108,25 @@ public class MultiThreadEx {
 
             public void run() {
                 System.out.printf("sda,");
+                otherCall();
+                longRunningCall();
+                System.out.printf("I'm done" + id);
+
+            }
+
+            public void longRunningCall()
+            {
+                try {
+                    TimeUnit.SECONDS.sleep(10);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
             }
 
         }
         ExecutorService executorService = Executors.newFixedThreadPool(NUM_THREADS);
         for (int i = 0; i < 8; i++) {
-            executorService.execute(new abc(i) //this is still not passing a class in
+            executorService.execute(new abc(i+1) //this is still not passing a class in
 
 
             );
