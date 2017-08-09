@@ -987,6 +987,13 @@ public class ReducedBoqa {
         //System.out.println("done looping through all the phenos. Took" + (System.nanoTime()-start));
     }
 
+    public boolean sumToCorrect(ReducedConfiguration rc)
+    {
+
+
+        return true;
+    }
+
     int curr_thread = 0;
 
     //move the for loop (other the indices) into here
@@ -1085,6 +1092,7 @@ public class ReducedBoqa {
                 }
 
 
+//                assert(stats.getTotalNodes()==this.multiDiseaseDistributions.length);
                 multiDiseaseDistributions[topo_sorted[pheno_counter++]][item] = stats.getScore(this.ALPHA_GRID[0],initial_beta, experimental_beta);
 
                 //assert start_pheno < end_pheno
@@ -1749,7 +1757,7 @@ public class ReducedBoqa {
                                     int pheno_end, boolean[]hidden, ReducedConfiguration rc)
                 {
                     this.id = id;
-                    this.o=o;
+                    this.o=new Observations(o);
                     this.start_item=start_item;
                     this.end_item=end_item;
                     this.pheno_start=pheno_start;
@@ -1761,7 +1769,7 @@ public class ReducedBoqa {
                 public void run()
                 {
                     actuateDiseaseDifferentials_MT(start_item,end_item,pheno_start, pheno_end,o, takeFrequenciesIntoAccount,
-                            numThreads > 1 ? this.hidden : previousHidden, numThreads > 1 ? this.rc: previousStat, id);
+                             this.hidden ,  this.rc, id);
 
 
 

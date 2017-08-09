@@ -62,6 +62,17 @@ final public class ReducedConfiguration implements Cloneable
         return this.stats[c.ordinal()]; //what if we used an array?!
     }
 
+    public int getTotalNodes()
+    {
+        int total = 0;
+        for (int count: stats)
+        {
+            total +=count;
+        }
+
+        return total;
+    }
+
     /**
      * Returns the log score of the summarized ReducedConfiguration .
      * J: This is the famous 4 term expoenntiation, multiplication equation
