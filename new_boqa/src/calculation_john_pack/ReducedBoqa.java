@@ -1036,15 +1036,18 @@ public class ReducedBoqa {
         //        System.out.println("predifferences" + (end_pheno-start_pheno) );
 //        System.out.printf("Going from this disease %d to this: %d", start_disease, end_disease);
 //        System.out.printf("Going from this pheno %d to this: %d", start_pheno, end_pheno);
-        int dec_counter = 0;
-        int inc_counter = 0;
+        long dec_counter = 0;
+        long inc_counter = 0;
+        int outer_dec_counter = 0;
+        int outer_inc_counter = 0;
+
         for (int item = start_disease; item < end_disease; item++)
         {
 
             diffOn = this.diffOnTerms[item];
             diffOff = this.diffOffTerms[item];
 
-            useDeltaToSetToCurrentDisease(hidden, diffOn, diffOff, stats, o);
+            outer_inc_counter+=useDeltaToSetToCurrentDisease(hidden, diffOn, diffOff, stats, o);
             long start = System.nanoTime();
 //            System.out.println("differences" + (end_pheno-start_pheno) );
 //            System.out.println("length" + phenoOnMT[thread_id].length);
@@ -1092,11 +1095,12 @@ public class ReducedBoqa {
 
 
             pheno_counter = start_pheno;
-            resetToConsistentStateForDiseaseDiff(o, stats, diffOn, diffOff, hidden);
+            outer_dec_counter+=resetToConsistentStateForDiseaseDiff(o, stats, diffOn, diffOff, hidden);
             //should require an incrmeent though?!
         }
         System.out.println("i am finishing " + thread_id + "my inc is " + inc_counter +
-                "my decs is " + dec_counter
+                "my decs is " + dec_counter + ". my outer incs " + outer_inc_counter +
+                " my outer decs " + outer_dec_counter
         );
 //        System.out.println("i am finishing " + thread_id + " i have stats at " + stats
 //        + "also this is my decs" + counter);
@@ -1276,9 +1280,10 @@ public class ReducedBoqa {
 
     //Resets the d-p combo into a "consistent" state, such that the NEXT diffON
     //can be applied.
-    private void resetToConsistentStateForDiseaseDiff(Observations o, ReducedConfiguration stats, int[] diffOn, int[] diffOff
+    private int resetToConsistentStateForDiseaseDiff(Observations o, ReducedConfiguration stats, int[] diffOn, int[] diffOff
     , boolean []hidden) {
 
+        int counter = 0;
         List <Integer> temp = new ArrayList<>();
         //undo all the changes we have done via phenoOn and phenoOff
         for (int i = 0; i < o.observations.length; i++)
@@ -1297,16 +1302,19 @@ public class ReducedBoqa {
         //try doing it from the real obs that were reset
         for (int element : diffOn) {
             stats.decrement(getNodeCase(element, hidden, o));
+            counter++;
         }
         for (int element : diffOff) {
             stats.decrement(getNodeCase(element, hidden, o)); //lookup the hidden and observed too
+            counter++;
         }
 
-        for (int x : temp)
-        {
-            stats.decrement(getNodeCase(x, hidden, o));
-        }
-
+//        for (int x : temp)
+//        {
+//            stats.decrement(getNodeCase(x, hidden, o));
+//            counter++;
+//        }
+        return counter;
         //TODO it would make more sense to do the decrements here (since it reoresents things that have changed)
 
 
@@ -1332,10 +1340,10 @@ public class ReducedBoqa {
     }
 
 
-    private void useDeltaToSetToCurrentDisease( boolean[] hidden,  int[] diffOn, int[] diffOff,
+    private int useDeltaToSetToCurrentDisease( boolean[] hidden,  int[] diffOn, int[] diffOff,
                                                 ReducedConfiguration stats, Observations obs) {
 
-
+        int counter = 0;
             /* Change nodes states */ //why is hidden[0] always on, esp. when we set observed to be on only
         for (int i = 0; i < diffOn.length; i++) {
             hidden[diffOn[i]] = true; //each element in the diffOn array, will change
@@ -1344,14 +1352,15 @@ public class ReducedBoqa {
             in particular, i cannot appear below in diffOff!
              */
             stats.increment(getNodeCase(diffOn[i], hidden, obs));
-
+            counter++;
             //(regarde, diffon is fixed for the item)
         }
         for (int i = 0; i < diffOff.length; i++) {
             hidden[diffOff[i]] = false; //what we need to switch off to get to disease i
             stats.increment(getNodeCase(diffOff[i], hidden, obs));
+            counter++;
         }
-
+        return counter;
 
 
     }
