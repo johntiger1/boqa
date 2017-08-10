@@ -995,6 +995,8 @@ public class ReducedBoqa {
     }
 
     int curr_thread = 0;
+    List <Double> arry_list;
+    List <Double> arry_list2;
 
     //move the for loop (other the indices) into here
     private void actuateDiseaseDifferentials_MT( int start_disease, int end_disease,
@@ -1047,13 +1049,14 @@ public class ReducedBoqa {
         long inc_counter = 0;
         int outer_dec_counter = 0;
         int outer_inc_counter = 0;
-
+        arry_list = new ArrayList<>();
+        arry_list2 = new ArrayList<>();
         for (int item = start_disease; item < end_disease; item++)
         {
-            if (item % 10 == 0)
-            {
-                System.out.println("done +" + item);
-            }
+//            if (item % 10 == 0)
+//            {
+//                System.out.println("done +" + item);
+//            }
             diffOn = this.diffOnTerms[item];
             diffOff = this.diffOffTerms[item];
 
@@ -1098,9 +1101,12 @@ public class ReducedBoqa {
 //                assert(stats.getTotalNodes()==this.multiDiseaseDistributions.length);
                 multiDiseaseDistributions[topo_sorted[pheno_counter++]][item] = stats.getScore(this.ALPHA_GRID[0],initial_beta, experimental_beta);
 
+                if (pheno_counter==3) // phenotype with graph index = 3
+                arry_list.add(stats.getScore(this.ALPHA_GRID[0],initial_beta, experimental_beta));
                 //assert start_pheno < end_pheno
                     //implicit dependence on phenoOnMT.length being right
-
+                if (pheno_counter==10000) // phenotype with graph index = 3
+                    arry_list2.add(stats.getScore(this.ALPHA_GRID[0],initial_beta, experimental_beta));
 
             }
 
