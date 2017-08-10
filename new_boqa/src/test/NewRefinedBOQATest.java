@@ -1,6 +1,7 @@
 package test;
 
 import com.sun.javafx.image.IntPixelGetter;
+import extra.IndexToTermPrinter;
 import ontologizer.association.Association;
 import ontologizer.association.AssociationContainer;
 import ontologizer.association.Gene2Associations;
@@ -563,6 +564,8 @@ public class NewRefinedBOQATest {
         disease_frequencies = res.marginals;
         long total = System.nanoTime();
         print_find_ancestors_of_trueDisease(boqa, tc);
+
+//        IndexToTermPrinter.printMapping(slim.vertex2Index);
         while (!discovered) {
             ReducedBoqa.iteration++;
 

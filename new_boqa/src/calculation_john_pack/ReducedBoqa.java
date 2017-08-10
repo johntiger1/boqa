@@ -323,7 +323,7 @@ public class ReducedBoqa {
             //when they are NOT inherited, what happens? a node CANNOT be made into a false
             //by another node--hence it IS conclusively false positve/negative
             //observed just means whether it was actually looked at or not
-            if (o.observations[node] && o.real_observations[node]) {
+            if ( o.real_observations[node]) {
                 return ReducedConfiguration.NodeCase.TRUE_OBSERVED_POSITIVE;
                 //ensure this is based on the correct beta being used (when being scored)
                 //however, it depends. Say we go with annotation propagation. Then, there is a
@@ -1065,17 +1065,55 @@ public class ReducedBoqa {
 
             outer_inc_counter+=useDeltaToSetToCurrentDisease(hidden, diffOn, diffOff, stats, o);
             for (int j =0; j<phenoOnMT[thread_id].length; j++) {
+
+
+                if (item==0 && j==0){
+                    System.out.println("I am thread" + thread_id + " on iteration " + iteration +
+                            "my pON[0] is"
+                            + Arrays.toString(phenoOnMT[thread_id][0]));}
+
+                int freeze_disease = 230;
+                int freeze_pheno = 203;
+                if (item == freeze_disease && j == freeze_pheno)
+                {
+                    System.out.println("Before decrement I am thread" + thread_id + "stats to be swcored is" + stats);
+                }
                 dec_counter+= decrementStaleNodes_MT(o, hidden, stats, phenoOnMT[thread_id][j],phenoOffMt[thread_id][j]);
+                if (item == freeze_disease && j == freeze_pheno)
+                {
+                    System.out.println("After decrement I am thread" + thread_id + "stats to be swcored is" + stats);
+                }
+                updateObservationsBasedOnPhenotype_MT(o, phenoOnMT[thread_id][j], phenoOffMt[thread_id][j]);
 
-                updateObservationsBasedOnPhenotype_MT(o, phenoOnMT[thread_id][j],
-                        phenoOffMt[thread_id][j]);
+                inc_counter +=incrementUpdatedNodes_MT(o, hidden, stats, phenoOnMT[thread_id][j], phenoOffMt[thread_id][j]);
+                //this means phenocounter is writing its value down the col to too many elements
+                if (item == freeze_disease && j == freeze_pheno)
+                {
+                    System.out.println("After increment" + thread_id + "stats to be swcored is" + stats);
+                }
 
-                inc_counter +=incrementUpdatedNodes_MT(o, hidden, stats,
-                        phenoOnMT[thread_id][j], phenoOffMt[thread_id][j]);
+
+//                assert(stats.getTotalNodes()==this.multiDiseaseDistributions.length);
                 double score = stats.getScore(this.ALPHA_GRID[0], initial_beta, experimental_beta);
                 multiDiseaseDistributions[topo_sorted[pheno_counter++]][item] = score;
 
+//                dec_counter+= decrementStaleNodes_MT(o, hidden, stats, phenoOnMT[thread_id][j],phenoOffMt[thread_id][j]);
+//
+//                updateObservationsBasedOnPhenotype_MT(o, phenoOnMT[thread_id][j],
+//                        phenoOffMt[thread_id][j]);
+//
+//                inc_counter +=incrementUpdatedNodes_MT(o, hidden, stats,
+//                        phenoOnMT[thread_id][j], phenoOffMt[thread_id][j]);
+//                double score = stats.getScore(this.ALPHA_GRID[0], initial_beta, experimental_beta);
+//                multiDiseaseDistributions[topo_sorted[pheno_counter++]][item] = score;
+//                if (item == 0)
+//                    column_list.add(score);
             }
+
+//            if (item==0)
+//            {
+//                System.out.println(allSameValues(column_list));
+//            }
 
 
 
@@ -1096,7 +1134,18 @@ public class ReducedBoqa {
 
 
     }
+    public static boolean allSameValues(List<Double> arr){
+        Set<Double> foundNumbers = new HashSet<>();
 
+        foundNumbers.add(arr.get(0));
+        for (double num : arr) {
+            if(!foundNumbers.contains(num)){
+                return false;
+            }
+            foundNumbers.add(num);
+        }
+        return true;
+    }
     int [] topo_sorted;
     /*
       Performs an after-the-fact dfs of a "graph"
@@ -1269,6 +1318,7 @@ public class ReducedBoqa {
     private int resetToConsistentStateForDiseaseDiff(Observations o, ReducedConfiguration stats, int[] diffOn, int[] diffOff
     , boolean []hidden) {
 
+        //compute the difference!
         int counter = 0;
         List <Integer> temp = new ArrayList<>();
         //undo all the changes we have done via phenoOn and phenoOff
@@ -1282,24 +1332,34 @@ public class ReducedBoqa {
             }
 
         }
+
+        for (int x: temp)
+        {
+            stats.decrement(getNodeCase(x, hidden, o));
+        }
+
+        for (int x: temp)
+        {
+            o.real_observations[x] = false;
+        }
         //this is problematic
         //it MIGHT be that this is : "resetting it to the same disease each time"
         //else this is a semi-convoluted way of resetting
         //try doing it from the real obs that were reset
-        for (int element : diffOn) {
-            stats.decrement(getNodeCase(element, hidden, o));
-            counter++;
-        }
-        for (int element : diffOff) {
-            stats.decrement(getNodeCase(element, hidden, o)); //lookup the hidden and observed too
-            counter++;
-        }
-
-//        for (int x : temp)
-//        {
-//            stats.decrement(getNodeCase(x, hidden, o));
+//        for (int element : diffOn) {
+//            stats.decrement(getNodeCase(element, hidden, o));
 //            counter++;
 //        }
+//        for (int element : diffOff) {
+//            stats.decrement(getNodeCase(element, hidden, o)); //lookup the hidden and observed too
+//            counter++;
+//        }
+
+        for (int x : temp)
+        {
+            stats.increment(getNodeCase(x, hidden, o));
+//            counter++;
+        }
         return counter;
         //TODO it would make more sense to do the decrements here (since it reoresents things that have changed)
 
@@ -1329,6 +1389,16 @@ public class ReducedBoqa {
     private int useDeltaToSetToCurrentDisease( boolean[] hidden,  int[] diffOn, int[] diffOff,
                                                 ReducedConfiguration stats, Observations obs) {
 
+        for (int elt: diffOn)
+        {
+            stats.decrement(getNodeCase(elt, hidden, obs));
+
+        }
+
+        for (int elt: diffOff)
+        {
+            stats.decrement(getNodeCase(elt, hidden, obs));
+        }
         int counter = 0;
             /* Change nodes states */ //why is hidden[0] always on, esp. when we set observed to be on only
         for (int i = 0; i < diffOn.length; i++) {
