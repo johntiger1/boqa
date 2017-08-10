@@ -339,7 +339,8 @@ public class ReducedBoqa {
             } else {
 
                 //really, this should just be false
-                if (!o.observations[node])
+                //IMP: note that the case observations=false and real_obs = true cannot arise!
+                if (o.observations[node])
                 {
                     return ReducedConfiguration.NodeCase.FALSE_OBSERVED_NEGATIVE;
 
@@ -1063,55 +1064,16 @@ public class ReducedBoqa {
             diffOff = this.diffOffTerms[item];
 
             outer_inc_counter+=useDeltaToSetToCurrentDisease(hidden, diffOn, diffOff, stats, o);
-            long start = System.nanoTime();
-//            System.out.println("differences" + (end_pheno-start_pheno) );
-//            System.out.println("length" + phenoOnMT[thread_id].length);
-//            assert end_pheno-start_pheno == phenoOnMT[thread_id].length;
-            //for some, j should be multiplied by thread_id+1 *j
-            //it's the solution to the modulus quesiton
-            //thread_id*j + j
-            //first thread does follow this, but all other threads: OFFSET + thread_id*j
-
             for (int j =0; j<phenoOnMT[thread_id].length; j++) {
-
-                if (item==0 && j==0){
-                System.out.println("I am thread" + thread_id + " on iteration " + iteration +
-                        "my pON[0] is"
-                + Arrays.toString(phenoOnMT[thread_id][0]));}
-
-                int freeze_disease = 230;
-                int freeze_pheno = 203;
-                if (item == freeze_disease && j == freeze_pheno)
-                {
-                    System.out.println("Before decrement I am thread" + thread_id + "stats to be swcored is" + stats);
-                }
                 dec_counter+= decrementStaleNodes_MT(o, hidden, stats, phenoOnMT[thread_id][j],phenoOffMt[thread_id][j]);
-                if (item == freeze_disease && j == freeze_pheno)
-                {
-                    System.out.println("After decrement I am thread" + thread_id + "stats to be swcored is" + stats);
-                }
-                updateObservationsBasedOnPhenotype_MT(o, phenoOnMT[thread_id][j], phenoOffMt[thread_id][j]);
 
-                inc_counter +=incrementUpdatedNodes_MT(o, hidden, stats, phenoOnMT[thread_id][j], phenoOffMt[thread_id][j]);
-                    //this means phenocounter is writing its value down the col to too many elements
-                if (item == freeze_disease && j == freeze_pheno)
-                {
-                    System.out.println("After increment" + thread_id + "stats to be swcored is" + stats);
-                }
+                updateObservationsBasedOnPhenotype_MT(o, phenoOnMT[thread_id][j],
+                        phenoOffMt[thread_id][j]);
 
-
-//                assert(stats.getTotalNodes()==this.multiDiseaseDistributions.length);
+                inc_counter +=incrementUpdatedNodes_MT(o, hidden, stats,
+                        phenoOnMT[thread_id][j], phenoOffMt[thread_id][j]);
                 double score = stats.getScore(this.ALPHA_GRID[0], initial_beta, experimental_beta);
                 multiDiseaseDistributions[topo_sorted[pheno_counter++]][item] = score;
-
-                if (pheno_counter==3) // phenotype with graph index = 3
-                arry_list.add(score);
-                //assert start_pheno < end_pheno
-                    //implicit dependence on phenoOnMT.length being right
-                if (pheno_counter==10000) // phenotype with graph index = 3
-                    arry_list2.add(score);
-                if (item == 0)
-                    column_list.add(score);
 
             }
 
