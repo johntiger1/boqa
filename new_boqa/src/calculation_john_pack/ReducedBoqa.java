@@ -1327,7 +1327,7 @@ public class ReducedBoqa {
             //unobserved must be false. this is OK since when we infer a node, we set it to True (observed) as well
             if (!o.observations[i] && o.real_observations[i])
             {
-                o.real_observations[i] = false;
+                
                 temp.add(i);
             }
 
