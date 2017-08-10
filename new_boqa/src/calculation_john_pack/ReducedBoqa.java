@@ -1087,14 +1087,14 @@ public class ReducedBoqa {
 //                        phenoOnMT[thread_id][j], phenoOffMt[thread_id][j]);
 //                double score = stats.getScore(this.ALPHA_GRID[0], initial_beta, experimental_beta);
 //                multiDiseaseDistributions[topo_sorted[pheno_counter++]][item] = score;
-                if (item == 0)
-                    column_list.add(score);
+//                if (item == 0)
+//                    column_list.add(score);
             }
 
-            if (item==0)
-            {
-                allDifferentPrintMatches(column_list);
-            }
+//            if (item==0)
+//            {
+//                allDifferentPrintMatches(column_list);
+//            }
 
 
 
@@ -1103,10 +1103,10 @@ public class ReducedBoqa {
             outer_dec_counter+=resetToConsistentStateForDiseaseDiff(o, stats, diffOn, diffOff, hidden);
             //should require an incrmeent though?!
         }
-        System.out.println("i am finishing " + thread_id + "my inc is " + inc_counter +
-                "my decs is " + dec_counter + ". my outer incs " + outer_inc_counter +
-                " my outer decs " + outer_dec_counter
-        );
+//        System.out.println("i am finishing " + thread_id + "my inc is " + inc_counter +
+//                "my decs is " + dec_counter + ". my outer incs " + outer_inc_counter +
+//                " my outer decs " + outer_dec_counter
+//        );
 //        System.out.println("i am finishing " + thread_id + " i have stats at " + stats
 //        + "also this is my decs" + counter);
 

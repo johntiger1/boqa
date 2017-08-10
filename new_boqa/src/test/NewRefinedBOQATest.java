@@ -25,6 +25,23 @@ import java.util.*;
  * Created by johnp on 2017-06-29.
  */
 public class NewRefinedBOQATest {
+
+    public int  getFreeObs( ReducedBoqa rb) {
+        Term t;
+        int ind = 0;
+        Random r = new Random (212);
+        for (TermID tt : trueDiseaseMapping.getAssociations()) {
+
+            t = rb.getOntology().getTerm(tt);
+            //check if the term is a descendant of the input index term
+            //Because you are your own ancestor, we do not need to deal with the self case specially.
+            ind = rb.getOntology().getSlimGraphView().getVertexIndex(t);
+            if (r.nextDouble()>0.5)
+                break;
+        }
+        return ind;
+    }
+
     public boolean getObservation(int index, ReducedBoqa rb) {
         ; //as long as only Terns are vertices, we will be fine.
 
@@ -241,7 +258,7 @@ public class NewRefinedBOQATest {
             //assert rb.o.observations.length =phenoDiseaseDist.length
             //We cannot return pick a phenotype twice
             if (!rb.o.observations[i]) {
-                if (best_phenotype_value < (temp = phenotype_frequencies[i] * scoringFunctionOnArray(phenoDiseaseDist[i]))) {
+                if (best_phenotype_value > (temp = phenotype_frequencies[i] * scoringFunctionOnArray(phenoDiseaseDist[i]))) {
                     best_phenotype_index = i;
                     best_phenotype_value = temp;
                 }
@@ -542,6 +559,7 @@ public class NewRefinedBOQATest {
         int numberOfTerms = ontology.getNumberOfTerms();
         o.observations = new boolean[numberOfTerms];
         o.real_observations = new boolean[numberOfTerms];
+
         //Run BOQA once to get the initial guesses.
         ArrayList<String> initial_guesses = null;
 
@@ -564,7 +582,9 @@ public class NewRefinedBOQATest {
         disease_frequencies = res.marginals;
         long total = System.nanoTime();
         print_find_ancestors_of_trueDisease(boqa, tc);
-
+        int free = getFreeObs(boqa);
+        o.observations[free] = true;
+        o.real_observations[free] = true;
 //        IndexToTermPrinter.printMapping(slim.vertex2Index);
         while (!discovered) {
             ReducedBoqa.iteration++;
@@ -586,7 +606,7 @@ public class NewRefinedBOQATest {
 
             System.out.println("starting multishot");
             start = System.nanoTime();
-            boqa.assignMultiShotMarginals(o,false,1);
+            boqa.assignMultiShotMarginals(o,false,8);
 
             //now that we have the matrix of probabiltiies, we can look up the pheno-freqs and weight it accordingly
             //this process will probably take some time as well (+20s)
