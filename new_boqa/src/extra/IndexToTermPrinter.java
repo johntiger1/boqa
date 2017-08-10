@@ -10,10 +10,16 @@ import java.util.Map;
 
 public class IndexToTermPrinter {
 
-
-    public IndexToTermPrinter(Object []vertices)
+    PrintWriter writer;
+    public IndexToTermPrinter(String filename)
     {
-
+        try {
+            writer = new PrintWriter(filename+ ".txt", "UTF-8");
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
     }
 
     public static void printMapping(HashMap<Term, Integer> vertices)
@@ -37,5 +43,15 @@ public class IndexToTermPrinter {
         }
         writer.close();
 
+    }
+
+    public void printStringToFile(String s)
+    {
+        writer.print(s);
+    }
+
+    public void close()
+    {
+        writer.close();
     }
 }

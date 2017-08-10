@@ -1,5 +1,6 @@
 package calculation_john_pack;
 
+import extra.IndexToTermPrinter;
 import ontologizer.association.AssociationContainer;
 import ontologizer.enumeration.GOTermEnumerator;
 import ontologizer.enumeration.ItemEnumerator;
@@ -355,7 +356,7 @@ public class ReducedBoqa {
             //Note this will cause errors!: !o.real_observations.get(node)
             /* Term is truly off */
 
-            if (!o.observations[node] || !o.real_observations[node]) {
+            if (!o.real_observations[node]) {
 
                 return ReducedConfiguration.NodeCase.TRUE_NEGATIVE;
             } else {
@@ -1067,33 +1068,13 @@ public class ReducedBoqa {
             for (int j =0; j<phenoOnMT[thread_id].length; j++) {
 
 
-                if (item==0 && j==0){
-                    System.out.println("I am thread" + thread_id + " on iteration " + iteration +
-                            "my pON[0] is"
-                            + Arrays.toString(phenoOnMT[thread_id][0]));}
-
-                int freeze_disease = 230;
-                int freeze_pheno = 203;
-                if (item == freeze_disease && j == freeze_pheno)
-                {
-                    System.out.println("Before decrement I am thread" + thread_id + "stats to be swcored is" + stats);
-                }
                 dec_counter+= decrementStaleNodes_MT(o, hidden, stats, phenoOnMT[thread_id][j],phenoOffMt[thread_id][j]);
-                if (item == freeze_disease && j == freeze_pheno)
-                {
-                    System.out.println("After decrement I am thread" + thread_id + "stats to be swcored is" + stats);
-                }
-                updateObservationsBasedOnPhenotype_MT(o, phenoOnMT[thread_id][j], phenoOffMt[thread_id][j]);
 
-                inc_counter +=incrementUpdatedNodes_MT(o, hidden, stats, phenoOnMT[thread_id][j], phenoOffMt[thread_id][j]);
-                //this means phenocounter is writing its value down the col to too many elements
-                if (item == freeze_disease && j == freeze_pheno)
-                {
-                    System.out.println("After increment" + thread_id + "stats to be swcored is" + stats);
-                }
+                updateObservationsBasedOnPhenotype_MT(o, phenoOnMT[thread_id][j],
+                        phenoOffMt[thread_id][j]);
 
-
-//                assert(stats.getTotalNodes()==this.multiDiseaseDistributions.length);
+                inc_counter +=incrementUpdatedNodes_MT(o, hidden, stats,
+                        phenoOnMT[thread_id][j], phenoOffMt[thread_id][j]);
                 double score = stats.getScore(this.ALPHA_GRID[0], initial_beta, experimental_beta);
                 multiDiseaseDistributions[topo_sorted[pheno_counter++]][item] = score;
 
@@ -1106,14 +1087,14 @@ public class ReducedBoqa {
 //                        phenoOnMT[thread_id][j], phenoOffMt[thread_id][j]);
 //                double score = stats.getScore(this.ALPHA_GRID[0], initial_beta, experimental_beta);
 //                multiDiseaseDistributions[topo_sorted[pheno_counter++]][item] = score;
-//                if (item == 0)
-//                    column_list.add(score);
+                if (item == 0)
+                    column_list.add(score);
             }
 
-//            if (item==0)
-//            {
-//                System.out.println(allSameValues(column_list));
-//            }
+            if (item==0)
+            {
+                allDifferentPrintMatches(column_list);
+            }
 
 
 
@@ -1146,6 +1127,23 @@ public class ReducedBoqa {
         }
         return true;
     }
+
+    public static void allDifferentPrintMatches(List<Double> arr){
+//        IndexToTermPrinter dupwrite = new IndexToTermPrinter("duplicates");
+        for (int i  = 0 ; i < arr.size(); i++)
+        {
+            for (int j = i+1; j< arr.size(); j++)
+            {
+                if (arr.get(i) .equals(arr.get(j)))
+                {
+//                    dupwrite.printStringToFile( i + "\t" + j + "\n");
+//                    System.out.println("these two are the same" + i +" " + j);
+                }
+            }
+        }
+//        dupwrite.close();
+        System.out.println("done");
+    }
     int [] topo_sorted;
     /*
       Performs an after-the-fact dfs of a "graph"
@@ -1155,29 +1153,38 @@ public class ReducedBoqa {
     public void dfs()
     {
 
+
+
+        topo_sorted = new int[multiDiseaseDistributions.length];
+        for (int i = 0; i < topo_sorted.length; i++)
+        {
+            topo_sorted[i]=i;
+        }
+        return;
+
 //        System.out.println("This is the root term" + graph.getRootTerm());
 //        System.out.println("These are the children");
 //        long start = System.nanoTime();
 
-        ArrayList<Term> topo_sort = graph.getTermsInTopologicalOrder();
-        //now: we need the topo sort
-        //convert it to the indices.
-        topo_sorted = new int[topo_sort.size()];
-
-        int i = 0;
-        //start = System.nanoTime();
-        for (Term t: topo_sort)
-        {
-            //assume this is the same as a[i], then i++
-            //topo_sorted[i++] = slimGraph.getVertexIndex(t);
-            //use i, then increment it
-
-            topo_sorted[i] = slimGraph.getVertexIndex(t);
-            i++;
-        }
-        //System.out.println("filling new array took " + (start-System.nanoTime()));
-
-        //if we compute via this array, then we will have GOOD things!
+//        ArrayList<Term> topo_sort = graph.getTermsInTopologicalOrder();
+//        //now: we need the topo sort
+//        //convert it to the indices.
+//        topo_sorted = new int[topo_sort.size()];
+//
+//        int i = 0;
+//        //start = System.nanoTime();
+//        for (Term t: topo_sort)
+//        {
+//            //assume this is the same as a[i], then i++
+//            //topo_sorted[i++] = slimGraph.getVertexIndex(t);
+//            //use i, then increment it
+//
+//            topo_sorted[i] = slimGraph.getVertexIndex(t);
+//            i++;
+//        }
+//        //System.out.println("filling new array took " + (start-System.nanoTime()));
+//
+//        //if we compute via this array, then we will have GOOD things!
 
 
 
@@ -1327,7 +1334,7 @@ public class ReducedBoqa {
             //unobserved must be false. this is OK since when we infer a node, we set it to True (observed) as well
             if (!o.observations[i] && o.real_observations[i])
             {
-                
+
                 temp.add(i);
             }
 
