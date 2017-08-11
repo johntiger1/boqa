@@ -1,6 +1,5 @@
 package calculation_john_pack;
 
-import extra.IndexToTermPrinter;
 import ontologizer.association.AssociationContainer;
 import ontologizer.enumeration.GOTermEnumerator;
 import ontologizer.enumeration.ItemEnumerator;
@@ -586,7 +585,8 @@ public class ReducedBoqa {
     }
 
     int [][][] phenoOnMT;
-    int [][][] phenoOffMt;
+    int [][][] phenoOffMT;
+
 
     //Creates the phenovectors, partitioning them using the "linear" method.
     //
@@ -604,7 +604,7 @@ public class ReducedBoqa {
         int starting = 0;
         prev_j = j;
         phenoOnMT = new int[num_threads][][];
-        phenoOffMt = new int[num_threads][][];
+        phenoOffMT = new int[num_threads][][];
 
         //assign inner sizes (task delegations) to each thread
         //z is the thread number
@@ -614,12 +614,13 @@ public class ReducedBoqa {
         for (int z = 1; z < num_threads; z++)
         {
             phenoOnMT[z] = new int [tasks_per_thread][];
-            phenoOffMt[z] = new int [tasks_per_thread][];
+            phenoOffMT[z] = new int [tasks_per_thread][];
         }
 
         //assign any extra left over work to the main thread
-        phenoOnMT[0] = new int [tasks_per_thread + remainder][];
-        phenoOffMt[0] = new int[tasks_per_thread+ remainder][];
+        int first_task = tasks_per_thread + remainder;
+        phenoOnMT[0] = new int [first_task][];
+        phenoOffMT[0] = new int[first_task][];
 
 
         int thread_num;
@@ -656,7 +657,7 @@ public class ReducedBoqa {
 
             this.phenoOnMT[thread_num][0] = this.term2Ancestors[topo_sorted[j++]]; /* For the first step, all terms must be activated */
             //assert it gets a fresh copy (no phenotypes set) each time
-            this.phenoOffMt[thread_num][0] = new int[0];
+            this.phenoOffMT[thread_num][0] = new int[0];
 
             for (i = 1; i < this.phenoOnMT[thread_num].length; i++) {
                 //if unobserved ONLY
@@ -696,10 +697,10 @@ public class ReducedBoqa {
                 //or we could just use more set differences!
                 //subtract the set of phenotypes that already have been observed
 //                phenoOnMT[thread_num][i] = setDiff(newOnTerms, prevOnTerms);
-//                phenoOffMt[thread_num][i] = setDiff(prevOnTerms, newOnTerms);
+//                phenoOffMT[thread_num][i] = setDiff(prevOnTerms, newOnTerms);
                 phenoOnMT[thread_num][i] = setDiffSpecial(newOnTerms, prevOnTerms,skip);
-                phenoOffMt[thread_num][i] = setDiffSpecial(prevOnTerms, newOnTerms,skip);
-                sum += phenoOnMT[thread_num][i].length + phenoOffMt[thread_num][i].length;
+                phenoOffMT[thread_num][i] = setDiffSpecial(prevOnTerms, newOnTerms,skip);
+                sum += phenoOnMT[thread_num][i].length + phenoOffMT[thread_num][i].length;
 
             }
 
@@ -1068,23 +1069,23 @@ public class ReducedBoqa {
             for (int j =0; j<phenoOnMT[thread_id].length; j++) {
 
 
-                dec_counter+= decrementStaleNodes_MT(o, hidden, stats, phenoOnMT[thread_id][j],phenoOffMt[thread_id][j]);
+                dec_counter+= decrementStaleNodes_MT(o, hidden, stats, phenoOnMT[thread_id][j], phenoOffMT[thread_id][j]);
 
                 updateObservationsBasedOnPhenotype_MT(o, phenoOnMT[thread_id][j],
-                        phenoOffMt[thread_id][j]);
+                        phenoOffMT[thread_id][j]);
 
                 inc_counter +=incrementUpdatedNodes_MT(o, hidden, stats,
-                        phenoOnMT[thread_id][j], phenoOffMt[thread_id][j]);
+                        phenoOnMT[thread_id][j], phenoOffMT[thread_id][j]);
                 double score = stats.getScore(this.ALPHA_GRID[0], initial_beta, experimental_beta);
                 multiDiseaseDistributions[topo_sorted[pheno_counter++]][item] = score;
 
-//                dec_counter+= decrementStaleNodes_MT(o, hidden, stats, phenoOnMT[thread_id][j],phenoOffMt[thread_id][j]);
+//                dec_counter+= decrementStaleNodes_MT(o, hidden, stats, phenoOnMT[thread_id][j],phenoOffMT[thread_id][j]);
 //
 //                updateObservationsBasedOnPhenotype_MT(o, phenoOnMT[thread_id][j],
-//                        phenoOffMt[thread_id][j]);
+//                        phenoOffMT[thread_id][j]);
 //
 //                inc_counter +=incrementUpdatedNodes_MT(o, hidden, stats,
-//                        phenoOnMT[thread_id][j], phenoOffMt[thread_id][j]);
+//                        phenoOnMT[thread_id][j], phenoOffMT[thread_id][j]);
 //                double score = stats.getScore(this.ALPHA_GRID[0], initial_beta, experimental_beta);
 //                multiDiseaseDistributions[topo_sorted[pheno_counter++]][item] = score;
 //                if (item == 0)
@@ -1791,7 +1792,7 @@ public class ReducedBoqa {
 
             curr_start_indexP = curr_end_indexP;
 //                System.out.println(curr_end_indexP);
-            curr_end_indexP+=phenoOffMt[i].length; //uses the NEXT one
+            curr_end_indexP+= phenoOffMT[i].length; //uses the NEXT one
 
 //            if (i != 0) {curr_start_indexD = curr_end_indexD;}
 //            curr_end_indexD += num_diseases_per_thread;
