@@ -587,6 +587,9 @@ public class ReducedBoqa {
     int [][][] phenoOnMT;
     int [][][] phenoOffMT;
 
+    //we only need one since, they represent the transitions between nodes,
+    //and the nodes are the same
+    int [][] phenosInThread;
 
     //Creates the phenovectors, partitioning them using the "linear" method.
     //
@@ -605,22 +608,26 @@ public class ReducedBoqa {
         prev_j = j;
         phenoOnMT = new int[num_threads][][];
         phenoOffMT = new int[num_threads][][];
+        phenosInThread = new int[num_threads][];
 
         //assign inner sizes (task delegations) to each thread
         //z is the thread number
 
         int tasks_per_thread = numberOfUnobservedPhenotypes/num_threads;
         int remainder = numberOfUnobservedPhenotypes % num_threads;
-        for (int z = 1; z < num_threads; z++)
-        {
-            phenoOnMT[z] = new int [tasks_per_thread][];
-            phenoOffMT[z] = new int [tasks_per_thread][];
-        }
 
         //assign any extra left over work to the main thread
         int first_task = tasks_per_thread + remainder;
         phenoOnMT[0] = new int [first_task][];
         phenoOffMT[0] = new int[first_task][];
+        phenosInThread[0] = new int[first_task];
+
+        for (int z = 1; z < num_threads; z++)
+        {
+            phenoOnMT[z] = new int [tasks_per_thread][];
+            phenoOffMT[z] = new int [tasks_per_thread][];
+            phenosInThread[z] = new int[tasks_per_thread];
+        }
 
 
         int thread_num;
@@ -655,10 +662,12 @@ public class ReducedBoqa {
             //assert j is total#-unobserved or something (not necessarily)
             //j is not really a descriptive statisitc, rather it only refers to the first, or the min
 
-            this.phenoOnMT[thread_num][0] = this.term2Ancestors[topo_sorted[j++]]; /* For the first step, all terms must be activated */
+            this.phenoOnMT[thread_num][0] = this.term2Ancestors[topo_sorted[j]]; /* For the first step, all terms must be activated */
             //assert it gets a fresh copy (no phenotypes set) each time
             this.phenoOffMT[thread_num][0] = new int[0];
 
+            phenosInThread[thread_num][0] = topo_sorted[j];
+            j++;
             for (i = 1; i < this.phenoOnMT[thread_num].length; i++) {
                 //if unobserved ONLY
 
@@ -676,6 +685,7 @@ public class ReducedBoqa {
                         //uhoh
                         System.out.println("wwoos");
                     }
+                    System.out.println("skipping" + topo_sorted[j]);
                     j++;
 
 
@@ -688,8 +698,10 @@ public class ReducedBoqa {
 
                 int prevOnTerms[] = this.term2Ancestors[topo_sorted[prev_j]];      //items2terms[0] on first iteration
                 int newOnTerms[] = this.term2Ancestors[topo_sorted[j]];
+                phenosInThread[thread_num][i] = topo_sorted[j];
                 prev_j = j;
                 j++;
+
 
                 //either need a special setdiff OR we can remove (prune) phenotypes that
                 //are already observed
@@ -716,7 +728,7 @@ public class ReducedBoqa {
         //potentially skip many phenotypes
 
 
-
+        areElementsEqual(phenosInThread, topo_sorted);
         System.out.println("number of deltas is " + sum);
 
 
@@ -724,6 +736,28 @@ public class ReducedBoqa {
     }
 
 
+    public static void areElementsEqual(int [][] split, int []single)
+
+    {
+        int k =0;
+
+        for (int i = 0; i < split.length;i++)
+        {
+            for (int j = 0; j < split[i].length;j++)
+            {
+                if (split[i][j] != single[k])
+                {
+                    System.out.println("not element equal");
+                    return;
+                }
+                k++;
+
+            }
+
+        }
+        System.out.println("all equal");
+
+    }
     private void createDiffVectors()
     {
 
