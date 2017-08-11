@@ -250,7 +250,7 @@ public class NewRefinedBOQATest {
     public int multiGetBestPhenotype(double [][] phenoDiseaseDist, ReducedBoqa rb)
     {
         int best_phenotype_index = 0;
-        double best_phenotype_value = Double.NEGATIVE_INFINITY;
+        double best_phenotype_value = Double.POSITIVE_INFINITY;
         double temp;
         double val;
         for (int i = 0; i<phenoDiseaseDist.length; i++)

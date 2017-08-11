@@ -1155,33 +1155,33 @@ public class ReducedBoqa {
 
 
 
-        topo_sorted = new int[multiDiseaseDistributions.length];
-        for (int i = 0; i < topo_sorted.length; i++)
-        {
-            topo_sorted[i]=i;
-        }
-        return;
+//        topo_sorted = new int[multiDiseaseDistributions.length];
+//        for (int i = 0; i < topo_sorted.length; i++)
+//        {
+//            topo_sorted[i]=i;
+//        }
+//        return;
 
 //        System.out.println("This is the root term" + graph.getRootTerm());
 //        System.out.println("These are the children");
 //        long start = System.nanoTime();
 
-//        ArrayList<Term> topo_sort = graph.getTermsInTopologicalOrder();
-//        //now: we need the topo sort
-//        //convert it to the indices.
-//        topo_sorted = new int[topo_sort.size()];
-//
-//        int i = 0;
-//        //start = System.nanoTime();
-//        for (Term t: topo_sort)
-//        {
-//            //assume this is the same as a[i], then i++
-//            //topo_sorted[i++] = slimGraph.getVertexIndex(t);
-//            //use i, then increment it
-//
-//            topo_sorted[i] = slimGraph.getVertexIndex(t);
-//            i++;
-//        }
+        ArrayList<Term> topo_sort = graph.getTermsInTopologicalOrder();
+        //now: we need the topo sort
+        //convert it to the indices.
+        topo_sorted = new int[topo_sort.size()];
+
+        int i = 0;
+        //start = System.nanoTime();
+        for (Term t: topo_sort)
+        {
+            //assume this is the same as a[i], then i++
+            //topo_sorted[i++] = slimGraph.getVertexIndex(t);
+            //use i, then increment it
+
+            topo_sorted[i] = slimGraph.getVertexIndex(t);
+            i++;
+        }
 //        //System.out.println("filling new array took " + (start-System.nanoTime()));
 //
 //        //if we compute via this array, then we will have GOOD things!
