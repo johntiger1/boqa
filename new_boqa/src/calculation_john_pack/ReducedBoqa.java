@@ -728,7 +728,7 @@ public class ReducedBoqa {
         //potentially skip many phenotypes
 
 
-//        areElementsEqual(phenosInThread, topo_sorted);
+        areElementsEqual(phenosInThread, topo_sorted);
         System.out.println("number of deltas is " + sum);
 
 
@@ -1079,6 +1079,7 @@ public class ReducedBoqa {
         }
         int[] diffOn ;
         int[] diffOff ;
+        int pheno_counter = start_pheno;
 
 //        System.out.printf(" I am %d, i am responsibl" +
 //                        "e for phenos %d to %d and diseases %d to %d\n",thread_id, start_pheno
@@ -1115,7 +1116,7 @@ public class ReducedBoqa {
                 inc_counter +=incrementUpdatedNodes_MT(o, hidden, stats,
                         phenoOnMT[thread_id][j], phenoOffMT[thread_id][j]);
                 double score = stats.getScore(this.ALPHA_GRID[0], initial_beta, experimental_beta);
-                multiDiseaseDistributions[phenosInThread[thread_id][j]][item] = score;
+                multiDiseaseDistributions[topo_sorted[pheno_counter++]][item] = score;
 
 //                dec_counter+= decrementStaleNodes_MT(o, hidden, stats, phenoOnMT[thread_id][j],phenoOffMT[thread_id][j]);
 //
@@ -1138,6 +1139,7 @@ public class ReducedBoqa {
 
 
 
+            pheno_counter = start_pheno;
             outer_dec_counter+=resetToConsistentStateForDiseaseDiff(o, stats, diffOn, diffOff, hidden);
             //should require an incrmeent though?!
         }
