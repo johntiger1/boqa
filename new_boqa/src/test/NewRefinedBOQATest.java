@@ -280,7 +280,15 @@ public class NewRefinedBOQATest {
         }
         return best_phenotype_index;
     }
+    public void computeVeniness(GOTermEnumerator gte, TermContainer tc)
+    {
 
+        for (Term t: tc)
+        {
+            gte.getAnnotatedGenes(t.getID()).totalAnnotatedCount();
+        }
+
+    }
     //Represents the disease-phenotype frequency annotation data.
     //I1: Disease
     //I2: Phenotype
