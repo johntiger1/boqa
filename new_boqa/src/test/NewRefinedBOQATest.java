@@ -270,6 +270,7 @@ public class NewRefinedBOQATest {
             //assert rb.o.observations.length =phenoDiseaseDist.length
             //We cannot return pick a phenotype twice
             if (!rb.o.observations[i]) {
+                if (phenotype_frequencies[i] != 0)
                 if (best_phenotype_value > (temp = phenotype_frequencies[i] * scoringFunctionOnArray(phenoDiseaseDist[i]))) {
                     best_phenotype_index = i;
                     best_phenotype_value = temp;
