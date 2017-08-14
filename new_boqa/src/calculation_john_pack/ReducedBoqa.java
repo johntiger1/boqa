@@ -195,8 +195,6 @@ public class ReducedBoqa {
         //a
         ItemEnumerator itemEnumerator = ItemEnumerator.createFromTermEnumerator(this.termEnumerator);
 
-
-
         this.allItemList = new ArrayList<ByteString>();
         this.item2Index = new HashMap<ByteString, Integer>(); //these are the diseases
         int i = 0;
@@ -685,7 +683,7 @@ public class ReducedBoqa {
                         //uhoh
                         System.out.println("wwoos");
                     }
-                    System.out.println("skipping" + topo_sorted[j]);
+//                    System.out.println("skipping" + topo_sorted[j]);
                     j++;
 
 
@@ -728,7 +726,7 @@ public class ReducedBoqa {
         //potentially skip many phenotypes
 
 
-        areElementsEqual(phenosInThread, topo_sorted);
+//        areElementsEqual(phenosInThread, topo_sorted);
         System.out.println("number of deltas is " + sum);
 
 
@@ -1166,6 +1164,36 @@ public class ReducedBoqa {
             foundNumbers.add(num);
         }
         return true;
+    }
+
+    public static boolean allDifferent(List<Double> arr){
+        Set<Double> foundNumbers = new HashSet<>();
+
+        foundNumbers.add(arr.get(0));
+        for (double num : arr) {
+            if(foundNumbers.contains(num)){
+                return false;
+            }
+            foundNumbers.add(num);
+        }
+        return true;
+    }
+
+    public void checkEquality(double [] arr1, double[]arr2)
+    {
+        HashSet <Double> h= new HashSet<>();
+
+
+        for (int i = 0; i < arr1.length; i++)
+        {
+            if (arr2[i]!=arr1[i])
+            {
+                System.out.println("they differ at" + i);
+                //and use a hashset to see they contain the same values?
+
+            }
+        }
+
     }
 
     public static void allDifferentPrintMatches(List<Double> arr){

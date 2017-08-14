@@ -89,13 +89,23 @@ public class NewRefinedBOQATest {
         return false;
     }
 
+    public void initializeHashmap(TermContainer tc)
+    {
+        pheno_disease_freq = new HashMap<>();
+        for (Term t : tc)
+        {
+            pheno_disease_freq.put(t, new HashMap<ByteString, Integer>());
+        }
+    }
+
     //Generates num diseases and associates them with terms in the graph
     //Diseases get 2 to 18 annotations, mirroring real life.
-    public AssociationContainer generateAnnotations(int num, SlimDirectedGraphView<Term> slim
+    public AssociationContainer generateAnnotations(int num, SlimDirectedGraphView<Term> slim,
+                                                    TermContainer tc
     ) {
-        pheno_disease_freq = new HashMap<>();
-
+        initializeHashmap(tc);
         //initialize all the inner hashmaps:
+
 
         //Set the random to a seed
         Random rnd = new Random(2);
@@ -116,8 +126,9 @@ public class NewRefinedBOQATest {
                 //we CAN do that!
                 //since for example, the interface between
                 //let us make it a mapping between terms, and items and frequencies
+
                 if (pheno_disease_freq.containsKey(t)) {
-                    pheno_disease_freq.get(t).put(item, rnd.nextInt(freq_categories.length)); //TODO, make this vary based on the length of the freq array
+                    pheno_disease_freq.get(t).put(item, rnd.nextInt(freq_categories.length));
 
                 } else {
                     pheno_disease_freq.put(t, new HashMap<ByteString, Integer>());
@@ -132,6 +143,7 @@ public class NewRefinedBOQATest {
     }
 
     static public ArrayList<String> getTopDiseasesAsStrings(final ReducedBoqa.Result res) {
+
         // All of this is sorting diseases by marginals
         Integer[] order = new Integer[res.size()];
         for (int i = 0; i < order.length; i++) {
@@ -251,7 +263,7 @@ public class NewRefinedBOQATest {
     {
         int best_phenotype_index = 0;
         double best_phenotype_value = Double.POSITIVE_INFINITY;
-        double temp;
+        double temp = 0;
         double val;
         for (int i = 0; i<phenoDiseaseDist.length; i++)
         {
@@ -306,7 +318,7 @@ public class NewRefinedBOQATest {
             //alternatively:
             //rb.slimGraph.getVertexIndex()
 
-            ByteString bs;
+            //go over the disease-frequency pairings
             //ideally, we have a bytestring->index
             //if we are just doing phenotype to disease, then we can directly use these elements
             for (Map.Entry annotation : pheno_disease_freq.get(pheno_term).entrySet()) {
@@ -503,7 +515,7 @@ public class NewRefinedBOQATest {
 
     @Test
     public void testConvergence() throws IOException, OBOParserException, URISyntaxException {
-        int num = 10000;
+        int num = 100;
         final ReducedBoqa boqa = new ReducedBoqa();
         //boqa.getOntology().
         //boqa.getOntology().getTerm() //FROM THE TERMID, we can recover the terms, and also recover the indexes?
@@ -547,7 +559,7 @@ public class NewRefinedBOQATest {
         SlimDirectedGraphView<Term> slim = ontology.getSlimGraphView();
 
 
-        assocs = generateAnnotations(num, slim);
+        assocs = generateAnnotations(num, slim, tc);
 
         trueDisease = new ByteString("item" + num);
         trueDiseaseMapping = new Gene2Associations(trueDisease);
