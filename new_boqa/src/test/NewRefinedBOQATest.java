@@ -142,6 +142,32 @@ public class NewRefinedBOQATest {
         return assocs;
     }
 
+//    public static void printParallelSorted(double [] array,
+//                                           TermContainer tc,
+//                                           GOTermEnumerator gte,
+//                                           SlimDirectedGraphView
+//                                                   <Term> slim)
+//    {
+//
+//        Integer[] order = new Integer[array.length];
+//        for (int i = 0; i < order.length; i++) {
+//            order[i] = i;
+//        }
+//        Arrays.sort(order, new Comparator<Integer>() {
+//            @Override
+//            public int compare(Integer o1, Integer o2) {
+//                if (gte.getAnnotatedGenes(slim.getVertex(o1).getID()).totalAnnotated < res.getScore(o2)) {
+//                    return 1;
+//                }
+//                if (res.getScore(o1) > res.getScore(o2)) {
+//                    return -1;
+//                }
+//                return 0;
+//            }
+//        });
+//
+//    }
+
     static public ArrayList<String> getTopDiseasesAsStrings(final ReducedBoqa.Result res) {
 
         // All of this is sorting diseases by marginals
@@ -170,7 +196,7 @@ public class NewRefinedBOQATest {
         //for (int i = 0; i < 20 && i<order.length; i++) {
 
         //order.length/2
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < 50; i++) {
             int id = order[i]; //presumably, order[i] is now in order from lowest to msot score
             results.add("item" + id); //bytestrings can be immediately constructed from this
             //"Disease "+ id + "\t"  + "Probs"  + res.getScore(id) ); //all amrginals are the same...
@@ -280,12 +306,18 @@ public class NewRefinedBOQATest {
         }
         return best_phenotype_index;
     }
-    public void computeVeniness(GOTermEnumerator gte, TermContainer tc)
+    public void computeVeniness(GOTermEnumerator gte, TermContainer tc,
+    SlimDirectedGraphView<Term> slim)
     {
+
 
         for (Term t: tc)
         {
-            gte.getAnnotatedGenes(t.getID()).totalAnnotatedCount();
+            if (gte.getAnnotatedGenes(t.getID()).totalAnnotatedCount() > 40)
+            System.out.println("This term " + t + "which has index" +
+                            slim.getVertexIndex(t) + "has this many annotations" +
+
+                    gte.getAnnotatedGenes(t.getID()).totalAnnotatedCount());
         }
 
     }
@@ -524,7 +556,7 @@ public class NewRefinedBOQATest {
 
     @Test
     public void testConvergence() throws IOException, OBOParserException, URISyntaxException {
-        int num = 100;
+        int num = 10000;
         final ReducedBoqa boqa = new ReducedBoqa();
         //boqa.getOntology().
         //boqa.getOntology().getTerm() //FROM THE TERMID, we can recover the terms, and also recover the indexes?
@@ -558,6 +590,7 @@ public class NewRefinedBOQATest {
         //we should return a copy of it or something
         long start = System.nanoTime();
         removeObsoleteTerms(hpoParser, start);
+
 
         //blackbox: it gets all the terms (in the HPO)
         //getTermMap returns a list of all terms!
@@ -604,8 +637,12 @@ public class NewRefinedBOQATest {
         long total = System.nanoTime();
         print_find_ancestors_of_trueDisease(boqa, tc);
         int free = getFreeObs(boqa);
+        //should set the free to true as well.
         o.observations[free] = true;
         o.real_observations[free] = true;
+
+        computeVeniness(boqa.termEnumerator,tc,slim);
+
 //        IndexToTermPrinter.printMapping(slim.vertex2Index);
         while (!discovered) {
             ReducedBoqa.iteration++;
