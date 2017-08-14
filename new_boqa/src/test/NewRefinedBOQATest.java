@@ -190,13 +190,24 @@ public class NewRefinedBOQATest {
                 return 0;
             }
         }); //order[i] will be sorted according to the comparator, so [1..n] will become [3,2,67,1,..]
+//"is now at"
+        for (int i = 0; i < order.length; i++) {
+            if (order[i] == order.length-1)
+            {
+                System.out.println("the actual disease is at position"
+                + i); //(since the last disease is the right one)
+                break;
+            }
+
+            }
+
 
         // Get top 20 results
         ArrayList<String> results = new ArrayList<String>();
         //for (int i = 0; i < 20 && i<order.length; i++) {
 
         //order.length/2
-        for (int i = 0; i < 50; i++) {
+        for (int i = 0; i < 31; i++) {
             int id = order[i]; //presumably, order[i] is now in order from lowest to msot score
             results.add("item" + id); //bytestrings can be immediately constructed from this
             //"Disease "+ id + "\t"  + "Probs"  + res.getScore(id) ); //all amrginals are the same...
@@ -556,7 +567,7 @@ public class NewRefinedBOQATest {
 
     @Test
     public void testConvergence() throws IOException, OBOParserException, URISyntaxException {
-        int num = 10000;
+        int num = 100;
         final ReducedBoqa boqa = new ReducedBoqa();
         //boqa.getOntology().
         //boqa.getOntology().getTerm() //FROM THE TERMID, we can recover the terms, and also recover the indexes?
