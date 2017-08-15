@@ -38,7 +38,12 @@ public class NewRefinedBOQATest {
             //Because you are your own ancestor, we do not need to deal with the self case specially.
             ind = rb.getOntology().getSlimGraphView().getVertexIndex(t);
             if (r.nextDouble()>0.5)
+            {
+                System.out.println("I am giving you this one for free " + t);
+                System.out.println("The index corresponding is " + ind);
                 break;
+            }
+
         }
         return ind;
     }
@@ -330,7 +335,7 @@ public class NewRefinedBOQATest {
 
         for (Term t: tc)
         {
-            if (gte.getAnnotatedGenes(t.getID()).totalAnnotatedCount() > 40)
+            if (gte.getAnnotatedGenes(t.getID()).totalAnnotatedCount() > 5000)
             System.out.println("This term " + t + "which has index" +
                             slim.getVertexIndex(t) + "has this many annotations" +
 
@@ -507,7 +512,7 @@ public class NewRefinedBOQATest {
 
     public void generateTrueDisease(SlimDirectedGraphView<Term> slim, AssociationContainer assocs)
     {
-        Random rnd = new Random(410); //this is our true disease
+        Random rnd = new Random(241); //this is our true disease
         for (int j = 0; j < rnd.nextInt(16) + 2; j++) {
             Term t;
             do {
@@ -575,7 +580,7 @@ public class NewRefinedBOQATest {
 
     @Test
     public void testConvergence() throws IOException, OBOParserException, URISyntaxException {
-        int num = 100;
+        int num = 10000;
         final ReducedBoqa boqa = new ReducedBoqa();
         //boqa.getOntology().
         //boqa.getOntology().getTerm() //FROM THE TERMID, we can recover the terms, and also recover the indexes?
