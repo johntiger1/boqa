@@ -292,14 +292,14 @@ public class NewRefinedBOQATest {
             score += marg * marg;
         }
 
-        return score;
+        return -score;
     }
 
     //pheno rows, disease cols
     public int multiGetBestPhenotype(double [][] phenoDiseaseDist, ReducedBoqa rb)
     {
         int best_phenotype_index = 0;
-        double best_phenotype_value = Double.POSITIVE_INFINITY;
+        double best_phenotype_value = Double.NEGATIVE_INFINITY;
         double temp = 0;
         double val;
         for (int i = 0; i<phenoDiseaseDist.length; i++)
@@ -308,7 +308,7 @@ public class NewRefinedBOQATest {
             //We cannot return pick a phenotype twice
             if (!rb.o.observations[i]) {
                 if (phenotype_frequencies[i] != 0)
-                if (best_phenotype_value > (temp = phenotype_frequencies[i] * scoringFunctionOnArray(phenoDiseaseDist[i]))) {
+                if (best_phenotype_value < (temp = phenotype_frequencies[i] * scoringFunctionOnArray(phenoDiseaseDist[i]))) {
                     best_phenotype_index = i;
                     best_phenotype_value = temp;
                 }
@@ -567,7 +567,7 @@ public class NewRefinedBOQATest {
 
     @Test
     public void testConvergence() throws IOException, OBOParserException, URISyntaxException {
-        int num = 10000;
+        int num = 100;
         final ReducedBoqa boqa = new ReducedBoqa();
         //boqa.getOntology().
         //boqa.getOntology().getTerm() //FROM THE TERMID, we can recover the terms, and also recover the indexes?
