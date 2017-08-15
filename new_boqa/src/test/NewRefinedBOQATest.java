@@ -1,5 +1,6 @@
 package test;
 
+import calculation_john_pack.ReducedConfiguration;
 import com.sun.javafx.image.IntPixelGetter;
 import extra.IndexToTermPrinter;
 import ontologizer.association.Association;
@@ -578,13 +579,25 @@ public class NewRefinedBOQATest {
         }
     }
 
-    public void printInfoAboutDisease(ReducedBoqa rb, int index,
-                                      ReducedBoqa.Result r)
+    public void printInfoAboutDisease(ReducedBoqa rb, int index)
     {
         System.out.println("This is the disease " +
                 rb.allItemList.get(index));
         System.out.println("This is their annotations" + rb.items2Terms[index]);
+        ReducedConfiguration rc = new ReducedConfiguration();
 
+        int numTerms = rb.slimGraph.getNumberOfVertices();
+        boolean [] hidden = new boolean[numTerms];
+        for (int x: rb.items2Terms[index])
+        {
+            hidden[x] = true;
+        }
+        for (int i = 0; i < numTerms; i++) {
+            ReducedConfiguration.NodeCase c = rb.getNodeCase(i, hidden, rb.o);
+            rc.increment(c); //increment the case that c is in
+        }
+
+        System.out.println("this is its stats" + rc);
     }
 
     @Test
@@ -692,9 +705,7 @@ public class NewRefinedBOQATest {
             System.out.println(getIndicesOfTrue(boqa.o.real_observations));
             //boqa.setInitial_beta(boqa.getInitial_beta()-boqa.getInitial_beta()/30);
             //Alternatively, we could jsut have the difference too (inital beta-experimental beta)
-
-
-            //assign marginals with the new o.
+                       //assign marginals with the new o.
 
 
             System.out.println("starting multishot");
@@ -781,7 +792,10 @@ public class NewRefinedBOQATest {
 
 //            System.out.println(java.util.Arrays.toString(res.marginals));
 //            System.out.println(java.util.Arrays.toString(res.scores));
-            printTopDisease(res, boqa);
+
+            int max_ind = printTopDisease(res, boqa);
+            printInfoAboutDisease(boqa,max_ind);
+            printInfoAboutDisease(boqa,boqa.item2Index.get(trueDisease));
 
             //sorts the array, by getScore and takes the top N
 
@@ -800,7 +814,7 @@ public class NewRefinedBOQATest {
         }
     }
 
-    private void printTopDisease(ReducedBoqa.Result res,
+    private int printTopDisease(ReducedBoqa.Result res,
                                  ReducedBoqa rb) {
         //Computes max element and the index it occurs at
         double max = -Double.MAX_VALUE;
@@ -816,6 +830,7 @@ public class NewRefinedBOQATest {
 
         System.out.println("max_ind is " + max_ind + " max is " + max);
         System.out.println("this corresponds to " + rb.allItemList.get(max_ind));
+        return max_ind;
     }
 
     //we could also provide an array implementation too

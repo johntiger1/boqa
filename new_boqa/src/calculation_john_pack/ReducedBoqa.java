@@ -249,7 +249,7 @@ public class ReducedBoqa {
         return false;
     }
 
-    private ReducedConfiguration.NodeCase getNodeCase(int node, boolean[] hidden,Observations o)
+    public  ReducedConfiguration.NodeCase getNodeCase(int node, boolean[] hidden,Observations o)
     {
         if (areFalsePositivesPropagated()) {
             /* Here, we consider that false positives are inherited.
