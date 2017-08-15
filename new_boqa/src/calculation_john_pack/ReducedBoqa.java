@@ -209,7 +209,7 @@ public class ReducedBoqa {
 
         this.items2Terms = new int[this.allItemList.size()][];
         i = 0;
-        for (ByteString item : itemEnumerator) {
+        for (ByteString item : allItemList) {
             int j = 0;
             //these all the terms connected via the induced subgraph (i.e. following the annotation propagation rule)
             ArrayList<TermID> tids = itemEnumerator.getTermsAnnotatedToTheItem(item);

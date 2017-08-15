@@ -170,7 +170,8 @@ public class NewRefinedBOQATest {
 //
 //    }
 
-    static public ArrayList<String> getTopDiseasesAsStrings(final ReducedBoqa.Result res) {
+     public ArrayList<String> getTopDiseasesAsStrings(final ReducedBoqa.Result res,
+                                                      ReducedBoqa rb) {
 
         // All of this is sorting diseases by marginals
         Integer[] order = new Integer[res.size()];
@@ -194,7 +195,7 @@ public class NewRefinedBOQATest {
         }); //order[i] will be sorted according to the comparator, so [1..n] will become [3,2,67,1,..]
 //"is now at"
         for (int i = 0; i < order.length; i++) {
-            if (order[i] == order.length-1)
+            if (rb.allItemList.get(order[i]) .equals(trueDisease))
             {
                 System.out.println("the actual disease is at position"
                 + i); //(since the last disease is the right one)
@@ -212,8 +213,9 @@ public class NewRefinedBOQATest {
         for (int i = 0; i < 10; i++) {
             int id = order[i]; //presumably, order[i] is now in order from lowest to msot score
 
+            results.add(rb.allItemList.get(id).toString());
             //must use item2index here
-            results.add("item" + id); //bytestrings can be immediately constructed from this
+//            results.add("item" + id); //bytestrings can be immediately constructed from this
             //"Disease "+ id + "\t"  + "Probs"  + res.getScore(id) ); //all amrginals are the same...
         }
 
@@ -350,6 +352,8 @@ public class NewRefinedBOQATest {
     //AssociationContainer;
     Gene2Associations gx = new Gene2Associations(new ByteString("aa"));
     Gene2Associations trueDiseaseMapping;
+
+    ByteString[] index2item;
 
     /***
      * TODO skip phenotypes that have already been observed
@@ -634,6 +638,7 @@ public class NewRefinedBOQATest {
 
         boqa.setup(ontology, assocs);
         boqa.setO(o);
+//        index2item = buildReverseArrayMapping(boqa.item2Index);
 
         int steps = 0;
         double increment = 0.01;
@@ -762,11 +767,11 @@ public class NewRefinedBOQATest {
 
 //            System.out.println(java.util.Arrays.toString(res.marginals));
 //            System.out.println(java.util.Arrays.toString(res.scores));
-            printTopDisease(res);
+            printTopDisease(res, boqa);
 
             //sorts the array, by getScore and takes the top N
 
-            initial_guesses = getTopDiseasesAsStrings(res); //we have essentially the top ids now
+            initial_guesses = getTopDiseasesAsStrings(res,boqa); //we have essentially the top ids now
             System.out.println(initial_guesses);
             //from the ids, we can get the mappings they have
 
@@ -781,7 +786,8 @@ public class NewRefinedBOQATest {
         }
     }
 
-    private void printTopDisease(ReducedBoqa.Result res) {
+    private void printTopDisease(ReducedBoqa.Result res,
+                                 ReducedBoqa rb) {
         //Computes max element and the index it occurs at
         double max = -Double.MAX_VALUE;
         int max_ind = 0;
@@ -793,9 +799,9 @@ public class NewRefinedBOQATest {
             }
 
         }
-ReducedBoqa rb;
+
         System.out.println("max_ind is " + max_ind + " max is " + max);
-        System.out.println("this corresponds to " + 1);
+        System.out.println("this corresponds to " + rb.allItemList.get(max_ind));
     }
 
     //we could also provide an array implementation too
@@ -822,7 +828,11 @@ ReducedBoqa rb;
             bs[e.getValue()] = e.getKey();
 
         }
-
+        //assert no elements are null
+        for (int i =0; i < bs.length; i++)
+        {
+            assert bs[i]!=null;
+        }
         return bs;
 
     }
