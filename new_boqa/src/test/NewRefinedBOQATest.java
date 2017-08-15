@@ -207,7 +207,7 @@ public class NewRefinedBOQATest {
         //for (int i = 0; i < 20 && i<order.length; i++) {
 
         //order.length/2
-        for (int i = 0; i < 31; i++) {
+        for (int i = 0; i < 10; i++) {
             int id = order[i]; //presumably, order[i] is now in order from lowest to msot score
             results.add("item" + id); //bytestrings can be immediately constructed from this
             //"Disease "+ id + "\t"  + "Probs"  + res.getScore(id) ); //all amrginals are the same...
