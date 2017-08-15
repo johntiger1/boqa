@@ -512,7 +512,7 @@ public class NewRefinedBOQATest {
 
     public void generateTrueDisease(SlimDirectedGraphView<Term> slim, AssociationContainer assocs)
     {
-        Random rnd = new Random(241); //this is our true disease
+        Random rnd = new Random(41); //this is our true disease
         for (int j = 0; j < rnd.nextInt(16) + 2; j++) {
             Term t;
             do {
