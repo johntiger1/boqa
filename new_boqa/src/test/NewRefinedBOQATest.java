@@ -813,6 +813,20 @@ ReducedBoqa rb;
 
     }
 
+    public ByteString[] buildReverseArrayMapping(
+            Map<ByteString,Integer> item2index)
+    {
+        ByteString[] bs = new ByteString[item2index.size()];
+        for (Entry <ByteString,Integer> e : item2index.entrySet())
+        {
+            bs[e.getValue()] = e.getKey();
+
+        }
+
+        return bs;
+
+    }
+
     private void removeObsoleteTerms(OBOParser hpoParser, long start) {
         Set<Term> terms = hpoParser.getTermMap();
         Iterator<Term> iter= terms.iterator();
