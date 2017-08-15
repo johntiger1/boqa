@@ -578,9 +578,18 @@ public class NewRefinedBOQATest {
         }
     }
 
+    public void printInfoAboutDisease(ReducedBoqa rb, int index,
+                                      ReducedBoqa.Result r)
+    {
+        System.out.println("This is the disease " +
+                rb.allItemList.get(index));
+        System.out.println("This is their annotations" + rb.items2Terms[index]);
+
+    }
+
     @Test
     public void testConvergence() throws IOException, OBOParserException, URISyntaxException {
-        int num = 10000;
+        int num = 100;
         final ReducedBoqa boqa = new ReducedBoqa();
         //boqa.getOntology().
         //boqa.getOntology().getTerm() //FROM THE TERMID, we can recover the terms, and also recover the indexes?
@@ -661,9 +670,9 @@ public class NewRefinedBOQATest {
         disease_frequencies = res.marginals;
         long total = System.nanoTime();
         print_find_ancestors_of_trueDisease(boqa, tc);
-        int free = getFreeObs(boqa);
-        //should set the free to true as well.
-        setAncestors(boqa, free);
+//        int free = getFreeObs(boqa);
+//        //should set the free to true as well.
+//        setAncestors(boqa, free);
 //        o.observations[free] = true;
 //        o.real_observations[free] = true;
 
@@ -779,7 +788,7 @@ public class NewRefinedBOQATest {
             initial_guesses = getTopDiseasesAsStrings(res,boqa); //we have essentially the top ids now
             System.out.println(initial_guesses);
             //from the ids, we can get the mappings they have
-
+//            System.out.println();
             //now, we recompute the marginals.
             //o.setValue()if ()
             if (trueDiseaseInTopNDiseases(trueDisease.toString(), initial_guesses)) {

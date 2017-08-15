@@ -162,7 +162,7 @@ public class ReducedBoqa {
      */
     public int[][][] diffOffTermsFreqs;
 
-    public Map <Integer, ByteString> index2Item;
+
 
 
     private double ALPHA_GRID[] = new double[] {  0.001 };
@@ -667,6 +667,7 @@ public class ReducedBoqa {
             this.phenoOffMT[thread_num][0] = new int[0];
 
             phenosInThread[thread_num][0] = topo_sorted[j];
+            prev_j = j;
             j++;
             for (i = 1; i < this.phenoOnMT[thread_num].length; i++) {
                 //if unobserved ONLY
@@ -735,6 +736,92 @@ public class ReducedBoqa {
 //         System.out.println("done createPhenoVecs (MT). Took" + (System.nanoTime()-start));
     }
 
+    private void createPhenoVectors_multithread_simple(int num_threads, boolean [] skip) {
+
+//        System.out.println("starting createPhenoVecs");
+//        long start = System.nanoTime();
+        int numberOfPhenotypes = multiDiseaseDistributions.length;
+        int i ;
+        int j = 0;
+        int prev_j = 0;
+        int sum =0;
+        int starting = 0;
+        prev_j = j;
+        phenoOnMT = new int[num_threads][][];
+        phenoOffMT = new int[num_threads][][];
+        phenosInThread = new int[num_threads][];
+
+        //assign inner sizes (task delegations) to each thread
+        //z is the thread number
+
+        int tasks_per_thread = numberOfPhenotypes/num_threads;
+        int remainder = numberOfPhenotypes % num_threads;
+
+        //assign any extra left over work to the main thread
+        int first_task = tasks_per_thread + remainder;
+        phenoOnMT[0] = new int [first_task][];
+        phenoOffMT[0] = new int[first_task][];
+        phenosInThread[0] = new int[first_task];
+
+        for (int z = 1; z < num_threads; z++)
+        {
+            phenoOnMT[z] = new int [tasks_per_thread][];
+            phenoOffMT[z] = new int [tasks_per_thread][];
+            phenosInThread[z] = new int[tasks_per_thread];
+        }
+
+
+        int thread_num;
+        for ( thread_num =0; thread_num<num_threads;thread_num++ )
+        {
+
+
+            //assert j is total#-unobserved or something (not necessarily)
+            //j is not really a descriptive statisitc, rather it only refers to the first, or the min
+
+            this.phenoOnMT[thread_num][0] = this.term2Ancestors[topo_sorted[j]]; /* For the first step, all terms must be activated */
+            //assert it gets a fresh copy (no phenotypes set) each time
+            this.phenoOffMT[thread_num][0] = new int[0];
+
+            phenosInThread[thread_num][0] = topo_sorted[j];
+            prev_j = j;
+            j++;
+
+            for (i = 1; i < this.phenoOnMT[thread_num].length; i++) {
+                //if unobserved ONLY
+
+                //find the next unobserved phenotype, in the order given by topo_osrt
+
+
+                //j must be from the previous incidence...
+
+                int prevOnTerms[] = this.term2Ancestors[topo_sorted[prev_j]];      //items2terms[0] on first iteration
+                int newOnTerms[] = this.term2Ancestors[topo_sorted[j]];
+                phenosInThread[thread_num][i] = topo_sorted[j];
+                prev_j = j;
+                j++;
+
+
+                //either need a special setdiff OR we can remove (prune) phenotypes that
+                //are already observed
+
+                //or we could just use more set differences!
+                //subtract the set of phenotypes that already have been observed
+                phenoOnMT[thread_num][i] = setDiff(newOnTerms, prevOnTerms);
+                phenoOffMT[thread_num][i] = setDiff(prevOnTerms, newOnTerms);
+//                phenoOnMT[thread_num][i] = setDiffSpecial(newOnTerms, prevOnTerms,skip);
+//                phenoOffMT[thread_num][i] = setDiffSpecial(prevOnTerms, newOnTerms,skip);
+                sum += phenoOnMT[thread_num][i].length + phenoOffMT[thread_num][i].length;
+
+            }
+
+        }
+
+        System.out.println("number of deltas is " + sum);
+
+
+//         System.out.println("done createPhenoVecs (MT). Took" + (System.nanoTime()-start));
+    }
 
     public static void areElementsEqual(int [][] split, int []single)
 
@@ -1800,7 +1887,7 @@ public class ReducedBoqa {
         long start = System.nanoTime();
         //computePhenoDifferentials();
 //        createPhenoVectors(observations.observations);//must be recomputed on every call
-        createPhenoVectors_multithread(numThreads, observations.observations);
+        createPhenoVectors_multithread_simple(numThreads, observations.observations);
 
         System.out.println("done compute pheno diff. Took" + (System.nanoTime()-start));
 
