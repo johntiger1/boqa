@@ -162,6 +162,7 @@ public class ReducedBoqa {
      */
     public int[][][] diffOffTermsFreqs;
 
+    public Map <Integer, ByteString> index2Item;
 
 
     private double ALPHA_GRID[] = new double[] {  0.001 };
@@ -219,6 +220,7 @@ public class ReducedBoqa {
             }
 
             Arrays.sort(this.items2Terms[i]);
+
             i++;
         }
 

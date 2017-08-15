@@ -20,6 +20,7 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.*;
+import java.util.Map.Entry;
 
 /**
  * Created by johnp on 2017-06-29.
@@ -139,6 +140,7 @@ public class NewRefinedBOQATest {
                 assocs.addAssociation(a);
             }
         }
+
         return assocs;
     }
 
@@ -209,6 +211,8 @@ public class NewRefinedBOQATest {
         //order.length/2
         for (int i = 0; i < 10; i++) {
             int id = order[i]; //presumably, order[i] is now in order from lowest to msot score
+
+            //must use item2index here
             results.add("item" + id); //bytestrings can be immediately constructed from this
             //"Disease "+ id + "\t"  + "Probs"  + res.getScore(id) ); //all amrginals are the same...
         }
@@ -373,7 +377,7 @@ public class NewRefinedBOQATest {
             //go over the disease-frequency pairings
             //ideally, we have a bytestring->index
             //if we are just doing phenotype to disease, then we can directly use these elements
-            for (Map.Entry annotation : pheno_disease_freq.get(pheno_term).entrySet()) {
+            for (Entry annotation : pheno_disease_freq.get(pheno_term).entrySet()) {
 
                 //does P(D)*P(I|D)
                 temp += disease_frequencies[rb.item2Index.get( annotation.getKey())] * freq_categories[(Integer) annotation.getValue()];
@@ -789,8 +793,24 @@ public class NewRefinedBOQATest {
             }
 
         }
-
+ReducedBoqa rb;
         System.out.println("max_ind is " + max_ind + " max is " + max);
+        System.out.println("this corresponds to " + 1);
+    }
+
+    //we could also provide an array implementation too
+    public Map<Integer, ByteString> buildReverseMapping(
+            Map<ByteString,Integer> item2index)
+    {
+        Map<Integer, ByteString> hm = new HashMap<>();
+        for (Entry <ByteString,Integer> e : item2index.entrySet())
+        {
+            hm.put(e.getValue(),e.getKey());
+
+        }
+
+        return hm;
+
     }
 
     private void removeObsoleteTerms(OBOParser hpoParser, long start) {
