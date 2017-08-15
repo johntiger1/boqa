@@ -575,7 +575,7 @@ public class NewRefinedBOQATest {
 
     @Test
     public void testConvergence() throws IOException, OBOParserException, URISyntaxException {
-        int num = 100;
+        int num = 10000;
         final ReducedBoqa boqa = new ReducedBoqa();
         //boqa.getOntology().
         //boqa.getOntology().getTerm() //FROM THE TERMID, we can recover the terms, and also recover the indexes?
