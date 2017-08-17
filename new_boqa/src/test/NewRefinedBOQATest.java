@@ -215,8 +215,9 @@ public class NewRefinedBOQATest {
         ArrayList<String> results = new ArrayList<String>();
         //for (int i = 0; i < 20 && i<order.length; i++) {
 
-        //order.length/2
-        for (int i = 0; i < 10; i++) {
+        //order.length/2\
+         int THRESHOLD = 1;
+        for (int i = 0; i < THRESHOLD ; i++) {
             int id = order[i]; //presumably, order[i] is now in order from lowest to msot score
 
             results.add(rb.allItemList.get(id).toString());
@@ -515,7 +516,7 @@ public class NewRefinedBOQATest {
 
     public void generateTrueDisease(SlimDirectedGraphView<Term> slim, AssociationContainer assocs)
     {
-        Random rnd = new Random(997); //this is our true disease
+        Random rnd = new Random(53); //this is our true disease
         for (int j = 0; j < rnd.nextInt(16) + 2; j++) {
             Term t;
             do {
