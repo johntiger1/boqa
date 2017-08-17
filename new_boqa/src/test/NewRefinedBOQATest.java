@@ -515,7 +515,7 @@ public class NewRefinedBOQATest {
 
     public void generateTrueDisease(SlimDirectedGraphView<Term> slim, AssociationContainer assocs)
     {
-        Random rnd = new Random(241); //this is our true disease
+        Random rnd = new Random(997); //this is our true disease
         for (int j = 0; j < rnd.nextInt(16) + 2; j++) {
             Term t;
             do {
@@ -585,7 +585,7 @@ public class NewRefinedBOQATest {
     {
         System.out.println("This is the disease " +
                 rb.allItemList.get(index));
-        System.out.println("This is their annotations" + rb.items2Terms[index]);
+        System.out.println("This is their annotations" + Arrays.toString(rb.items2Terms[index]));
         ReducedConfiguration rc = new ReducedConfiguration();
 
         int numTerms = rb.slimGraph.getNumberOfVertices();
@@ -809,7 +809,8 @@ public class NewRefinedBOQATest {
             //o.setValue()if ()
             if (trueDiseaseInTopNDiseases(trueDisease.toString(), initial_guesses)) {
                 discovered = true;
-                System.out.println("we are finishedd!");
+                System.out.println("we are finished! took " + steps
+                + " guesses");
             }
 
             System.out.println("done loop iter. Took" + (System.nanoTime()-total));
