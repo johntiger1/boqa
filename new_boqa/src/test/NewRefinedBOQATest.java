@@ -298,13 +298,15 @@ public class NewRefinedBOQATest {
     }
 
     public double scoringFunctionOnArray(double [] freqs) {
-        double score = 0;
 
-        for (double marg : freqs) {
-            score += marg * marg;
-        }
-
-        return -score;
+        return 1;
+//        double score = 0;
+//
+//        for (double marg : freqs) {
+//            score += marg * marg;
+//        }
+//
+//        return -score;
     }
 
     //pheno rows, disease cols
