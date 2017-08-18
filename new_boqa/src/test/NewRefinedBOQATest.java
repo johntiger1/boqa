@@ -12,7 +12,9 @@ import calculation_john_pack.ReducedBoqa;
 import org.junit.jupiter.api.Test;
 import sonumina.math.graph.SlimDirectedGraphView;
 
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -641,11 +643,48 @@ public class NewRefinedBOQATest {
         return rc;
     }
 
+    public void getBatchNumber()
+    {
+        try (BufferedWriter bw = new BufferedWriter(new FileWriter(FILENAME))) {
+
+            String content = "This is the content to write into file\n";
+
+            bw.write(content);
+
+            // no need to close it.
+            //bw.close();
+
+            System.out.println("Done");
+
+        } catch (IOException e) {
+
+            e.printStackTrace();
+
+        }
+    }
+
     @Test
     public void testConvergenceWrapper() throws IOException, OBOParserException, URISyntaxException
     {
         double sum = 0;
         int NUM_TESTS = 100;
+        try (BufferedWriter bw = new BufferedWriter(new FileWriter(FILENAME))) {
+
+            String content = "This is the content to write into file\n";
+
+            bw.write(content);
+
+            // no need to close it.
+            //bw.close();
+
+            System.out.println("Done");
+
+        } catch (IOException e) {
+
+            e.printStackTrace();
+
+        }
+
         for (int i = 0; i < NUM_TESTS; i++)
         {
             sum += testConvergence();
