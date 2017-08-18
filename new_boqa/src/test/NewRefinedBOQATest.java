@@ -742,9 +742,9 @@ public class NewRefinedBOQATest {
         disease_frequencies = res.marginals;
         long total = System.nanoTime();
         print_find_ancestors_of_trueDisease(boqa, tc);
-//        int free = getFreeObs(boqa);
-//        //should set the free to true as well.
-//        setAncestors(boqa, free);
+        int free = getFreeObs(boqa);
+        //should set the free to true as well.
+        setAncestors(boqa, free);
 //        o.observations[free] = true;
 //        o.real_observations[free] = true;
 
