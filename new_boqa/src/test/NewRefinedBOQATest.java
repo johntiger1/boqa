@@ -692,7 +692,7 @@ public class NewRefinedBOQATest {
 
 
     public int testConvergence() throws IOException, OBOParserException, URISyntaxException {
-        int num = 5000;
+        int num = 10000;
         final ReducedBoqa boqa = new ReducedBoqa();
         //boqa.getOntology().
         //boqa.getOntology().getTerm() //FROM THE TERMID, we can recover the terms, and also recover the indexes?
@@ -768,7 +768,8 @@ public class NewRefinedBOQATest {
         //initalization/first step stuff
         ReducedBoqa.Result res=new ReducedBoqa.Result();
         steps++;
-        boqa.setInitial_beta(boqa.getInitial_beta()-increment * steps);
+//        boqa.setInitial_beta(boqa.getInitial_beta()-increment * steps);
+        boqa.setInitial_beta(increment * steps);
         res = boqa.assignMarginals(o, false, 1);
         disease_frequencies = res.marginals;
         long total = System.nanoTime();
@@ -901,7 +902,8 @@ public class NewRefinedBOQATest {
                 + " guesses");
             }
             steps++;
-            boqa.setInitial_beta(boqa.getInitial_beta()-increment * steps);
+//            boqa.setInitial_beta(boqa.getInitial_beta()-increment * steps);
+            boqa.setInitial_beta(increment * steps);
             System.out.println("done loop iter. Took" + (System.nanoTime()-total));
 
         }
