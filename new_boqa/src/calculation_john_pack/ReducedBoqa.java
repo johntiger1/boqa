@@ -75,7 +75,7 @@ public class ReducedBoqa {
     //public HashMap<Integer,Boolean> registered_obserations; //we still need this to store whether observed
     public Observations o;
 
-    private double initial_beta = 0.3 ; //this will approach the experimental beta
+    private double initial_beta = 0.5 ; //this will approach the experimental beta
 
     public double getExperimental_beta() {
         return experimental_beta;
