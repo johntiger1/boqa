@@ -643,47 +643,39 @@ public class NewRefinedBOQATest {
         return rc;
     }
 
-    public void getBatchNumber()
-    {
-        try (BufferedWriter bw = new BufferedWriter(new FileWriter(FILENAME))) {
-
-            String content = "This is the content to write into file\n";
-
-            bw.write(content);
-
-            // no need to close it.
-            //bw.close();
-
-            System.out.println("Done");
-
-        } catch (IOException e) {
-
-            e.printStackTrace();
-
-        }
-    }
+//    public void getBatchNumber()
+//    {
+//        List<String> readSmallTextFile(String aFileName) throws IOException {
+//        Path path = Paths.get(aFileName);
+//        return Files.readAllLines(path, ENCODING);
+//    } catch (IOException e) {
+//
+//            e.printStackTrace();
+//
+//        }
+//    }
 
     @Test
     public void testConvergenceWrapper() throws IOException, OBOParserException, URISyntaxException
     {
         double sum = 0;
         int NUM_TESTS = 100;
-        try (BufferedWriter bw = new BufferedWriter(new FileWriter(FILENAME))) {
-
-            String content = "This is the content to write into file\n";
-
-            bw.write(content);
-
-            // no need to close it.
-            //bw.close();
-
-            System.out.println("Done");
-
-        } catch (IOException e) {
-
-            e.printStackTrace();
-
-        }
+//        try (BufferedWriter bw = new BufferedWriter(new FileWriter(FILENAME))) {
+//
+//            String content = "This is the content to write into file\n";
+//
+//            bw.write(content);
+//
+//            // no need to close it.
+//            //bw.close();
+//
+//            System.out.println("Done");
+//
+//        } catch (IOException e) {
+//
+//            e.printStackTrace();
+//
+//        }
 
         for (int i = 0; i < NUM_TESTS; i++)
         {
@@ -700,7 +692,7 @@ public class NewRefinedBOQATest {
 
 
     public int testConvergence() throws IOException, OBOParserException, URISyntaxException {
-        int num = 10000;
+        int num = 5000;
         final ReducedBoqa boqa = new ReducedBoqa();
         //boqa.getOntology().
         //boqa.getOntology().getTerm() //FROM THE TERMID, we can recover the terms, and also recover the indexes?
