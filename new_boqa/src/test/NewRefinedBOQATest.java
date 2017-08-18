@@ -689,8 +689,7 @@ public class NewRefinedBOQATest {
         //(idelaly, writes this info to a file)
         //and computes avg, std. dev and such
     }
-
-
+    
     public int testConvergence() throws IOException, OBOParserException, URISyntaxException {
         int num = 10000;
         final ReducedBoqa boqa = new ReducedBoqa();
