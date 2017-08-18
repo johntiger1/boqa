@@ -751,7 +751,7 @@ public class NewRefinedBOQATest {
 
             System.out.println("starting multishot");
             start = System.nanoTime();
-            boqa.assignMultiShotMarginals(o,false,8);
+//            boqa.assignMultiShotMarginals(o,false,8);
 
             //now that we have the matrix of probabiltiies, we can look up the pheno-freqs and weight it accordingly
             //this process will probably take some time as well (+20s)
