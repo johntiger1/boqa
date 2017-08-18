@@ -714,7 +714,7 @@ public class NewRefinedBOQATest {
 //        index2item = buildReverseArrayMapping(boqa.item2Index);
 
         int steps = 0;
-        double increment = 0.01;
+        double increment = 0.29/138;
         boolean discovered = false;
         phenotype_frequencies = new double[numberOfTerms]; //alternatively, just copy over the
         //array length from the item2ancestors for example
