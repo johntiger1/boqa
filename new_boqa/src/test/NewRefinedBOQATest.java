@@ -213,7 +213,7 @@ public class NewRefinedBOQATest {
         //for (int i = 0; i < 20 && i<order.length; i++) {
 
         //order.length/2\
-         int THRESHOLD = 1;
+         int THRESHOLD = 10;
         for (int i = 0; i < THRESHOLD ; i++) {
             int id = order[i]; //presumably, order[i] is now in order from lowest to msot score
 
@@ -639,6 +639,11 @@ public class NewRefinedBOQATest {
         System.out.println("this is its stats" + rc);
 
         return rc;
+    }
+
+    public void testConvergenceWrapper()
+    {
+
     }
 
     @Test
