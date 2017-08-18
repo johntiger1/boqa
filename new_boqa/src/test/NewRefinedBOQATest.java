@@ -216,7 +216,7 @@ public class NewRefinedBOQATest {
         //for (int i = 0; i < 20 && i<order.length; i++) {
 
         //order.length/2\
-         int THRESHOLD = 1;
+         int THRESHOLD = 2;
         for (int i = 0; i < THRESHOLD ; i++) {
             int id = order[i]; //presumably, order[i] is now in order from lowest to msot score
 
@@ -323,7 +323,7 @@ public class NewRefinedBOQATest {
             //We cannot return pick a phenotype twice
             if (!rb.o.observations[i]) {
                 if (phenotype_frequencies[i] != 0)
-                if (best_phenotype_value < (temp = phenotype_frequencies[i] * scoringFunctionOnArray(phenoDiseaseDist[i]))) {
+                if (best_phenotype_value <= (temp = phenotype_frequencies[i] * scoringFunctionOnArray(phenoDiseaseDist[i]))) {
                     best_phenotype_index = i;
                     best_phenotype_value = temp;
                 }
@@ -543,7 +543,6 @@ public class NewRefinedBOQATest {
                 pheno_disease_freq.get(t).put(trueDisease, rnd.nextInt(freq_categories.length));
 
             } else {
-                pheno_disease_freq.put(t, new HashMap<ByteString, Integer>());
                 pheno_disease_freq.get(t).put(trueDisease, rnd.nextInt(freq_categories.length)); //these correspond to the frequency classes
 
             }
