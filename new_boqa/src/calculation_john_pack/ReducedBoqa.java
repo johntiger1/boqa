@@ -76,13 +76,23 @@ public class ReducedBoqa {
     public Observations o;
 
     private double initial_beta = 0.3 ; //this will approach the experimental beta
+
+    public double getExperimental_beta() {
+        return experimental_beta;
+    }
+
     private double experimental_beta = 0.01 ;
 
     public void setInitial_beta(double new_beta)
     {
+        System.out.println("I was called with" + new_beta);
         if (new_beta >= experimental_beta)
         {
             initial_beta = new_beta;
+        }
+
+        else{
+            initial_beta = experimental_beta;
         }
 
     }
@@ -163,7 +173,9 @@ public class ReducedBoqa {
     public int[][][] diffOffTermsFreqs;
 
 
-
+    public double[] getALPHA_GRID() {
+        return ALPHA_GRID;
+    }
 
     private double ALPHA_GRID[] = new double[] {  0.001 };
 
@@ -351,7 +363,7 @@ public class ReducedBoqa {
                 //i.e. AN observation must have been made
 
             }
-        } else {
+        } else { //(!hidden[node])
             //Note this will cause errors!: !o.real_observations.get(node)
             /* Term is truly off */
 

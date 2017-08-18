@@ -57,6 +57,17 @@ final public class ReducedConfiguration implements Cloneable
 
     final public int[] stats = new int[ReducedConfiguration.NodeCase.values().length]; ///this is literally just 8 or so
 
+//    @Override
+//    public boolean equals(Object o)
+//    {
+//        if (!(o instanceof ReducedConfiguration))
+//        {
+//
+//        }
+//
+//        return true;
+//    }
+
     public int getCases(ReducedConfiguration.NodeCase c)
     {
         return this.stats[c.ordinal()]; //what if we used an array?!

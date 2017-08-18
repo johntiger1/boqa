@@ -1,8 +1,6 @@
 package test;
 
 import calculation_john_pack.ReducedConfiguration;
-import com.sun.javafx.image.IntPixelGetter;
-import extra.IndexToTermPrinter;
 import ontologizer.association.Association;
 import ontologizer.association.AssociationContainer;
 import ontologizer.association.Gene2Associations;
@@ -19,7 +17,6 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.net.URLClassLoader;
 import java.util.*;
 import java.util.Map.Entry;
 
@@ -216,7 +213,7 @@ public class NewRefinedBOQATest {
         //for (int i = 0; i < 20 && i<order.length; i++) {
 
         //order.length/2\
-         int THRESHOLD = 2;
+         int THRESHOLD = 1;
         for (int i = 0; i < THRESHOLD ; i++) {
             int id = order[i]; //presumably, order[i] is now in order from lowest to msot score
 
@@ -557,6 +554,46 @@ public class NewRefinedBOQATest {
 
     }
 
+    public void checkScoresAreEqual(ReducedConfiguration rc1,
+                                  ReducedConfiguration rc2,
+                                    ReducedBoqa rb)
+    {
+
+
+
+        System.out.println("The beta values are " + rb.getInitial_beta()
+        + "for initial/naive beta" + rb.getExperimental_beta()
+                );
+        if (rc1.getScore(rb.getALPHA_GRID()[0],rb.getInitial_beta(),
+                rb.getExperimental_beta()) ==
+                rc2.getScore(rb.getALPHA_GRID()[0],rb.getInitial_beta(),
+                rb.getExperimental_beta()))
+        {
+            System.out.println("they are the same score");
+        }
+
+        else
+        {
+            System.out.println("they are not the same score;");
+        }
+
+    }
+
+    public void checkStatsAreSame(ReducedConfiguration rc1,
+                                  ReducedConfiguration rc2)
+    {
+        for (int i = 0; i<rc1.stats.length;i++)
+        {
+            if (rc1.stats[i]!=rc2.stats[i])
+            {
+                System.out.println("the configs are not equal");
+                return;
+            }
+        }
+
+        System.out.println("The configs are equal;");
+    }
+
     //approximateArrayList by printing the indices of where it is true only
     public List<Integer> getIndicesOfTrue(boolean [] arr)
     {
@@ -581,7 +618,7 @@ public class NewRefinedBOQATest {
         }
     }
 
-    public void printInfoAboutDisease(ReducedBoqa rb, int index)
+    public ReducedConfiguration printInfoAboutDisease(ReducedBoqa rb, int index)
     {
         System.out.println("This is the disease " +
                 rb.allItemList.get(index));
@@ -600,6 +637,8 @@ public class NewRefinedBOQATest {
         }
 
         System.out.println("this is its stats" + rc);
+
+        return rc;
     }
 
     @Test
@@ -680,7 +719,7 @@ public class NewRefinedBOQATest {
         //initalization/first step stuff
         ReducedBoqa.Result res=new ReducedBoqa.Result();
         steps++;
-        boqa.setInitial_beta(increment * steps);
+        boqa.setInitial_beta(boqa.getInitial_beta()-increment * steps);
         res = boqa.assignMarginals(o, false, 1);
         disease_frequencies = res.marginals;
         long total = System.nanoTime();
@@ -786,8 +825,7 @@ public class NewRefinedBOQATest {
             //test shoudl work:
 
             //updating steps for the next one:
-            steps++;
-            boqa.setInitial_beta(increment * steps);
+
             res = boqa.assignMarginals(o, false, 1);
             disease_frequencies = res.marginals;
 
@@ -796,9 +834,10 @@ public class NewRefinedBOQATest {
 //            System.out.println(java.util.Arrays.toString(res.scores));
 
             int max_ind = printTopDisease(res, boqa);
-            printInfoAboutDisease(boqa,max_ind);
-            printInfoAboutDisease(boqa,boqa.item2Index.get(trueDisease));
-
+            ReducedConfiguration rc1 = printInfoAboutDisease(boqa,max_ind);
+            ReducedConfiguration rc2 = printInfoAboutDisease(boqa,boqa.item2Index.get(trueDisease));
+            checkStatsAreSame(rc1,rc2);
+            checkScoresAreEqual(rc1,rc2, boqa);
             //sorts the array, by getScore and takes the top N
 
             initial_guesses = getTopDiseasesAsStrings(res,boqa); //we have essentially the top ids now
@@ -812,7 +851,8 @@ public class NewRefinedBOQATest {
                 System.out.println("we are finished! took " + steps
                 + " guesses");
             }
-
+            steps++;
+            boqa.setInitial_beta(boqa.getInitial_beta()-increment * steps);
             System.out.println("done loop iter. Took" + (System.nanoTime()-total));
         }
     }
