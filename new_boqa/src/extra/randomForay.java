@@ -19,7 +19,8 @@ public class randomForay {
 
         ByteString [] bs = new ByteString[11];
         bs[1] = new ByteString("aa");
-
+        int processors = Runtime.getRuntime().availableProcessors();
+        System.out.println("I have this many cores" + processors);
     }
 }
 
