@@ -91,10 +91,6 @@ public class ReducedBoqa {
             initial_beta = new_beta;
         }
 
-        else{
-            initial_beta = experimental_beta;
-        }
-
     }
 
     public double getInitial_beta()
