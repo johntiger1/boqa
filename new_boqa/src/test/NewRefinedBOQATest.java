@@ -80,7 +80,7 @@ public class NewRefinedBOQATest {
 
 
         }
-        Random r = new Random();
+        Random r = new Random(21);
         //this heavily rewards those with long parental chains. however we assume that
         //we only have the most specific. however, that is not justified!
         return r.nextDouble() < probs;
@@ -114,7 +114,7 @@ public class NewRefinedBOQATest {
 
 
         //Set the random to a seed
-        Random rnd = new Random();
+        Random rnd = new Random(2);
         AssociationContainer assocs = new AssociationContainer();
         for (int i = 0; i < num; i++) {
 
@@ -215,7 +215,7 @@ public class NewRefinedBOQATest {
         //for (int i = 0; i < 20 && i<order.length; i++) {
 
         //order.length/2\
-         int THRESHOLD = 10;
+         int THRESHOLD = 1;
         for (int i = 0; i < THRESHOLD ; i++) {
             int id = order[i]; //presumably, order[i] is now in order from lowest to msot score
 
@@ -515,7 +515,7 @@ public class NewRefinedBOQATest {
 
     public void generateTrueDisease(SlimDirectedGraphView<Term> slim, AssociationContainer assocs)
     {
-        Random rnd = new Random(); //this is our true disease
+        Random rnd = new Random(53); //this is our true disease
         for (int j = 0; j < rnd.nextInt(16) + 2; j++) {
             Term t;
             do {
@@ -659,7 +659,7 @@ public class NewRefinedBOQATest {
     public void testConvergenceWrapper() throws IOException, OBOParserException, URISyntaxException
     {
         double sum = 0;
-        int NUM_TESTS = 100;
+        int NUM_TESTS = 1;
 //        try (BufferedWriter bw = new BufferedWriter(new FileWriter(FILENAME))) {
 //
 //            String content = "This is the content to write into file\n";
@@ -874,7 +874,8 @@ public class NewRefinedBOQATest {
             //test shoudl work:
 
             //updating steps for the next one:
-
+            steps++;
+            boqa.setInitial_beta(increment * steps);
             res = boqa.assignMarginals(o, false, 1);
             disease_frequencies = res.marginals;
 
@@ -900,9 +901,9 @@ public class NewRefinedBOQATest {
                 System.out.println("we are finished! took " + steps
                 + " guesses");
             }
-            steps++;
-//            boqa.setInitial_beta(boqa.getInitial_beta()-increment * steps);
-            boqa.setInitial_beta(increment * steps);
+//            steps++;
+////            boqa.setInitial_beta(boqa.getInitial_beta()-increment * steps);
+//            boqa.setInitial_beta(increment * steps);
             System.out.println("done loop iter. Took" + (System.nanoTime()-total));
 
         }
