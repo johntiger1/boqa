@@ -48,7 +48,7 @@ public class NewRefinedBOQATest {
         return ind;
     }
 
-    public boolean getObservation(int index, ReducedBoqa rb) {
+    public boolean getObservation(int index, ReducedBoqa rb, boolean noise) {
         ; //as long as only Terns are vertices, we will be fine.
 
         //However, these results must correspond with
@@ -71,15 +71,26 @@ public class NewRefinedBOQATest {
             if (rb.slimGraph.isAncestor(target_pheno_to_check,t ))
             {
                 //DO NOT use this nakedly! (it will sum to > 1!)
-                probs+= pheno_disease_freq.get(t).get(trueDiseaseMapping.name()) ;
+                probs+= freq_categories[pheno_disease_freq.get(t).get(trueDiseaseMapping.name())] ;
+
             }
             ///This just has the frequency class (1-5)
             //for now, let us use it directly as P(ph|D)
 
+        if (noise)
+        {
+            //modify these probabilities
+            //if present: make it not
+            //
 
+        }
 
 
         }
+
+        //if noise:
+
+
         Random r = new Random();
         //this heavily rewards those with long parental chains. however we assume that
         //we only have the most specific. however, that is not justified!
@@ -692,6 +703,7 @@ public class NewRefinedBOQATest {
 
 
     public int testConvergence() throws IOException, OBOParserException, URISyntaxException {
+        boolean noise = false;
         int num = 10000;
         final ReducedBoqa boqa = new ReducedBoqa();
         //boqa.getOntology().
@@ -844,7 +856,7 @@ public class NewRefinedBOQATest {
                 System.out.println(boqa.slimGraph.getDescendants(tempt));
             }
 
-            boolean present_or_not = getObservation(index,boqa);
+            boolean present_or_not = getObservation(index,boqa, noise);
 
             //get input from physician, and update the observations object
             //ALL ancestors must be updated as well!
