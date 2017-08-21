@@ -12,7 +12,9 @@ import calculation_john_pack.ReducedBoqa;
 import org.junit.jupiter.api.Test;
 import sonumina.math.graph.SlimDirectedGraphView;
 
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -28,7 +30,7 @@ public class NewRefinedBOQATest {
     public int  getFreeObs( ReducedBoqa rb) {
         Term t;
         int ind = 0;
-        Random r = new Random (212);
+        Random r = new Random ();
         for (TermID tt : trueDiseaseMapping.getAssociations()) {
 
             t = rb.getOntology().getTerm(tt);
@@ -78,7 +80,7 @@ public class NewRefinedBOQATest {
 
 
         }
-        Random r = new Random(21);
+        Random r = new Random();
         //this heavily rewards those with long parental chains. however we assume that
         //we only have the most specific. however, that is not justified!
         return r.nextDouble() < probs;
@@ -112,7 +114,7 @@ public class NewRefinedBOQATest {
 
 
         //Set the random to a seed
-        Random rnd = new Random(2);
+        Random rnd = new Random();
         AssociationContainer assocs = new AssociationContainer();
         for (int i = 0; i < num; i++) {
 
@@ -513,7 +515,7 @@ public class NewRefinedBOQATest {
 
     public void generateTrueDisease(SlimDirectedGraphView<Term> slim, AssociationContainer assocs)
     {
-        Random rnd = new Random(53); //this is our true disease
+        Random rnd = new Random(); //this is our true disease
         for (int j = 0; j < rnd.nextInt(16) + 2; j++) {
             Term t;
             do {
@@ -641,13 +643,55 @@ public class NewRefinedBOQATest {
         return rc;
     }
 
-    public void testConvergenceWrapper()
-    {
-
-    }
+//    public void getBatchNumber()
+//    {
+//        List<String> readSmallTextFile(String aFileName) throws IOException {
+//        Path path = Paths.get(aFileName);
+//        return Files.readAllLines(path, ENCODING);
+//    } catch (IOException e) {
+//
+//            e.printStackTrace();
+//
+//        }
+//    }
 
     @Test
-    public void testConvergence() throws IOException, OBOParserException, URISyntaxException {
+    public void testConvergenceWrapper() throws IOException, OBOParserException, URISyntaxException
+    {
+        double sum = 0;
+        int NUM_TESTS = 100;
+//        try (BufferedWriter bw = new BufferedWriter(new FileWriter(FILENAME))) {
+//
+//            String content = "This is the content to write into file\n";
+//
+//            bw.write(content);
+//
+//            // no need to close it.
+//            //bw.close();
+//
+//            System.out.println("Done");
+//
+//        } catch (IOException e) {
+//
+//            e.printStackTrace();
+//
+//        }
+
+        for (int i = 0; i < NUM_TESTS; i++)
+        {
+            sum += testConvergence();
+            System.out.println("Done test "+ i );
+        }
+
+        System.out.printf("DONE RUNNING\n" +
+                "ran %d tests, avg is %f\n", NUM_TESTS, sum/NUM_TESTS);
+        //calls testConvergence repeatedly and tracks how long it took
+        //(idelaly, writes this info to a file)
+        //and computes avg, std. dev and such
+    }
+
+
+    public int testConvergence() throws IOException, OBOParserException, URISyntaxException {
         int num = 10000;
         final ReducedBoqa boqa = new ReducedBoqa();
         //boqa.getOntology().
@@ -714,7 +758,7 @@ public class NewRefinedBOQATest {
 //        index2item = buildReverseArrayMapping(boqa.item2Index);
 
         int steps = 0;
-        double increment = 0.29/138;
+        double increment = 0.01;
         boolean discovered = false;
         phenotype_frequencies = new double[numberOfTerms]; //alternatively, just copy over the
         //array length from the item2ancestors for example
@@ -729,9 +773,9 @@ public class NewRefinedBOQATest {
         disease_frequencies = res.marginals;
         long total = System.nanoTime();
         print_find_ancestors_of_trueDisease(boqa, tc);
-//        int free = getFreeObs(boqa);
-//        //should set the free to true as well.
-//        setAncestors(boqa, free);
+        int free = getFreeObs(boqa);
+        //should set the free to true as well.
+        setAncestors(boqa, free);
 //        o.observations[free] = true;
 //        o.real_observations[free] = true;
 
@@ -859,7 +903,9 @@ public class NewRefinedBOQATest {
             steps++;
             boqa.setInitial_beta(boqa.getInitial_beta()-increment * steps);
             System.out.println("done loop iter. Took" + (System.nanoTime()-total));
+
         }
+        return steps;
     }
 
     private int printTopDisease(ReducedBoqa.Result res,
