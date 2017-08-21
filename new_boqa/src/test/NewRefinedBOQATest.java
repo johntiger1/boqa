@@ -66,6 +66,9 @@ public class NewRefinedBOQATest {
         {
 
             t = rb.getOntology().getTerm(tt);
+
+
+
             //check if the term is a descendant of the input index term
             //Because you are your own ancestor, we do not need to deal with the self case specially.
             if (rb.slimGraph.isAncestor(target_pheno_to_check,t ))
@@ -82,6 +85,18 @@ public class NewRefinedBOQATest {
             //modify these probabilities
             //if present: make it not
             //
+            if (probs==0)
+            {
+
+
+            }
+
+            else
+            {
+
+            }
+
+
 
         }
 
@@ -779,7 +794,6 @@ public class NewRefinedBOQATest {
 
         //initalization/first step stuff
         ReducedBoqa.Result res=new ReducedBoqa.Result();
-        steps++;
         boqa.setInitial_beta(boqa.getInitial_beta()-increment * steps);
         res = boqa.assignMarginals(o, false, 1);
         disease_frequencies = res.marginals;
@@ -913,7 +927,7 @@ public class NewRefinedBOQATest {
                 + " guesses");
             }
             steps++;
-            boqa.setInitial_beta(boqa.getInitial_beta()-increment * steps);
+            boqa.setInitial_beta(boqa.getInitial_beta()-increment);
             System.out.println("done loop iter. Took" + (System.nanoTime()-total));
 
         }
