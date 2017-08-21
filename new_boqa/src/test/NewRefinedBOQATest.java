@@ -785,7 +785,7 @@ public class NewRefinedBOQATest {
 //        index2item = buildReverseArrayMapping(boqa.item2Index);
 
         int steps = 0;
-        double increment = 0.01;
+        double increment = 0.00; //using no unobs neg!:
         boolean discovered = false;
         phenotype_frequencies = new double[numberOfTerms]; //alternatively, just copy over the
         //array length from the item2ancestors for example
@@ -931,7 +931,7 @@ public class NewRefinedBOQATest {
             System.out.println("done loop iter. Took" + (System.nanoTime()-total));
 
         }
-        return steps;
+        return steps+1; //to stay consistent with the previous estimates
     }
 
     private int printTopDisease(ReducedBoqa.Result res,
