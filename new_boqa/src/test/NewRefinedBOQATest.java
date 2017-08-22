@@ -91,6 +91,7 @@ public class NewRefinedBOQATest {
             //
             if (probs==0)
             {
+                System.out.println("THIS IS --FP!!!!!");
                 return r.nextDouble() < rb.getALPHA_GRID()[0];
                 //with some probability, observe it!
 
@@ -104,6 +105,7 @@ public class NewRefinedBOQATest {
 
                 if (temp)
                 {
+                    System.out.println("THIS IS NOISE--FN!!");
                     return false;
 
                 }
@@ -735,7 +737,8 @@ public class NewRefinedBOQATest {
 
 
     public int testConvergence() throws IOException, OBOParserException, URISyntaxException {
-        boolean noise = false;
+        boolean noise = true;
+        boolean give_free = false;
         int num = 10000;
         final ReducedBoqa boqa = new ReducedBoqa();
         //boqa.getOntology().
@@ -816,9 +819,14 @@ public class NewRefinedBOQATest {
         disease_frequencies = res.marginals;
         long total = System.nanoTime();
         print_find_ancestors_of_trueDisease(boqa, tc);
-        int free = getFreeObs(boqa);
-        //should set the free to true as well.
-        setAncestors(boqa, free);
+
+        if (give_free)
+        {
+            int free = getFreeObs(boqa);
+            //should set the free to true as well.
+            setAncestors(boqa, free);
+        }
+
 //        o.observations[free] = true;
 //        o.real_observations[free] = true;
 
