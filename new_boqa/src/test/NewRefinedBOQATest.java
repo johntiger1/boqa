@@ -80,6 +80,10 @@ public class NewRefinedBOQATest {
             ///This just has the frequency class (1-5)
             //for now, let us use it directly as P(ph|D)
 
+
+
+        }
+        Random r = new Random();
         if (noise)
         {
             //modify these probabilities
@@ -87,26 +91,39 @@ public class NewRefinedBOQATest {
             //
             if (probs==0)
             {
+                return r.nextDouble() < rb.getALPHA_GRID()[0];
+                //with some probability, observe it!
 
 
             }
 
             else
             {
+                //with some probability don't observe;
+                boolean temp = r.nextDouble() < rb.getExperimental_beta();
+
+                if (temp)
+                {
+                    return false;
+
+                }
+
+                else {
+
+                    return true;
+                } //IOW, return complement of r.nextDouble()< ...
+                //note this treats it as being associated = being present,
+                //disregarding the frequencies!
 
             }
 
 
 
         }
-
-
-        }
-
         //if noise:
 
 
-        Random r = new Random();
+
         //this heavily rewards those with long parental chains. however we assume that
         //we only have the most specific. however, that is not justified!
         return r.nextDouble() < probs;
@@ -799,9 +816,9 @@ public class NewRefinedBOQATest {
         disease_frequencies = res.marginals;
         long total = System.nanoTime();
         print_find_ancestors_of_trueDisease(boqa, tc);
-//        int free = getFreeObs(boqa);
-//        //should set the free to true as well.
-//        setAncestors(boqa, free);
+        int free = getFreeObs(boqa);
+        //should set the free to true as well.
+        setAncestors(boqa, free);
 //        o.observations[free] = true;
 //        o.real_observations[free] = true;
 

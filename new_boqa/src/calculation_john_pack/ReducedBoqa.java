@@ -81,7 +81,7 @@ public class ReducedBoqa {
         return experimental_beta;
     }
 
-    private double experimental_beta = 0.01 ;
+    private double experimental_beta = 0.05 ;
 
     public void setInitial_beta(double new_beta)
     {
