@@ -12,7 +12,7 @@ public class PATParser {
     {
         System.out.println("Working Directory = " +
                 System.getProperty("user.dir"));
-        File inputFile = new File(".\\new_boqa\\resources\\phenotype_annotation.tab");
+        File inputFile = new File("C:\\Users\\johnp\\Desktop\\git_stuff\\boqa\\new_boqa\\resources\\phenotype_annotation.tab");
         System.out.println(inputFile.toString());
         try {
             HpoDiseaseAnnotationParser parser = new HpoDiseaseAnnotationParser(inputFile);
