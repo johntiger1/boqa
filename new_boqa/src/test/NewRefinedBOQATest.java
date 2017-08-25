@@ -74,8 +74,8 @@ public class NewRefinedBOQATest {
             if (rb.slimGraph.isAncestor(target_pheno_to_check,t ))
             {
                 //DO NOT use this nakedly! (it will sum to > 1!)
-                probs+= freq_categories[pheno_disease_freq.get(t).get(trueDiseaseMapping.name())] ;
-
+//                probs+= freq_categories[pheno_disease_freq.get(t).get(trueDiseaseMapping.name())] ;
+                probs+= pheno_disease_freq.get(t).get(trueDiseaseMapping.name()) ;
             }
             ///This just has the frequency class (1-5)
             //for now, let us use it directly as P(ph|D)
@@ -704,7 +704,7 @@ public class NewRefinedBOQATest {
     public void testConvergenceWrapper() throws IOException, OBOParserException, URISyntaxException
     {
         double sum = 0;
-        int NUM_TESTS = 100;
+        int NUM_TESTS = 1;
 //        try (BufferedWriter bw = new BufferedWriter(new FileWriter(FILENAME))) {
 //
 //            String content = "This is the content to write into file\n";
@@ -737,7 +737,7 @@ public class NewRefinedBOQATest {
 
 
     public int testConvergence() throws IOException, OBOParserException, URISyntaxException {
-        boolean noise = true;
+        boolean noise = false;
         boolean give_free = false;
         int num = 10000;
         final ReducedBoqa boqa = new ReducedBoqa();
