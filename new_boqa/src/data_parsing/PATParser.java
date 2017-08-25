@@ -10,9 +10,10 @@ import java.io.IOException;
 public class PATParser {
     public static void main(String[]args)
     {
-
-        File inputFile = new File("phenotype_annotation.tab");
-        
+        System.out.println("Working Directory = " +
+                System.getProperty("user.dir"));
+        File inputFile = new File(".\\new_boqa\\resources\\phenotype_annotation.tab");
+        System.out.println(inputFile.toString());
         try {
             HpoDiseaseAnnotationParser parser = new HpoDiseaseAnnotationParser(inputFile);
             while (parser.hasNext()) {
