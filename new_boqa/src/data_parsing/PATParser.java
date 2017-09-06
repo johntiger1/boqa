@@ -70,17 +70,33 @@ public class PATParser {
         return hpoFreqMap;
 
     }
-
+    public static Map<Term, Integer> getHPOToFreqMappingHardCoded(TermContainer tc)
+    {
+        Map<Term, Integer> hpoFreqMap = new HashMap<>();
+        Term t0 = tc.get("HP:0040280");
+        Term t1 = tc.get("HP:0040281");
+        Term t2 = tc.get("HP:0040282");
+        Term t3 = tc.get("HP:0040283");
+        Term t4 = tc.get("HP:0040284");
+        Term t5 = tc.get("HP:0040285");
+        hpoFreqMap.put(t0,0);
+        hpoFreqMap.put(t1,1);
+        hpoFreqMap.put(t2,2);
+        hpoFreqMap.put(t3,3);
+        hpoFreqMap.put(t4,4);
+        hpoFreqMap.put(t5,5);
+        return hpoFreqMap;
+    }
     public PATParser(){
 
     }
-
+    AssociationContainer assocs;
     public TermContainer doParse()  throws OBOParserException, IOException, URISyntaxException
     {
 
         SlimDirectedGraphView<Term> slim;
         OBOParser hpoParser = getOboParser();
-        AssociationContainer assocs;
+
         TermContainer tc = new TermContainer(hpoParser.getTermMap(), hpoParser.getFormatVersion(), hpoParser.getDate());
         Ontology ontology = new Ontology(tc);
         Map<Term, Integer> hpo2freq = getHPOToFreqMapping(tc);
@@ -100,7 +116,7 @@ public class PATParser {
             while (parser.hasNext()) {
                 HpoDiseaseAnnotation anno = parser.next();
 
-                if (anno.getDb().equals(OMIM_name))
+                if (anno.getDb().equals(ORPHA_name))
                 {
 //                    System.out.println(anno);
                     ByteString item = new ByteString(anno.getDbName());
@@ -145,6 +161,13 @@ public class PATParser {
 
 
                     assocs.addAssociation(a);
+                    //pick randomly using this
+//                    assocs.getAllAnnotatedGenes().size()
+                    //then: update the freq dict (so it goes from 0 to 6, 7 indices), and then:
+                    //then: why can't we run BOQA?
+                    //possibly some more tweaking with the false pos/neg on the diseases
+                    //probably need to instantiate this in the other class, so that we can still access it
+
                 }
 
 
@@ -159,13 +182,15 @@ public class PATParser {
         return tc;
     }
 
-    static final String OMIM_name = "OMIM"; //Constant
-    static final String ORPHA_name = "ORPHA"; //Constant
+    public static final String OMIM_name = "OMIM"; //Constant
+    public static final String ORPHA_name = "ORPHA"; //Constant
     public static void main(String[]args) throws OBOParserException, IOException, URISyntaxException {
         PATParser p = new PATParser();
         TermContainer tc = p.doParse();
         System.out.println("done");
         Object o  = p.pheno_disease_freq.get(tc.get("HP:0000028"));
+
+        //probably need list of diseases
 
     }
 

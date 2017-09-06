@@ -1,6 +1,10 @@
 package test;
 
 import calculation_john_pack.ReducedConfiguration;
+import com.github.phenomics.ontolib.formats.hpo.HpoDiseaseAnnotation;
+import com.github.phenomics.ontolib.io.base.TermAnnotationParserException;
+import com.github.phenomics.ontolib.io.obo.hpo.HpoDiseaseAnnotationParser;
+import data_parsing.PATParser;
 import ontologizer.association.Association;
 import ontologizer.association.AssociationContainer;
 import ontologizer.association.Gene2Associations;
@@ -21,6 +25,9 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.*;
 import java.util.Map.Entry;
+
+import static data_parsing.PATParser.ORPHA_name;
+import static data_parsing.PATParser.getHPOToFreqMappingHardCoded;
 
 /**
  * Created by johnp on 2017-06-29.
@@ -154,44 +161,49 @@ public class NewRefinedBOQATest {
     public AssociationContainer generateAnnotations(int num, SlimDirectedGraphView<Term> slim,
                                                     TermContainer tc
     ) {
-        initializeHashmap(tc);
-        //initialize all the inner hashmaps:
 
 
-        //Set the random to a seed
-        Random rnd = new Random();
-        AssociationContainer assocs = new AssociationContainer();
-        for (int i = 0; i < num; i++) {
+        PATParser p = new PATParser();
+        p.doParse()
 
-            ByteString item = new ByteString("item" + i);
-
-            for (int j = 0; j < rnd.nextInt(16) + 2; j++) {
-                Term t;
-                do {
-                    t = slim.getVertex(rnd.nextInt(slim.getNumberOfVertices())); //randomly select a vertex
-                    //keeps doing this til it gets a non-obsolete vertex
-                } while (t.isObsolete());
-                Association a = new Association(item, t.getIDAsString());
-                //here we are simply required to remember what TID and temr was.
-                //we want to be able to update the indices, based on the vertex2ancestor info from before, and
-                //we CAN do that!
-                //since for example, the interface between
-                //let us make it a mapping between terms, and items and frequencies
-
-                if (pheno_disease_freq.containsKey(t)) {
-                    pheno_disease_freq.get(t).put(item, rnd.nextInt(freq_categories.length));
-
-                } else {
-                    pheno_disease_freq.put(t, new HashMap<ByteString, Integer>());
-                    pheno_disease_freq.get(t).put(item, rnd.nextInt(freq_categories.length)); //these correspond to the frequency classes
-
-                }
-
-                assocs.addAssociation(a);
-            }
-        }
-
-        return assocs;
+//        initializeHashmap(tc);
+//        //initialize all the inner hashmaps:
+//
+//
+//        //Set the random to a seed
+//        Random rnd = new Random();
+//        AssociationContainer assocs = new AssociationContainer();
+//        for (int i = 0; i < num; i++) {
+//
+//            ByteString item = new ByteString("item" + i);
+//
+//            for (int j = 0; j < rnd.nextInt(16) + 2; j++) {
+//                Term t;
+//                do {
+//                    t = slim.getVertex(rnd.nextInt(slim.getNumberOfVertices())); //randomly select a vertex
+//                    //keeps doing this til it gets a non-obsolete vertex
+//                } while (t.isObsolete());
+//                Association a = new Association(item, t.getIDAsString());
+//                //here we are simply required to remember what TID and temr was.
+//                //we want to be able to update the indices, based on the vertex2ancestor info from before, and
+//                //we CAN do that!
+//                //since for example, the interface between
+//                //let us make it a mapping between terms, and items and frequencies
+//
+//                if (pheno_disease_freq.containsKey(t)) {
+//                    pheno_disease_freq.get(t).put(item, rnd.nextInt(freq_categories.length));
+//
+//                } else {
+//                    pheno_disease_freq.put(t, new HashMap<ByteString, Integer>());
+//                    pheno_disease_freq.get(t).put(item, rnd.nextInt(freq_categories.length)); //these correspond to the frequency classes
+//
+//                }
+//
+//                assocs.addAssociation(a);
+//            }
+//        }
+//
+//        return assocs;
     }
 
 //    public static void printParallelSorted(double [] array,
@@ -735,6 +747,107 @@ public class NewRefinedBOQATest {
         //and computes avg, std. dev and such
     }
 
+
+    public Gene2Associations getTrueDisease(AssociationContainer assocs)
+    {
+        Random r = new Random(234);
+//        int i =0;
+        int selected = r.nextInt(assocs.getAllAnnotatedGenes().size());
+//        while ( i < selected)
+//        {
+//
+//        }
+        Set<ByteString> allDisease = assocs.getAllAnnotatedGenes();
+        Iterator<ByteString> iter = allDisease.iterator();
+        ByteString tD = null;
+        for (int i = 0; i < selected; i++)
+        {
+            tD = iter.next();
+            i++;
+
+        }
+
+        return assocs.get(tD);
+//        return assocs.get(assocs.getAllAnnotatedGenes().)r.nextInt(assocs.getAllAnnotatedGenes().size());
+//        assocs.getAllAnnotatedGenes().size()
+
+
+    }
+
+    public AssociationContainer getAnnotations(TermContainer tc)  throws OBOParserException, IOException, URISyntaxException
+    {
+        Map<Term, Integer> hpo2freq = getHPOToFreqMappingHardCoded(tc);
+        initializeHashmap(tc);
+        //need to add all the diseases in... the issue is that: we don't have a group by!
+        //hence, we should check the diseaseContainer if it is already there
+
+
+        AssociationContainer assocs = new AssociationContainer();
+
+        System.out.println("Working Directory = " +
+                System.getProperty("user.dir"));
+        File inputFile = new File("C:\\Users\\johnp\\Desktop\\git_stuff\\boqa\\new_boqa\\resources\\phenotype_annotation.tab");
+//        System.out.println(inputFile.toString());
+        try {
+            HpoDiseaseAnnotationParser parser = new HpoDiseaseAnnotationParser(inputFile);
+            while (parser.hasNext()) {
+                HpoDiseaseAnnotation anno = parser.next();
+
+                if (anno.getDb().equals(ORPHA_name))
+                {
+//                    System.out.println(anno);
+                    ByteString item = new ByteString(anno.getDbName());
+
+//                Term t = slim.getVertex()
+//                Term t  = new Term(new TermID(anno.getTermId().getIdWithPrefix()));
+
+                    TermID t = new TermID(anno.getTermId().getIdWithPrefix());
+
+                    //This is the solution!
+                    Term tx = tc.get(t);
+
+
+                    Association a = new Association(item, tx.getIDAsString());
+                    String freq_mod = anno.getFrequencyModifier();
+                    if (freq_mod.equals(""))
+                    {
+                        pheno_disease_freq.get(tx).put(item, 6); //special 0.5 case
+                    }
+
+                    else{
+//                        System.out.println(freq_mod);
+//                        System.out.println(anno);
+                        Term freq_term = tc.get(freq_mod);
+
+                        pheno_disease_freq.get(tx).put(item, hpo2freq.get(freq_term));
+                    }
+
+
+//                pheno_disease_freq.get(t).put(item, hpo2freq.get(freq_term));
+
+
+
+                    assocs.addAssociation(a);
+                    //pick randomly using this
+//                    assocs.getAllAnnotatedGenes().size()
+                    //then: update the freq dict (so it goes from 0 to 6, 7 indices), and then:
+                    //then: why can't we run BOQA?
+                    //possibly some more tweaking with the false pos/neg on the diseases
+                    //probably need to instantiate this in the other class, so that we can still access it
+
+                }
+
+
+
+            }
+        } catch (IOException e) {
+            System.err.println("Problem reading from file.");
+        } catch (TermAnnotationParserException e) {
+            System.err.println("Problem parsing file.");
+        }
+        System.out.println("done");
+        return assocs;
+    }
 
     public int testConvergence() throws IOException, OBOParserException, URISyntaxException {
         boolean noise = false;
