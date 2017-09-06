@@ -32,10 +32,42 @@ public class PATParser {
     }
 
     public Map<Term, Integer> getHPOToFreqMapping(TermContainer tc)
+//            , SlimDirectedGraphView<Term>slim)
     {
         //check if the term is already in there!
 //        tc.get().
-        return null;
+
+        //Get the parent (frequency), then get the child
+//        Term freq_category;
+//        slim.vertexChildren;
+//        freq_category = tc.get("HP:0040279");
+//
+//        int index_of_freq_category = slim.getVertexIndex(freq_category);
+//        //check each kid
+//
+//        for (int x: slim.vertexChildren[index_of_freq_category])
+//        {
+//
+//        }
+//        t.ge
+        Map<Term, Integer> hpoFreqMap = new HashMap<>();
+        Term t0 = tc.get("HP:0040280");
+        Term t1 = tc.get("HP:0040281");
+        Term t2 = tc.get("HP:0040282");
+        Term t3 = tc.get("HP:0040283");
+        Term t4 = tc.get("HP:0040284");
+        Term t5 = tc.get("HP:0040285");
+        hpoFreqMap.put(t0,0);
+        hpoFreqMap.put(t1,1);
+        hpoFreqMap.put(t2,2);
+        hpoFreqMap.put(t3,3);
+        hpoFreqMap.put(t4,4);
+        hpoFreqMap.put(t5,5);
+
+
+
+        //if we pass in the graph, then we can just immediately do inference that way
+        return hpoFreqMap;
 
     }
 
@@ -95,7 +127,8 @@ public class PATParser {
                 //we CAN do that!
                 //since for example, the interface between
                 //let us make it a mapping between terms, and items and frequencies
-                pheno_disease_freq.get(t).put(item, hpo2freq.get(tc.get(anno.getFrequencyModifier())));
+                Term freq_term = tc.get(anno.getFrequencyModifier());
+//                pheno_disease_freq.get(t).put(item, hpo2freq.get(freq_term));
 
 
 
