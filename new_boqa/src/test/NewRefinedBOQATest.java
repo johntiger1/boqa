@@ -747,39 +747,15 @@ public class NewRefinedBOQATest {
         //vertex2ancestors just immediately from boqa)
 
         //get the file, then get its canonical path
+        OBOParser hpoParser = getOboParser();
+        removeObsoleteTerms(hpoParser);
         AssociationContainer assocs;
-
-
-        URL resource = ClassLoader.getSystemResource("hp.obo.gz");
-        ClassLoader cl = ClassLoader.getSystemClassLoader();
-
-//        URL[] urls = ((URLClassLoader)cl).getURLs();
-//
-//        for(URL url: urls){
-//            System.out.println(url.getFile());
-//        }
-        if (resource == null) {
-            throw new NullPointerException("Couldn't find it!");
-        }
-        URI resourceURI = resource.toURI();
-        File hpo_file = new File(resourceURI);
-        String final_path = hpo_file.getCanonicalPath();
-        //.toURI();
-
-        OBOParser hpoParser = new OBOParser(
-                final_path);
-        hpoParser.doParse();
-        //this line illustrates the 301 lesson: getting an object, then being able to modify it
-        //we should return a copy of it or something
-        long start = System.nanoTime();
-        removeObsoleteTerms(hpoParser, start);
+        long start;
 
 
         //blackbox: it gets all the terms (in the HPO)
         //getTermMap returns a list of all terms!
         TermContainer tc = new TermContainer(hpoParser.getTermMap(), hpoParser.getFormatVersion(), hpoParser.getDate());
-
-
         Ontology ontology = new Ontology(tc);
         SlimDirectedGraphView<Term> slim = ontology.getSlimGraphView();
 
@@ -959,6 +935,35 @@ public class NewRefinedBOQATest {
         return steps+1; //to stay consistent with the previous estimates
     }
 
+    public static OBOParser getOboParser() throws URISyntaxException, IOException, OBOParserException {
+        AssociationContainer assocs;
+
+
+        URL resource = ClassLoader.getSystemResource("hp.obo");
+        ClassLoader cl = ClassLoader.getSystemClassLoader();
+
+//        URL[] urls = ((URLClassLoader)cl).getURLs();
+//
+//        for(URL url: urls){
+//            System.out.println(url.getFile());
+//        }
+        if (resource == null) {
+            throw new NullPointerException("Couldn't find it!");
+        }
+        URI resourceURI = resource.toURI();
+        File hpo_file = new File(resourceURI);
+        String final_path = hpo_file.getCanonicalPath();
+        //.toURI();
+
+        OBOParser hpoParser = new OBOParser(
+                final_path);
+        hpoParser.doParse();
+        //this line illustrates the 301 lesson: getting an object, then being able to modify it
+        //we should return a copy of it or something
+
+        return hpoParser;
+    }
+
     private int printTopDisease(ReducedBoqa.Result res,
                                  ReducedBoqa rb) {
         //Computes max element and the index it occurs at
@@ -1011,7 +1016,7 @@ public class NewRefinedBOQATest {
 
     }
 
-    private void removeObsoleteTerms(OBOParser hpoParser, long start) {
+    private void removeObsoleteTerms(OBOParser hpoParser) {
         Set<Term> terms = hpoParser.getTermMap();
         Iterator<Term> iter= terms.iterator();
 
@@ -1025,6 +1030,5 @@ public class NewRefinedBOQATest {
                 iter.remove();
             }
         }
-        System.out.println("Removal of obsolete took" + (System.nanoTime()-start));
     }
 }

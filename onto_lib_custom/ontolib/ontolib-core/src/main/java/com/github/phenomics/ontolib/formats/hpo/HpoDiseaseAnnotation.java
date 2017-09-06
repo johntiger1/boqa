@@ -7,6 +7,7 @@ import com.github.phenomics.ontolib.base.OntoLibRuntimeException;
 import com.github.phenomics.ontolib.ontology.data.TermAnnotation;
 import com.github.phenomics.ontolib.ontology.data.TermId;
 import com.google.common.collect.ComparisonChain;
+import ontologizer.go.TermID;
 
 // TODO: discuss with Sebastian whether this is the correct naming and description
 // TODO: use more enumeration types?
@@ -172,6 +173,9 @@ public final class HpoDiseaseAnnotation implements TermAnnotation {
   public TermId getHpoId() {
     return hpoId;
   }
+
+
+
 
   /**
    * @return Reference of entry, e.g., <code>OMIM:154700</code> or <code>PMId:15517394</code>.
