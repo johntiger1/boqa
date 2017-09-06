@@ -75,7 +75,7 @@ public class PATParser {
 
     }
 
-    public void doParse()  throws OBOParserException, IOException, URISyntaxException
+    public TermContainer doParse()  throws OBOParserException, IOException, URISyntaxException
     {
 
         SlimDirectedGraphView<Term> slim;
@@ -94,7 +94,7 @@ public class PATParser {
         System.out.println("Working Directory = " +
                 System.getProperty("user.dir"));
         File inputFile = new File("C:\\Users\\johnp\\Desktop\\git_stuff\\boqa\\new_boqa\\resources\\phenotype_annotation.tab");
-        System.out.println(inputFile.toString());
+//        System.out.println(inputFile.toString());
         try {
             HpoDiseaseAnnotationParser parser = new HpoDiseaseAnnotationParser(inputFile);
             while (parser.hasNext()) {
@@ -102,7 +102,7 @@ public class PATParser {
 
                 if (anno.getDb().equals(OMIM_name))
                 {
-                    System.out.println(anno);
+//                    System.out.println(anno);
                     ByteString item = new ByteString(anno.getDbName());
 
 //                Term t = slim.getVertex()
@@ -132,8 +132,8 @@ public class PATParser {
                     }
 
                     else{
-                        System.out.println(freq_mod);
-                        System.out.println(anno);
+//                        System.out.println(freq_mod);
+//                        System.out.println(anno);
                         Term freq_term = tc.get(freq_mod);
 
                         pheno_disease_freq.get(tx).put(item, hpo2freq.get(freq_term));
@@ -156,15 +156,16 @@ public class PATParser {
             System.err.println("Problem parsing file.");
         }
         System.out.println("done");
-
+        return tc;
     }
 
     static final String OMIM_name = "OMIM"; //Constant
     static final String ORPHA_name = "ORPHA"; //Constant
     public static void main(String[]args) throws OBOParserException, IOException, URISyntaxException {
         PATParser p = new PATParser();
-        p.doParse();
+        TermContainer tc = p.doParse();
         System.out.println("done");
+        Object o  = p.pheno_disease_freq.get(tc.get("HP:0000028"));
 
     }
 
