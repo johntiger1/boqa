@@ -155,14 +155,16 @@ public class PATParser {
         } catch (TermAnnotationParserException e) {
             System.err.println("Problem parsing file.");
         }
-
+        System.out.println("done");
 
     }
 
     static final String OMIM_name = "OMIM"; //Constant
+    static final String ORPHA_name = "ORPHA"; //Constant
     public static void main(String[]args) throws OBOParserException, IOException, URISyntaxException {
         PATParser p = new PATParser();
         p.doParse();
+        System.out.println("done");
 
     }
 
