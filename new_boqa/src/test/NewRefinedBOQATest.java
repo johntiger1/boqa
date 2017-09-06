@@ -160,50 +160,50 @@ public class NewRefinedBOQATest {
     //Diseases get 2 to 18 annotations, mirroring real life.
     public AssociationContainer generateAnnotations(int num, SlimDirectedGraphView<Term> slim,
                                                     TermContainer tc
-    ) {
+    )
+    {
 
 
-        PATParser p = new PATParser();
-        p.doParse()
 
-//        initializeHashmap(tc);
-//        //initialize all the inner hashmaps:
-//
-//
-//        //Set the random to a seed
-//        Random rnd = new Random();
-//        AssociationContainer assocs = new AssociationContainer();
-//        for (int i = 0; i < num; i++) {
-//
-//            ByteString item = new ByteString("item" + i);
-//
-//            for (int j = 0; j < rnd.nextInt(16) + 2; j++) {
-//                Term t;
-//                do {
-//                    t = slim.getVertex(rnd.nextInt(slim.getNumberOfVertices())); //randomly select a vertex
-//                    //keeps doing this til it gets a non-obsolete vertex
-//                } while (t.isObsolete());
-//                Association a = new Association(item, t.getIDAsString());
-//                //here we are simply required to remember what TID and temr was.
-//                //we want to be able to update the indices, based on the vertex2ancestor info from before, and
-//                //we CAN do that!
-//                //since for example, the interface between
-//                //let us make it a mapping between terms, and items and frequencies
-//
-//                if (pheno_disease_freq.containsKey(t)) {
-//                    pheno_disease_freq.get(t).put(item, rnd.nextInt(freq_categories.length));
-//
-//                } else {
-//                    pheno_disease_freq.put(t, new HashMap<ByteString, Integer>());
-//                    pheno_disease_freq.get(t).put(item, rnd.nextInt(freq_categories.length)); //these correspond to the frequency classes
-//
-//                }
-//
-//                assocs.addAssociation(a);
-//            }
-//        }
-//
-//        return assocs;
+
+        initializeHashmap(tc);
+        //initialize all the inner hashmaps:
+
+
+        //Set the random to a seed
+        Random rnd = new Random();
+        AssociationContainer assocs = new AssociationContainer();
+        for (int i = 0; i < num; i++) {
+
+            ByteString item = new ByteString("item" + i);
+
+            for (int j = 0; j < rnd.nextInt(16) + 2; j++) {
+                Term t;
+                do {
+                    t = slim.getVertex(rnd.nextInt(slim.getNumberOfVertices())); //randomly select a vertex
+                    //keeps doing this til it gets a non-obsolete vertex
+                } while (t.isObsolete());
+                Association a = new Association(item, t.getIDAsString());
+                //here we are simply required to remember what TID and temr was.
+                //we want to be able to update the indices, based on the vertex2ancestor info from before, and
+                //we CAN do that!
+                //since for example, the interface between
+                //let us make it a mapping between terms, and items and frequencies
+
+                if (pheno_disease_freq.containsKey(t)) {
+                    pheno_disease_freq.get(t).put(item, rnd.nextInt(freq_categories.length));
+
+                } else {
+                    pheno_disease_freq.put(t, new HashMap<ByteString, Integer>());
+                    pheno_disease_freq.get(t).put(item, rnd.nextInt(freq_categories.length)); //these correspond to the frequency classes
+
+                }
+
+                assocs.addAssociation(a);
+            }
+        }
+
+        return assocs;
     }
 
 //    public static void printParallelSorted(double [] array,
@@ -411,7 +411,7 @@ public class NewRefinedBOQATest {
     double[] phenotype_frequencies;
     double[] disease_frequencies; //this is actually just BOQA's marginals
     HashMap<Term, HashMap<ByteString, Integer>> pheno_disease_freq;
-    double [] freq_categories = {0.2,0.4,0.6,0.8,1};
+    double [] freq_categories = {1, 0.9, 0.55, 0.175,0.02,0,0.4};
     ByteString trueDisease;
     Set<Term> trueDiseasePhentoypes; //perhaps an association container might have been best
     //AssociationContainer;
@@ -716,7 +716,7 @@ public class NewRefinedBOQATest {
     public void testConvergenceWrapper() throws IOException, OBOParserException, URISyntaxException
     {
         double sum = 0;
-        int NUM_TESTS = 1;
+        int NUM_TESTS = 100;
 //        try (BufferedWriter bw = new BufferedWriter(new FileWriter(FILENAME))) {
 //
 //            String content = "This is the content to write into file\n";
@@ -748,9 +748,9 @@ public class NewRefinedBOQATest {
     }
 
 
-    public Gene2Associations getTrueDisease(AssociationContainer assocs)
+    public ByteString getTrueDisease(AssociationContainer assocs)
     {
-        Random r = new Random(234);
+        Random r = new Random();
 //        int i =0;
         int selected = r.nextInt(assocs.getAllAnnotatedGenes().size());
 //        while ( i < selected)
@@ -766,8 +766,9 @@ public class NewRefinedBOQATest {
             i++;
 
         }
-
-        return assocs.get(tD);
+        System.out.println("there are " + assocs.getAllAnnotatedGenes().size() + " diseases");
+        return tD;
+//        return assocs.get(tD);
 //        return assocs.get(assocs.getAllAnnotatedGenes().)r.nextInt(assocs.getAllAnnotatedGenes().size());
 //        assocs.getAllAnnotatedGenes().size()
 
@@ -850,8 +851,8 @@ public class NewRefinedBOQATest {
     }
 
     public int testConvergence() throws IOException, OBOParserException, URISyntaxException {
-        boolean noise = false;
-        boolean give_free = false;
+        boolean noise = true;
+        boolean give_free = true;
         int num = 10000;
         final ReducedBoqa boqa = new ReducedBoqa();
         //boqa.getOntology().
@@ -873,12 +874,14 @@ public class NewRefinedBOQATest {
         SlimDirectedGraphView<Term> slim = ontology.getSlimGraphView();
 
 
-        assocs = generateAnnotations(num, slim, tc);
+//        assocs = generateAnnotations(num, slim, tc);
+        assocs = getAnnotations(tc);
+//        trueDisease = new ByteString("item" + num);
+//        trueDiseaseMapping = new Gene2Associations(trueDisease);
 
-        trueDisease = new ByteString("item" + num);
-        trueDiseaseMapping = new Gene2Associations(trueDisease);
-
-        generateTrueDisease(slim, assocs);
+//        generateTrueDisease(slim, assocs);
+        trueDisease = getTrueDisease(assocs);
+        trueDiseaseMapping = assocs.get(trueDisease);
 
 
         Observations o = new Observations();
