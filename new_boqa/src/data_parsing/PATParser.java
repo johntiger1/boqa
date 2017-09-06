@@ -103,50 +103,51 @@ public class PATParser {
                 if (anno.getDb().equals(OMIM_name))
                 {
                     System.out.println(anno);
-                }
-
-                ByteString item = new ByteString(anno.getDbName());
+                    ByteString item = new ByteString(anno.getDbName());
 
 //                Term t = slim.getVertex()
 //                Term t  = new Term(new TermID(anno.getTermId().getIdWithPrefix()));
 
-                TermID t = new TermID(anno.getTermId().getIdWithPrefix());
+                    TermID t = new TermID(anno.getTermId().getIdWithPrefix());
 
-                //This is the solution!
-                Term tx = tc.get(t);
+                    //This is the solution!
+                    Term tx = tc.get(t);
 
 
-                Association a = new Association(item, tx.getIDAsString());
+                    Association a = new Association(item, tx.getIDAsString());
 
-                //it will auto group it if its already in there!
+                    //it will auto group it if its already in there!
 //                if (assocs.containsGene(item))
 //                {
 //                    assocs.
-                //here we are simply required to remember what TID and temr was.
-                //we want to be able to update the indices, based on the vertex2ancestor info from before, and
-                //we CAN do that!
-                //since for example, the interface between
-                //let us make it a mapping between terms, and items and frequencies
-                String freq_mod = anno.getFrequencyModifier();
-                if (freq_mod.equals(""))
-                {
-                    pheno_disease_freq.get(tx).put(item, 6); //special 0.5 case
-                }
+                    //here we are simply required to remember what TID and temr was.
+                    //we want to be able to update the indices, based on the vertex2ancestor info from before, and
+                    //we CAN do that!
+                    //since for example, the interface between
+                    //let us make it a mapping between terms, and items and frequencies
+                    String freq_mod = anno.getFrequencyModifier();
+                    if (freq_mod.equals(""))
+                    {
+                        pheno_disease_freq.get(tx).put(item, 6); //special 0.5 case
+                    }
 
-                else{
-                    System.out.println(freq_mod);
-                    System.out.println(anno);
-                    Term freq_term = tc.get(freq_mod);
+                    else{
+                        System.out.println(freq_mod);
+                        System.out.println(anno);
+                        Term freq_term = tc.get(freq_mod);
 
-                    pheno_disease_freq.get(tx).put(item, hpo2freq.get(freq_term));
-                }
+                        pheno_disease_freq.get(tx).put(item, hpo2freq.get(freq_term));
+                    }
 
 
 //                pheno_disease_freq.get(t).put(item, hpo2freq.get(freq_term));
 
 
 
-                assocs.addAssociation(a);
+                    assocs.addAssociation(a);
+                }
+
+
 
             }
         } catch (IOException e) {
