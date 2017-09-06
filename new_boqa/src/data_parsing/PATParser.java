@@ -127,7 +127,21 @@ public class PATParser {
                 //we CAN do that!
                 //since for example, the interface between
                 //let us make it a mapping between terms, and items and frequencies
-                Term freq_term = tc.get(anno.getFrequencyModifier());
+                String freq_mod = anno.getFrequencyModifier();
+                if (freq_mod.equals(""))
+                {
+                    pheno_disease_freq.get(tx).put(item, 6); //special 0.5 case
+                }
+
+                else{
+                    System.out.println(freq_mod);
+                    System.out.println(anno);
+                    Term freq_term = tc.get(freq_mod);
+
+                    pheno_disease_freq.get(tx).put(item, hpo2freq.get(freq_term));
+                }
+
+
 //                pheno_disease_freq.get(t).put(item, hpo2freq.get(freq_term));
 
 
@@ -140,6 +154,8 @@ public class PATParser {
         } catch (TermAnnotationParserException e) {
             System.err.println("Problem parsing file.");
         }
+
+
     }
 
     static final String OMIM_name = "OMIM"; //Constant
