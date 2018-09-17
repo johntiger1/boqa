@@ -92,7 +92,7 @@ public class NewRefinedBOQATest {
 
 
         }
-        Random r = new Random();
+        Random r = new Random(2);
         if (noise)
         {
             //modify these probabilities
@@ -376,7 +376,7 @@ public class NewRefinedBOQATest {
     }
 
 //    QJK: Essentially, we WERE computing underneath the split before!
-    public int QJKGetBestPhenotype(ReducedBoqa rb, double[] phenotype_frequencies) {
+    public int ObsoleteQJKGetBestPhenotype(ReducedBoqa rb, double[] phenotype_frequencies) {
         //why not just maintain the observed array from before?
         //int [] top_phenotypes; //TODO keep the n largest phenotypes
         //we can use a min heap here! we want to maintain the largest k elements in a stream
@@ -453,6 +453,34 @@ public class NewRefinedBOQATest {
     }
 
 
+    public double[] normalizeMarginals(double [] freqs){
+
+        double sum = 0;
+        for (double marg : freqs) {
+            sum += marg;
+        }
+        double [] normalized = Arrays.copyOf(freqs, freqs.length);
+        for (int i =0; i <freqs.length; i++)
+        {
+            normalized[i] /= sum;
+        }
+
+
+        return normalized;
+
+    }
+    public double QJKscoringFunctionOnArray(double [] freqs) {
+
+        double entropy = 0;
+
+        for (double marg : normalizeMarginals(freqs)) {
+            double intermediate = Math.log(marg)*marg;
+            entropy += Math.log(marg)*marg;
+        }
+
+        return entropy*-1;
+    }
+
     public double scoringFunctionOnArray(double [] freqs) {
 
         return 1;
@@ -465,28 +493,28 @@ public class NewRefinedBOQATest {
 //        return -score;
     }
 
-    public int QJKBestPhenotype()
+    public int QJKBestPhenotype(double [][] phenoDiseaseDist, ReducedBoqa rb)
     {
-        //Find the initial marginals,
-        // and then pick the GAIN
-        double initial_entropy = 0;
-
-        for (double marg_prob: disease_frequencies)
+        int best_phenotype_index = -1;
+        double best_phenotype_value = Double.POSITIVE_INFINITY;
+        double temp = 0;
+        double val;
+        for (int i = 0; i<phenoDiseaseDist.length; i++)
         {
-            initial_entropy+=Math.log(marg_prob)*marg_prob;
+            //assert rb.o.observations.length =phenoDiseaseDist.length
+            //We cannot return pick a phenotype twice
+            if (!rb.o.observations[i]) {
+                if (phenotype_frequencies[i] != 0)
 
+//                    QJK: as it stands right now, we simply ask for the most likely phenotype!
+                    if (best_phenotype_value >= (temp = phenotype_frequencies[i] * QJKscoringFunctionOnArray(phenoDiseaseDist[i]))) {
+                        best_phenotype_index = i;
+                        best_phenotype_value = temp;
+                    }
+            }
 
         }
-
-//        split entropy (do it for each new one)
-//        p(ph)
-
-        for (double pheno_prob: phenotype_frequencies){
-
-
-        }
-
-        return 0;
+        return best_phenotype_index;
     }
 
     //pheno rows, disease cols
@@ -542,7 +570,7 @@ public class NewRefinedBOQATest {
     //AssociationContainer;
     Gene2Associations gx = new Gene2Associations(new ByteString("aa"));
     Gene2Associations trueDiseaseMapping;
-
+    List<ByteString> all_diseases = new ArrayList<>();
     ByteString[] index2item;
 
     /***
@@ -587,6 +615,8 @@ public class NewRefinedBOQATest {
 //        System.out.println("finish compute of Phi");
 //        System.out.println("done, took " + (System.nanoTime()-start));
 
+//        QJK normalization step:
+//        phi_phenotype_frequencies = normalizeMarginals(phi_phenotype_frequencies);
     }
     //computes it from the REST of the array.
     public void computePhenotypeFrequencies(ReducedBoqa rb)
@@ -618,8 +648,8 @@ public class NewRefinedBOQATest {
 //        System.out.println("finish compute of phen-freq");
 //        System.out.println("done, took " + (System.nanoTime()-start));
 
-
-
+//QJK: normalization
+//        phenotype_frequencies = normalizeMarginals(phenotype_frequencies);
 
 
     }
@@ -704,6 +734,19 @@ public class NewRefinedBOQATest {
         return score;
     }
 
+    public void QJKgenerateTrueDisease( AssociationContainer assocs)
+    {
+
+        int limit = all_diseases.size();
+
+        Random rnd = new Random(2);
+        int disease = rnd.nextInt(limit);
+        trueDisease = all_diseases.get(disease);
+        trueDiseaseMapping = assocs.get(trueDisease);
+
+
+
+    }
 
     public void generateTrueDisease(SlimDirectedGraphView<Term> slim, AssociationContainer assocs)
     {
@@ -851,7 +894,7 @@ public class NewRefinedBOQATest {
     public void testConvergenceWrapper() throws IOException, OBOParserException, URISyntaxException
     {
         double sum = 0;
-        int NUM_TESTS = 100;
+        int NUM_TESTS = 10;
 //        try (BufferedWriter bw = new BufferedWriter(new FileWriter(FILENAME))) {
 //
 //            String content = "This is the content to write into file\n";
@@ -944,7 +987,9 @@ public class NewRefinedBOQATest {
                     Term tx = tc.get(t);
 
 
+
                     Association a = new Association(item, tx.getIDAsString());
+                    all_diseases.add(item);
                     String freq_mod = anno.getFrequencyModifier();
                     if (freq_mod.equals(""))
                     {
@@ -1017,8 +1062,8 @@ public class NewRefinedBOQATest {
 //        trueDiseaseMapping = new Gene2Associations(trueDisease);
 
 //        generateTrueDisease(slim, assocs);
-        trueDisease = getTrueDisease(assocs);
-        trueDiseaseMapping = assocs.get(trueDisease);
+
+        QJKgenerateTrueDisease(assocs);
 
 
         Observations o = new Observations();
@@ -1040,7 +1085,6 @@ public class NewRefinedBOQATest {
         //array length from the item2ancestors for example
         phi_phenotype_frequencies = new double[numberOfTerms];
 
-
         //initalization/first step stuff
         ReducedBoqa.Result res=new ReducedBoqa.Result();
         boqa.setInitial_beta(boqa.getInitial_beta()-increment * steps);
@@ -1060,6 +1104,7 @@ public class NewRefinedBOQATest {
 //        o.real_observations[free] = true;
 
         computeVeniness(boqa.termEnumerator,tc,slim);
+
 
 //        IndexToTermPrinter.printMapping(slim.vertex2Index);
         while (!discovered) {
@@ -1111,7 +1156,7 @@ public class NewRefinedBOQATest {
             start = System.nanoTime();
 
 //            call the multiGetBest one...
-            int phenotype_to_check = multiGetBestPhenotype(boqa.multiDiseaseDistributions,boqa); //in here we do all the phenotype checks
+            int phenotype_to_check = QJKBestPhenotype(boqa.multiDiseaseDistributions,boqa); //in here we do all the phenotype checks
 
             System.out.println("done pheno check. Took" + (System.nanoTime()-start));
             //This allows us to go from TermID->index, but what about the other way>
@@ -1194,7 +1239,7 @@ public class NewRefinedBOQATest {
 
     public int testConvergence() throws IOException, OBOParserException, URISyntaxException {
         boolean noise = true;
-        boolean give_free = true;
+        boolean give_free = false;
         int num = 10000;
         final ReducedBoqa boqa = new ReducedBoqa();
         //boqa.getOntology().
@@ -1222,8 +1267,9 @@ public class NewRefinedBOQATest {
 //        trueDiseaseMapping = new Gene2Associations(trueDisease);
 
 //        generateTrueDisease(slim, assocs);
-        trueDisease = getTrueDisease(assocs);
-        trueDiseaseMapping = assocs.get(trueDisease);
+        QJKgenerateTrueDisease(assocs);
+//        trueDisease = getTrueDisease(assocs);
+//        trueDiseaseMapping = assocs.get(trueDisease);
 
 
         Observations o = new Observations();
