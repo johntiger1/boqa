@@ -95,7 +95,7 @@ public class NewRefinedBOQATest {
         }
 
         //standardize randomness
-        Random r = new Random(1001);
+        Random r = new Random(120);
         if (noise)
         {
             //modify these probabilities
