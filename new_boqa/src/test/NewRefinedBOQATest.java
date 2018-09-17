@@ -92,6 +92,8 @@ public class NewRefinedBOQATest {
 
 
         }
+
+        //standardize randomness
         Random r = new Random(2);
         if (noise)
         {
