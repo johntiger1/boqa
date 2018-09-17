@@ -84,6 +84,7 @@ public class NewRefinedBOQATest {
             {
                 //DO NOT use this nakedly! (it will sum to > 1!)
 //                probs+= freq_categories[pheno_disease_freq.get(t).get(trueDiseaseMapping.name())] ;
+//                TODO: we should probably add up NORMALIZED probabilities, and probably have a normalized freqeuncy*probability table
                 probs+= pheno_disease_freq.get(t).get(trueDiseaseMapping.name()) ;
             }
             ///This just has the frequency class (1-5)
@@ -94,7 +95,7 @@ public class NewRefinedBOQATest {
         }
 
         //standardize randomness
-        Random r = new Random(2);
+        Random r = new Random(1001);
         if (noise)
         {
             //modify these probabilities
@@ -109,6 +110,7 @@ public class NewRefinedBOQATest {
 
             }
 
+//            OK, I see: by fluke, this means that (truthfully) at least one disease phenotype is a descendant of this term
             else
             {
                 //with some probability don't observe;
@@ -139,7 +141,7 @@ public class NewRefinedBOQATest {
 
         //this heavily rewards those with long parental chains. however we assume that
         //we only have the most specific. however, that is not justified!
-        return r.nextDouble() < probs;
+        return r.nextDouble() < 0.5;
     }
 
     public boolean trueDiseaseInTopNDiseases(String target, List<String> top) {
@@ -486,6 +488,13 @@ public class NewRefinedBOQATest {
     public double scoringFunctionOnArray(double [] freqs) {
 
         return 1;
+//        double entropy = 0;
+//        for (double marg : normalizeMarginals(freqs)) {
+//            double intermediate = Math.log(marg)*marg;
+//            entropy += Math.log(marg)*marg;
+//        }
+//
+//        return entropy*-1;
 //        double score = 0;
 //
 //        for (double marg : freqs) {
@@ -509,7 +518,7 @@ public class NewRefinedBOQATest {
                 if (phenotype_frequencies[i] != 0)
 
 //                    QJK: as it stands right now, we simply ask for the most likely phenotype!
-                    if (best_phenotype_value >= (temp = phenotype_frequencies[i] * QJKscoringFunctionOnArray(phenoDiseaseDist[i]))) {
+                    if (best_phenotype_value >= (temp = -1* phenotype_frequencies[i] * QJKscoringFunctionOnArray(phenoDiseaseDist[i]))) {
                         best_phenotype_index = i;
                         best_phenotype_value = temp;
                     }
@@ -618,7 +627,7 @@ public class NewRefinedBOQATest {
 //        System.out.println("done, took " + (System.nanoTime()-start));
 
 //        QJK normalization step:
-//        phi_phenotype_frequencies = normalizeMarginals(phi_phenotype_frequencies);
+        phi_phenotype_frequencies = normalizeMarginals(phi_phenotype_frequencies);
     }
     //computes it from the REST of the array.
     public void computePhenotypeFrequencies(ReducedBoqa rb)
@@ -651,7 +660,7 @@ public class NewRefinedBOQATest {
 //        System.out.println("done, took " + (System.nanoTime()-start));
 
 //QJK: normalization
-//        phenotype_frequencies = normalizeMarginals(phenotype_frequencies);
+        phenotype_frequencies = normalizeMarginals(phenotype_frequencies);
 
 
     }
@@ -741,7 +750,8 @@ public class NewRefinedBOQATest {
 
         int limit = all_diseases.size();
 
-        Random rnd = new Random(2);
+//        THIS MUST BE RANDOMIZED!!!
+        Random rnd = new Random();
         int disease = rnd.nextInt(limit);
         trueDisease = all_diseases.get(disease);
         trueDiseaseMapping = assocs.get(trueDisease);
@@ -916,7 +926,7 @@ public class NewRefinedBOQATest {
 
         for (int i = 0; i < NUM_TESTS; i++)
         {
-            sum += testConvergence();
+            sum += QJKtestConvergence();
             System.out.println("Done test "+ i );
         }
 
@@ -1036,7 +1046,7 @@ public class NewRefinedBOQATest {
 
     public int QJKtestConvergence() throws IOException, OBOParserException, URISyntaxException {
         boolean noise = true;
-        boolean give_free = true;
+        boolean give_free = false;
         int num = 10000;
         final ReducedBoqa boqa = new ReducedBoqa();
         //boqa.getOntology().
@@ -1066,7 +1076,7 @@ public class NewRefinedBOQATest {
 //        generateTrueDisease(slim, assocs);
 
         QJKgenerateTrueDisease(assocs);
-
+        System.out.println("THIS IS THE TRUE DISEASE" + trueDisease);
 
         Observations o = new Observations();
         int numberOfTerms = ontology.getNumberOfTerms();
@@ -1191,6 +1201,8 @@ public class NewRefinedBOQATest {
 
                 }}
             //this should all be abstracted to another function!
+//            TODO: semantics here are off: if it's IN the patient, then we should MISOBSERVE with a probability
+//            TODO: let the getObservation handle all this: and have the case based misclassifications
             o.real_observations[index] = present_or_not;
 
 
@@ -1364,6 +1376,7 @@ public class NewRefinedBOQATest {
             start = System.nanoTime();
 
 //            call the multiGetBest one...
+//            QJK; note that multiDiseaseDistributions is NOT computed! Hence, we are doing passing in misleading stuff here!!
             int phenotype_to_check = multiGetBestPhenotype(boqa.multiDiseaseDistributions,boqa); //in here we do all the phenotype checks
 
             System.out.println("done pheno check. Took" + (System.nanoTime()-start));
