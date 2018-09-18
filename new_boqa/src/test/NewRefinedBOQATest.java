@@ -906,7 +906,7 @@ public class NewRefinedBOQATest {
     public void testConvergenceWrapper() throws IOException, OBOParserException, URISyntaxException
     {
         double sum = 0;
-        int NUM_TESTS = 100;
+        int NUM_TESTS = 400;
 //        try (BufferedWriter bw = new BufferedWriter(new FileWriter(FILENAME))) {
 //
 //            String content = "This is the content to write into file\n";
@@ -928,7 +928,7 @@ public class NewRefinedBOQATest {
         {
             sum += QJKtestConvergence();
             System.out.println("Done test "+ i );
-            System.out.printf( "ran %d tests, avg is %f\n", NUM_TESTS, sum/i);
+            System.out.printf( "ran %d tests, avg is %f\n", i, sum/i);
         }
 
         System.out.printf("DONE RUNNING\n" +
