@@ -387,11 +387,13 @@ public class NewRefinedBOQATest {
         //(simply check the min elemnt, and if its larger, kick out one of the elements (replace)
 
         //we have the index, but not about the TermID
-        int best_phenotype_index = 0;
-        double best_phenotype_value = 0;
+
+        int best_phenotype_index = -1;
+        double best_phenotype_value = Double.POSITIVE_INFINITY;
         double temp = 0;
         ReducedBoqa.Result res;
         ArrayList<Integer> turnedOn;
+        double val = 0;
         for (int i = 0; i < rb.o.observations.length; i++)//(int termInd : rb.o.observations)
         {
             if (!rb.o.observations[i]) {
@@ -406,24 +408,44 @@ public class NewRefinedBOQATest {
                 //we need this next line so that assignMarginals makes sense
                 rb.o.observations[i] = true;
                 turnedOn = setAncestors(rb, i);
-                System.out.println("starting assignmarginals");
+//                System.out.println("starting assignmarginals");
                 long start = System.nanoTime();
 
                 res = rb.assignMarginals(rb.o, false, 1);
-                System.out.println("done assignmarginals. Took" + (System.nanoTime()-start));
+//                System.out.println("done assignmarginals. Took" + (System.nanoTime()-start));
 
                 //after assignMarginals, the scores array is updated
                 //boqa roll back: undoes the last one
 
                 //if our current best worse than this new one, update it
-                System.out.println("starting scoring and misc");
+//                System.out.println("starting scoring and misc");
                 start = System.nanoTime();
+                val = QJKscoringFunctionOnArray(res.marginals);
 
                 //Should be memoized (in order to use the previous value (from the previous iteration), we need to
                 //write it down somewhere!
-                if (best_phenotype_value <
-                        (temp = scoringFunction(res, rb) * phenotype_frequencies[i])) //pass in rb in case we need ot infer other things
-                {       //weight on the phenotype_frequency! (how likely it is to be true)
+                if (best_phenotype_value >=
+                        (
+
+                                temp = -1*
+
+//                                    this term is large when the phenotype is likely and the entropy is HIGH
+//                                    if we are picking specificially on this characteristic, then
+//                                    we pick when this term is small since we get the negative, and then take it if it dcreases the value!
+                                        (
+                                                phenotype_frequencies[i] * (val)
+
+//                                            This term will be large for those who are unlikely
+//                                            + (1-phenotype_frequencies[i]) * val
+
+                                        )
+
+
+
+                                )) //pass in rb in case we need ot infer other things
+
+
+                    {       //weight on the phenotype_frequency! (how likely it is to be true)
 
 //                    QJK: process the result:
 //                    We should compute the P(ph). We should compute the Entropy underneath this distribution
@@ -443,7 +465,7 @@ public class NewRefinedBOQATest {
                     //hence we should use 3termcontainer to send it into
 
                 }
-                System.out.println("done assignmarginals. Took" + (System.nanoTime()-start));
+//                System.out.println("done assignmarginals. Took" + (System.nanoTime()-start));
 
                 //undoes the setting action
                 rb.o.real_observations[i] = false;
@@ -478,7 +500,7 @@ public class NewRefinedBOQATest {
         double entropy = 0;
 
         for (double marg : normalizeMarginals(freqs)) {
-            double intermediate = Math.log(marg)*marg;
+//            double intermediate = Math.log(marg)*marg;
             entropy += Math.log(marg)*marg;
         }
 
@@ -509,7 +531,7 @@ public class NewRefinedBOQATest {
         int best_phenotype_index = -1;
         double best_phenotype_value = Double.POSITIVE_INFINITY;
         double temp = 0;
-        double val;
+        double val = 0;
         for (int i = 0; i<phenoDiseaseDist.length; i++)
         {
             //assert rb.o.observations.length =phenoDiseaseDist.length
@@ -517,8 +539,23 @@ public class NewRefinedBOQATest {
             if (!rb.o.observations[i]) {
                 if (phenotype_frequencies[i] != 0)
 
+    val = QJKscoringFunctionOnArray(phenoDiseaseDist[i]);
 //                    QJK: as it stands right now, we simply ask for the most likely phenotype!
-                    if (best_phenotype_value >= (temp = -1* phenotype_frequencies[i] * QJKscoringFunctionOnArray(phenoDiseaseDist[i]))) {
+                    if (best_phenotype_value >= (
+
+                            temp = -1*
+
+//                                    this term is large when the phenotype is likely and the entropy is HIGH
+//                                    if we are picking specificially on this characteristic, then
+//                                    we pick when this term is small since we get the negative, and then take it if it dcreases the value!
+                                    (
+                                            phenotype_frequencies[i] * (1.0/val)
+
+//                                            This term will be large for those who are unlikely
+//                                            + (1-phenotype_frequencies[i]) * val
+
+                                    )
+                                    )) {
                         best_phenotype_index = i;
                         best_phenotype_value = temp;
                     }
@@ -543,7 +580,11 @@ public class NewRefinedBOQATest {
                 if (phenotype_frequencies[i] != 0)
 
 //                    QJK: as it stands right now, we simply ask for the most likely phenotype!
-                if (best_phenotype_value <= (temp = phenotype_frequencies[i] * scoringFunctionOnArray(phenoDiseaseDist[i]))) {
+                if (best_phenotype_value <= (
+
+                        temp = phenotype_frequencies[i] * scoringFunctionOnArray(phenoDiseaseDist[i])
+
+                )) {
                     best_phenotype_index = i;
                     best_phenotype_value = temp;
                 }
@@ -584,6 +625,11 @@ public class NewRefinedBOQATest {
     List<ByteString> all_diseases = new ArrayList<>();
     ByteString[] index2item;
 
+
+    public int getIndexFromTermId()
+    {
+        return 101; //index of phenotypic abnormality
+    }
     /***
      * TODO skip phenotypes that have already been observed
      */
@@ -906,7 +952,7 @@ public class NewRefinedBOQATest {
     public void testConvergenceWrapper() throws IOException, OBOParserException, URISyntaxException
     {
         double sum = 0;
-        int NUM_TESTS = 400;
+        int NUM_TESTS = 10;
 //        try (BufferedWriter bw = new BufferedWriter(new FileWriter(FILENAME))) {
 //
 //            String content = "This is the content to write into file\n";
@@ -926,7 +972,7 @@ public class NewRefinedBOQATest {
 
         for (int i = 0; i < NUM_TESTS; i++)
         {
-            sum += QJKtestConvergence();
+            sum += testConvergence();
             System.out.println("Done test "+ i );
             System.out.printf( "ran %d tests, avg is %f\n", i, sum/i);
         }
@@ -1046,6 +1092,8 @@ public class NewRefinedBOQATest {
 
 
     public int QJKtestConvergence() throws IOException, OBOParserException, URISyntaxException {
+
+
         boolean noise = true;
         boolean give_free = false;
         int num = 10000;
@@ -1377,8 +1425,10 @@ public class NewRefinedBOQATest {
             start = System.nanoTime();
 
 //            call the multiGetBest one...
+
 //            QJK; note that multiDiseaseDistributions is NOT computed! Hence, we are doing passing in misleading stuff here!!
-            int phenotype_to_check = multiGetBestPhenotype(boqa.multiDiseaseDistributions,boqa); //in here we do all the phenotype checks
+
+            int phenotype_to_check = ObsoleteQJKGetBestPhenotype(boqa, phenotype_frequencies); //in here we do all the phenotype checks
 
             System.out.println("done pheno check. Took" + (System.nanoTime()-start));
             //This allows us to go from TermID->index, but what about the other way>
